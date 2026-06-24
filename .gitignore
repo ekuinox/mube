@@ -2,6 +2,7 @@ build/
 *.stl
 result
 .worktrees/
+__pycache__/
 
 # Rust / Pico W firmware
 /target

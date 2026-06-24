@@ -15,6 +15,14 @@
     ./test/render.sh test/params_test.scad
     ./test/render.sh scad/smartlock.scad
 
+## 基板（電気設計・手配線用）
+    uv run --script circuit/netlist.py   # = ./circuit/netlist.py
+
+回路を `circuit/netlist.py` にコードで定義し、ERC ライト（結線チェック）の後に
+`build/from-to.md`（手配線手順表）と `build/bom.md`（部品表）を生成する。
+GPIO 番号は仮で `netlist.py` の `GPIO` 変数に隔離（ファームで確定後に差し替え）。
+生成物は STL と同様 build/ で非コミット。テストは `./test/netlist_test.py`。
+
 ## 3D プレビュー（ブラウザ + Cloudflare quick tunnel）
     nix develop                          # openscad / uv / cloudflared を用意
     uv run --script viewer/serve.py      # = ./viewer/serve.py
