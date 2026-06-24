@@ -65,6 +65,15 @@ STL は build/ に再生成される派生物なのでコミットしない（.g
       cargo install elf2uf2-rs
       elf2uf2-rs -d target/thumbv6m-none-eabi/release/smtlk-firmware
 
+### サーボ動作確認（bench）
+probe-rs か BOOTSEL+UF2 で焼くと、起動・WiFi 接続後に約3秒ごとに施錠⇄解錠を繰り返す
+（オンボード LED がハートビート）。サーボ給電は動作時だけ ON（GP14 の電源ゲート）。
+
+**実機合わせ:** `src/servo.rs` 冒頭のキャリブ定数 5 つ（SERVO_MIN_US / SERVO_MAX_US /
+LOCK_DEG / UNLOCK_DEG / SETTLE_MS）だけを調整する。SG90 は個体差が大きいので、
+まず安全側（狭い MIN/MAX）で焼き、唸らない・突き当てない範囲を実測で広げること。
+初回はサムターンを手で止められる状態で投入する（突き当て保護）。
+
 依存の Embassy は git 追従（`Cargo.toml` のコメント参照）。再現性が要るなら rev 固定する。
 
 ## 未確定（積み残し）
