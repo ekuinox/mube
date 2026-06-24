@@ -42,3 +42,23 @@ def check(parts, nets, required):
         if r not in nets:
             errors.append(f"required net {r} is missing")
     return errors
+
+
+def gen_from_to(nets):
+    """Markdown wiring guide: chain each net's endpoints into from->to pairs."""
+    lines = ["# Wiring (from-to)", ""]
+    for name, eps in nets.items():
+        lines.append(f"## {name}")
+        pins = [f"{ref}.{pin}" for ref, pin in eps]
+        for a, b in zip(pins, pins[1:]):
+            lines.append(f"- {a} -> {b}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def gen_bom(part_meta):
+    """Markdown BOM table, one row per ref (qty 1)."""
+    lines = ["# BOM", "", "| Ref | Part | Value | Qty |", "|-----|------|-------|-----|"]
+    for ref, (name, value) in part_meta.items():
+        lines.append(f"| {ref} | {name} | {value} | 1 |")
+    return "\n".join(lines) + "\n"

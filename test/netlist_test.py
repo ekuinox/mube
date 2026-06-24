@@ -49,6 +49,29 @@ def test_unknown_pin_detected():
     assert any("references unknown pin A.9" in e for e in errs), errs
 
 
+def test_gen_from_to_chains_endpoints():
+    nets = {"GND": [("U1", "GND"), ("Q1", "S"), ("C1", "-")]}
+    md = n.gen_from_to(nets)
+    assert "## GND" in md
+    assert "- U1.GND -> Q1.S" in md
+    assert "- Q1.S -> C1.-" in md
+
+
+def test_gen_from_to_single_pair():
+    nets = {"SERVO_SIG": [("U1", "GP15"), ("M1", "SIG")]}
+    md = n.gen_from_to(nets)
+    assert "- U1.GP15 -> M1.SIG" in md
+
+
+def test_gen_bom_rows():
+    meta = {"Q1": ("N-ch MOSFET (logic level)", "AO3400 / IRLZ44N"),
+            "Rg": ("Resistor", "220R")}
+    md = n.gen_bom(meta)
+    assert "| Ref | Part | Value | Qty |" in md
+    assert "| Q1 | N-ch MOSFET (logic level) | AO3400 / IRLZ44N | 1 |" in md
+    assert "| Rg | Resistor | 220R | 1 |" in md
+
+
 TESTS = [
     test_good_netlist_passes,
     test_unconnected_pin_detected,
@@ -56,6 +79,9 @@ TESTS = [
     test_double_connected_pin_detected,
     test_missing_required_net_detected,
     test_unknown_pin_detected,
+    test_gen_from_to_chains_endpoints,
+    test_gen_from_to_single_pair,
+    test_gen_bom_rows,
 ]
 
 
