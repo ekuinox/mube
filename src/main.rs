@@ -19,11 +19,13 @@
 mod config;
 
 use config::{WIFI_PASSWORD, WIFI_SSID};
+use cyw43::SpiBus;
 use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_net::{Config as NetConfig, StackResources};
 use embassy_rp::bind_interrupts;
+use embassy_rp::dma::{Channel, InterruptHandler as DmaInterruptHandler};
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
@@ -33,12 +35,13 @@ use {defmt_rtt as _, panic_probe as _};
 
 bind_interrupts!(struct Irqs {
     PIO0_IRQ_0 => InterruptHandler<PIO0>;
+    DMA_IRQ_0 => DmaInterruptHandler<DMA_CH0>;
 });
 
 /// CYW43 ドライバを回し続けるタスク。
 #[embassy_executor::task]
 async fn cyw43_task(
-    runner: cyw43::Runner<'static, Output<'static>, PioSpi<'static, PIO0, 0, DMA_CH0>>,
+    runner: cyw43::Runner<'static, SpiBus<Output<'static>, PioSpi<'static, PIO0, 0>>>,
 ) -> ! {
     runner.run().await
 }
@@ -54,13 +57,15 @@ async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
-    let fw = include_bytes!("../cyw43-firmware/43439A0.bin");
-    let clm = include_bytes!("../cyw43-firmware/43439A0_clm.bin");
+    // cyw43 v0.7.0 では aligned_bytes! マクロで A4 アライメントが要る。
+    let fw = cyw43::aligned_bytes!("../cyw43-firmware/43439A0.bin");
+    let clm = cyw43::aligned_bytes!("../cyw43-firmware/43439A0_clm.bin");
 
     // CYW43 との PIO-SPI 配線（Pico W 固定ピン）。
     let pwr = Output::new(p.PIN_23, Level::Low);
     let cs = Output::new(p.PIN_25, Level::High);
     let mut pio = Pio::new(p.PIO0, Irqs);
+    let dma = Channel::new(p.DMA_CH0, Irqs);
     let spi = PioSpi::new(
         &mut pio.common,
         pio.sm0,
@@ -69,15 +74,15 @@ async fn main(spawner: Spawner) {
         cs,
         p.PIN_24,
         p.PIN_29,
-        p.DMA_CH0,
+        dma,
     );
 
     static STATE: StaticCell<cyw43::State> = StaticCell::new();
     let state = STATE.init(cyw43::State::new());
-    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
-    unwrap!(spawner.spawn(cyw43_task(runner)));
+    // cyw43 v0.7.0: new() takes fw and clm (nvram) as Aligned<A4, [u8]>; control.init() は廃止。
+    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw, clm).await;
+    spawner.spawn(cyw43_task(runner).unwrap());
 
-    control.init(clm).await;
     control
         .set_power_management(cyw43::PowerManagementMode::PowerSave)
         .await;
@@ -93,7 +98,7 @@ async fn main(spawner: Spawner) {
         RESOURCES.init(StackResources::new()),
         seed,
     );
-    unwrap!(spawner.spawn(net_task(net_runner)));
+    spawner.spawn(net_task(net_runner).unwrap());
 
     // WPA2 で接続。失敗したら少し待って再試行。
     loop {
@@ -103,7 +108,7 @@ async fn main(spawner: Spawner) {
         {
             Ok(_) => break,
             Err(err) => {
-                warn!("join failed (status={}), retrying...", err.status);
+                warn!("join failed ({:?}), retrying...", err);
                 Timer::after(Duration::from_secs(2)).await;
             }
         }
