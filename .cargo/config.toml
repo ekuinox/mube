@@ -1,0 +1,11 @@
+# RP2040 は Cortex-M0+ = thumbv6m-none-eabi。
+# runner は probe-rs（デバッグプローブ経由）。プローブが無ければ BOOTSEL + UF2 を使う（README 参照）。
+[target.thumbv6m-none-eabi]
+runner = "probe-rs run --chip RP2040"
+
+[build]
+target = "thumbv6m-none-eabi"
+
+[env]
+# defmt のログレベル。trace/debug/info/warn/error。
+DEFMT_LOG = "debug"

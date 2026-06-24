@@ -1,0 +1,126 @@
+//! smtlk Pico W ファームウェアの土台。
+//!
+//! 現状: CYW43439 を起動し、WPA2 で WiFi に接続して DHCP で IP を取得、
+//! オンボード LED を点滅させる（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっている
+//! ため、点滅にも WiFi チップの初期化が要る）。
+//!
+//! ここから先（スマートロック本体）の積み残し:
+//!   - SG90 サーボの PWM 制御（embassy_rp::pwm）でサムターンを開閉する
+//!   - 遠隔操作の口（embassy-net の TCP/HTTP サーバ等）
+//!   - 手回し後の状態再同期・省電力運用
+//!
+//! 注意: このコードは embassy の公式 examples（examples/rp の wifi 系）に倣っている。
+//! embassy を rev 固定した際は、その rev の example と API（特に PioSpi::new と
+//! control.join の引数）を突き合わせて調整すること。
+
+#![no_std]
+#![no_main]
+
+mod config;
+
+use config::{WIFI_PASSWORD, WIFI_SSID};
+use cyw43_pio::PioSpi;
+use defmt::*;
+use embassy_executor::Spawner;
+use embassy_net::{Config as NetConfig, StackResources};
+use embassy_rp::bind_interrupts;
+use embassy_rp::gpio::{Level, Output};
+use embassy_rp::peripherals::{DMA_CH0, PIO0};
+use embassy_rp::pio::{InterruptHandler, Pio};
+use embassy_time::{Duration, Timer};
+use static_cell::StaticCell;
+use {defmt_rtt as _, panic_probe as _};
+
+bind_interrupts!(struct Irqs {
+    PIO0_IRQ_0 => InterruptHandler<PIO0>;
+});
+
+/// CYW43 ドライバを回し続けるタスク。
+#[embassy_executor::task]
+async fn cyw43_task(
+    runner: cyw43::Runner<'static, Output<'static>, PioSpi<'static, PIO0, 0, DMA_CH0>>,
+) -> ! {
+    runner.run().await
+}
+
+/// ネットワークスタック（DHCP 等）を回し続けるタスク。
+#[embassy_executor::task]
+async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'static>>) -> ! {
+    runner.run().await
+}
+
+#[embassy_executor::main]
+async fn main(spawner: Spawner) {
+    let p = embassy_rp::init(Default::default());
+
+    // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
+    let fw = include_bytes!("../cyw43-firmware/43439A0.bin");
+    let clm = include_bytes!("../cyw43-firmware/43439A0_clm.bin");
+
+    // CYW43 との PIO-SPI 配線（Pico W 固定ピン）。
+    let pwr = Output::new(p.PIN_23, Level::Low);
+    let cs = Output::new(p.PIN_25, Level::High);
+    let mut pio = Pio::new(p.PIO0, Irqs);
+    let spi = PioSpi::new(
+        &mut pio.common,
+        pio.sm0,
+        cyw43_pio::DEFAULT_CLOCK_DIVIDER,
+        pio.irq0,
+        cs,
+        p.PIN_24,
+        p.PIN_29,
+        p.DMA_CH0,
+    );
+
+    static STATE: StaticCell<cyw43::State> = StaticCell::new();
+    let state = STATE.init(cyw43::State::new());
+    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
+    unwrap!(spawner.spawn(cyw43_task(runner)));
+
+    control.init(clm).await;
+    control
+        .set_power_management(cyw43::PowerManagementMode::PowerSave)
+        .await;
+
+    // ネットワークスタック（DHCPv4）。
+    let net_config = NetConfig::dhcpv4(Default::default());
+    // TODO: seed はハードウェア RNG (embassy_rp::clocks::RoscRng 等) から取るべき。
+    let seed = 0x0123_4567_89ab_cdef;
+    static RESOURCES: StaticCell<StackResources<5>> = StaticCell::new();
+    let (stack, net_runner) = embassy_net::new(
+        net_device,
+        net_config,
+        RESOURCES.init(StackResources::new()),
+        seed,
+    );
+    unwrap!(spawner.spawn(net_task(net_runner)));
+
+    // WPA2 で接続。失敗したら少し待って再試行。
+    loop {
+        match control
+            .join(WIFI_SSID, cyw43::JoinOptions::new(WIFI_PASSWORD.as_bytes()))
+            .await
+        {
+            Ok(_) => break,
+            Err(err) => {
+                warn!("join failed (status={}), retrying...", err.status);
+                Timer::after(Duration::from_secs(2)).await;
+            }
+        }
+    }
+    info!("WiFi connected, waiting for DHCP...");
+
+    stack.wait_config_up().await;
+    if let Some(cfg) = stack.config_v4() {
+        info!("DHCP up: IP = {}", cfg.address);
+    }
+
+    // オンボード LED 点滅（疎通確認用のハートビート）。
+    let delay = Duration::from_millis(500);
+    loop {
+        control.gpio_set(0, true).await;
+        Timer::after(delay).await;
+        control.gpio_set(0, false).await;
+        Timer::after(delay).await;
+    }
+}
