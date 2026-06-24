@@ -36,7 +36,30 @@ STL は build/ に再生成される派生物なのでコミットしない（.g
 - `mount_plate()` の下方向ブレーススタブを、実ノブ/枠の形状に合わせて確定する。
 - 必要ならドア写真を `docs/superpowers/assets/` に追加。
 
+## Pico W ファームウェア（Rust / Embassy）
+
+リポジトリ直下が Rust パッケージ（`Cargo.toml` / `src/`）も兼ねる。Embassy(async) + CYW43 WiFi
+の雛形で、現状は「WiFi 接続 → DHCP → オンボード LED 点滅」まで。サーボ制御や遠隔操作は
+`src/main.rs` の TODO を参照。
+
+### 準備
+    nix develop                                   # rustup を用意（rust-toolchain.toml が stable + thumbv6m を自動導入）
+    # CYW43 ファームウェアブロブを取得（ライセンス物のため未コミット）
+    #   詳細は cyw43-firmware/README.md
+    # src/config.rs の WIFI_SSID / WIFI_PASSWORD を実値に書き換える
+
+### ビルド
+    cargo build --release                         # thumbv6m-none-eabi（.cargo/config.toml で既定ターゲット指定済み）
+
+### 書き込み・実行
+- デバッグプローブあり: `cargo run --release`（runner = `probe-rs run --chip RP2040`、defmt ログが出る）
+- プローブなし: BOOTSEL ボタンを押しながら USB 接続 → UF2 を生成して書き込む
+      cargo install elf2uf2-rs
+      elf2uf2-rs -d target/thumbv6m-none-eabi/release/smtlk-firmware
+
+依存の Embassy は git 追従（`Cargo.toml` のコメント参照）。再現性が要るなら rev 固定する。
+
 ## 未確定（積み残し）
 - ドア固定の突っ張り先（mount_plate で隔離）。
 - サムターン実寸（socket パラメータで隔離）。
-- Pico W ファームウェア・省電力運用・手回し後の状態再同期。
+- Pico W ファームウェア: SG90 サーボ PWM 制御 / 遠隔操作の口 / 省電力運用 / 手回し後の状態再同期。
