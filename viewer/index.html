@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>smtlk — STL ビューア</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: system-ui, sans-serif; }
+  #app { position: fixed; inset: 0; background: #1b1f24; }
+  #ui {
+    position: fixed; top: 12px; left: 12px; z-index: 10;
+    background: rgba(20,24,29,.82); border: 1px solid #333; border-radius: 10px;
+    padding: 12px 14px; color: #e7e9ec; backdrop-filter: blur(6px); max-width: 80vw;
+  }
+  #ui h1 { font-size: 14px; margin: 0 0 8px; font-weight: 600; letter-spacing: .02em; }
+  #ui label { font-size: 12px; color: #aab1ba; display: block; margin-bottom: 4px; }
+  select {
+    font-size: 14px; padding: 6px 8px; border-radius: 6px; border: 1px solid #3a4048;
+    background: #262b31; color: #e7e9ec; width: 100%;
+  }
+  #dims { margin-top: 10px; font-size: 12px; color: #aab1ba; line-height: 1.5; }
+  #dims b { color: #e7e9ec; font-weight: 600; }
+  #hint { margin-top: 8px; font-size: 11px; color: #79808a; }
+  #status {
+    position: fixed; bottom: 12px; left: 12px; z-index: 10; font-size: 12px;
+    color: #aab1ba; background: rgba(20,24,29,.7); padding: 4px 8px; border-radius: 6px;
+  }
+  .err { color: #ff8a8a !important; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="ui">
+  <h1>smtlk スマートロック筐体</h1>
+  <label for="part">パーツ</label>
+  <select id="part">
+    <option value="assembly.stl">組立プレビュー (assembly)</option>
+    <option value="body.stl">本体 (body)</option>
+    <option value="lid.stl">蓋 (lid)</option>
+    <option value="socket.stl">サムターンソケット (socket)</option>
+  </select>
+  <div id="dims"></div>
+  <div id="hint">ドラッグ=回転 / ホイール=ズーム / 右ドラッグ=平行移動</div>
+</div>
+<div id="status">読み込み中…</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const app = document.getElementById('app');
+const statusEl = document.getElementById('status');
+const dimsEl = document.getElementById('dims');
+const partSel = document.getElementById('part');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1b1f24);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+app.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+
+// Lights
+scene.add(new THREE.HemisphereLight(0xffffff, 0x33373c, 0.9));
+const dir = new THREE.DirectionalLight(0xffffff, 1.1);
+dir.position.set(1, 1.3, 1);
+scene.add(dir);
+const dir2 = new THREE.DirectionalLight(0xffffff, 0.4);
+dir2.position.set(-1, -0.5, -0.8);
+scene.add(dir2);
+
+// Helpers (sized after first load)
+let grid = null, axes = null;
+const material = new THREE.MeshStandardMaterial({ color: 0x7fb2e6, metalness: 0.15, roughness: 0.55, flatShading: false });
+
+let mesh = null;
+const loader = new STLLoader();
+
+function disposeMesh() {
+  if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); mesh = null; }
+}
+
+function frameObject(geometry) {
+  geometry.computeBoundingBox();
+  const bb = geometry.boundingBox;
+  const size = new THREE.Vector3(); bb.getSize(size);
+  const center = new THREE.Vector3(); bb.getCenter(center);
+
+  // center the geometry at origin
+  geometry.translate(-center.x, -center.y, -center.z);
+
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const fitDist = (maxDim / 2) / Math.tan((camera.fov * Math.PI / 180) / 2);
+  const dist = fitDist * 2.1;
+  camera.position.set(dist * 0.7, dist * 0.5, dist * 0.8);
+  camera.near = maxDim / 100;
+  camera.far = maxDim * 100;
+  camera.updateProjectionMatrix();
+  controls.target.set(0, 0, 0);
+  controls.update();
+
+  // rebuild helpers scaled to the object
+  if (grid) scene.remove(grid);
+  if (axes) scene.remove(axes);
+  const gridSize = Math.ceil(maxDim * 1.6 / 10) * 10;
+  grid = new THREE.GridHelper(gridSize, gridSize / 10, 0x55606b, 0x363c44);
+  grid.position.y = -size.y / 2;
+  scene.add(grid);
+  axes = new THREE.AxesHelper(maxDim * 0.6);
+  scene.add(axes);
+
+  dimsEl.innerHTML =
+    `寸法 (mm): <b>${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}</b>` +
+    `<br><span style="color:#ff6b6b">X</span> / <span style="color:#6bff6b">Y</span> / <span style="color:#6b9bff">Z</span>`;
+}
+
+function loadPart(file) {
+  statusEl.textContent = `読み込み中: ${file}`;
+  statusEl.classList.remove('err');
+  loader.load(
+    file + '?t=' + Date.now(),
+    (geometry) => {
+      disposeMesh();
+      // OpenSCAD exports Z-up; rotate so Z-up maps to three.js Y-up for natural framing
+      geometry.rotateX(-Math.PI / 2);
+      frameObject(geometry);
+      mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      statusEl.textContent = `表示中: ${file}`;
+    },
+    undefined,
+    (err) => {
+      statusEl.textContent = `読み込み失敗: ${file}`;
+      statusEl.classList.add('err');
+      console.error(err);
+    }
+  );
+}
+
+partSel.addEventListener('change', () => loadPart(partSel.value));
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+loadPart(partSel.value);
+</script>
+</body>
+</html>
