@@ -36,8 +36,11 @@ module body() {
       }
       // bottom mount face
       mount_plate();
-      // Pico standoffs (footprint centered at (pico_x, pico_y))
-      translate([pico_x, pico_y, wall])
+      // Pico standoffs (footprint centered at (pico_x, pico_y)).
+      // Sunk to wall*0.5 so the boss base overlaps the floor (z=0..wall) by
+      // wall*0.5, fusing them into one solid. The pilot holes start at
+      // wall*0.5 - 0.1 > 0, so they do not breach the bottom face.
+      translate([pico_x, pico_y, wall*0.5])
         pico_w_mounts();
     }
 

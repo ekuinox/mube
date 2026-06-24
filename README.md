@@ -9,10 +9,11 @@
     ./build.sh            # build/ に body.stl / lid.stl / socket.stl を出力（dev シェル外でも自動で nix develop 経由で実行）
 
 ## 個別レンダリング
-    nix develop -c openscad -D part="body" -o body.stl scad/smartlock.scad
+    nix develop -c openscad -D 'part="body"' -o body.stl scad/smartlock.scad
 
 ## テスト
     ./test/render.sh test/params_test.scad
+    ./test/render.sh scad/smartlock.scad
 
 ## 採寸後にやること
 - `scad/params.scad` の `knob_w/knob_t/knob_h`（サムターン実寸）を更新。

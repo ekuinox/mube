@@ -5,6 +5,7 @@ wall          = 2.4;
 fit_clearance = 0.4;
 $fn           = 64;
 box_corner_r  = 3;      // outer shell corner fillet radius
+lid_lip_h     = 4;      // lid inner-lip depth
 
 // --- SG90 servo (datasheet nominal) ---
 servo_body_l  = 22.8;
