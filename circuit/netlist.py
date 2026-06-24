@@ -70,6 +70,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # from-to.md follows.
 GPIO = {"servo": "GP15", "gate": "GP14", "led": "GP16", "btn": "GP17"}
 
+# PARTS and NETS both derive from GPIO. If you mutate GPIO at runtime, rebuild
+# both (PARTS' U1 pins and build_nets(GPIO)) together so they stay consistent.
 PARTS = {
     "U1": ["VBUS", "GND", GPIO["servo"], GPIO["gate"], GPIO["led"], GPIO["btn"]],
     "M1": ["V+", "GND", "SIG"],
@@ -98,8 +100,10 @@ PART_META = {
 def build_nets(gpio):
     """Build the net dict from a GPIO assignment so changes flow into outputs."""
     return {
-        "+5V": [("U1", "VBUS"), ("M1", "V+"), ("C1", "+")],
-        "GND": [("U1", "GND"), ("Q1", "S"), ("C1", "-"),
+        # C1 is the bulk cap: keep it adjacent to U1 in the from-to order so it
+        # gets soldered close to the Pico's VBUS/GND (brownout suppression).
+        "+5V": [("U1", "VBUS"), ("C1", "+"), ("M1", "V+")],
+        "GND": [("U1", "GND"), ("C1", "-"), ("Q1", "S"),
                 ("Rgs", "2"), ("D1", "K"), ("SW1", "2")],
         "SERVO_RTN": [("M1", "GND"), ("Q1", "D")],
         "SERVO_SIG": [("U1", gpio["servo"]), ("M1", "SIG")],
