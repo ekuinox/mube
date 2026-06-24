@@ -17,6 +17,7 @@
 #![no_main]
 
 mod config;
+mod servo;
 
 use config::{WIFI_PASSWORD, WIFI_SSID};
 use cyw43::SpiBus;
