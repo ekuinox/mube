@@ -74,7 +74,7 @@ LOCK_DEG / UNLOCK_DEG / SETTLE_MS）だけを調整する。SG90 は個体差が
 まず安全側（狭い MIN/MAX）で焼き、唸らない・突き当てない範囲を実測で広げること。
 初回はサムターンを手で止められる状態で投入する（突き当て保護）。
 
-依存の Embassy は git 追従（`Cargo.toml` のコメント参照）。再現性が要るなら rev 固定する。
+依存の Embassy / cyw43 は crates.io 公開バージョンに固定済み。`Cargo.lock` をコミットしているため、`cargo build --locked` で完全に再現できる。
 
 ## 未確定（積み残し）
 - ドア固定の突っ張り先（mount_plate で隔離）。
