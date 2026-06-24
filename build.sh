@@ -5,6 +5,7 @@ if ! command -v openscad >/dev/null 2>&1; then
   command -v nix >/dev/null 2>&1 || export PATH="/nix/var/nix/profiles/default/bin:$PATH"
   exec nix develop "$(cd "$(dirname "$0")" && pwd)" -c "$0" "$@"
 fi
+cd "$(dirname "$0")"
 mkdir -p build
 for p in body lid socket; do
   echo "== building $p =="
