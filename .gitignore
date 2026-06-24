@@ -1,6 +1,7 @@
 build/
 *.stl
 result
+.worktrees/
 
 # Rust / Pico W firmware
 /target

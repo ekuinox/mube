@@ -27,9 +27,14 @@ STL は build/ に再生成される派生物なのでコミットしない（.g
 `serve.py` は PEP 723 のインラインメタデータを持ち、`uv` が Python と依存を解決して実行する
 （cloudflared の pip 版は aarch64 非対応のため、バイナリは devShell から供給する）。
 
-## 採寸後にやること
-- `scad/params.scad` の `knob_w/knob_t/knob_h`（サムターン実寸）を更新。
-- ドア固定が決まったら `scad/mount_plate.scad` の `mount_plate()` を差し替え。
+## 採寸（反映済み・v2）
+- サムターン: 台形 幅 28(根元)→25(先端) × 厚み 3、突き出し 11（`params.scad` の `knob_*`）。
+- 座 Ø46（`rosette_d`）= 位置決め専用（回転対称ゆえトルクは受けない）。
+- クリアランス: 左 30 / 下 40（`clear_left` / `clear_down`）。本体は右・上へ展開。
+
+## 次フェーズ（トルク対策・現物合わせ）
+- `mount_plate()` の下方向ブレーススタブを、実ノブ/枠の形状に合わせて確定する。
+- 必要ならドア写真を `docs/superpowers/assets/` に追加。
 
 ## Pico W ファームウェア（Rust / Embassy）
 

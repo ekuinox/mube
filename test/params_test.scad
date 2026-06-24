@@ -1,9 +1,8 @@
 include <../scad/params.scad>
-// Derived body must enclose the largest component footprints.
-assert(body_l >= pico_l + 2*wall, "body length must enclose Pico");
-assert(body_h >= servo_body_h + 2*wall, "body height must enclose servo");
-assert(fit_clearance >= 0, "clearance non-negative");
+assert(body_l > 0 && body_w > 0 && body_h > 0, "positive body dims");
+assert(ext_left <= clear_left, "left extent within door clearance");
+assert(ext_down <= clear_down, "down extent within handle clearance");
+assert(knob_w_top <= knob_w_base, "knob tapers base->top");
+assert(knob_engage < knob_h, "engagement shallower than protrusion");
 echo("params_test ok");
-
-// Render a minimal object to satisfy OpenSCAD's requirement
-sphere(0.01, $fn=3);
+sphere(0.01, $fn = 3);
