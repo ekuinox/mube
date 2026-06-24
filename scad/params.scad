@@ -43,6 +43,7 @@ mosfet_l      = 16.0;
 clear_left  = 30;   // -X to door edge/frame
 clear_down  = 40;   // -Y to door handle
 rosette_d   = 46;   // circular escutcheon diameter (registration only)
+brace_stub_w = 12;  // width of the downward torque-brace stub (toward the handle)
 
 // --- Thumb-turn knob (measured; trapezoid) ---
 knob_w_base = 28;   // width at the door (base, wider)
