@@ -2,66 +2,65 @@ include <params.scad>
 use <hardware.scad>
 use <mount_plate.scad>
 
-// Servo and Pico sit SIDE BY SIDE along the WIDTH (Y axis) — matching the
-// inner_w derivation: inner_w = servo_body_w + pico_w + 8.
-// Servo is centered in X on the -Y half; Pico on the +Y half.
-// LED/button on the +Y front wall (body_w/2). USB on the +X end wall (Pico's USB end).
+// Origin = thumb-turn / servo axis (center of the door rosette).
+// The body center is offset to (center_x, center_y): the axis sits low-left so
+// -X stays within clear_left and -Y within clear_down; the body grows +X/+Y.
 module body() {
-  // Both components centered in X.
+  // Servo on the axis; shaft points down through the bottom.
   servo_x = 0;
-  servo_y = -inner_w/4;  // -Y half
+  servo_y = 0;
 
-  pico_x  = 0;
-  pico_y  = +inner_w/4;  // +Y half
+  // Pico stacked above the servo in free +Y space; long axis along Y
+  // (rotate the X-oriented pico_w_mounts by 90 deg).
+  pico_x = 0;
+  pico_y = servo_body_w/2 + 6 + pico_l/2;
 
-  // LED and button are on the +Y wall, centered around pico_x ± led_btn_spacing/2.
-  led_x    = pico_x - led_btn_spacing/2;
-  btn_x    = pico_x + led_btn_spacing/2;
+  // MOSFET keep-out on the free +X side, clear of servo and Pico.
+  mosfet_x = ext_right - mosfet_l/2 - 2;
+  mosfet_y = center_y;
 
-  // MOSFET subtraction: centered in X (between pico bosses at ±23.5), on the
-  // +Y (Pico) side at floor level — safe from servo pocket (different Y half)
-  // and clear of pico bosses (mosfet X extent ±8.4 < boss X at ±21.25).
-  mosfet_x = 0;
-  mosfet_y = pico_y;
+  // LED + button on the +X right wall, spaced around center_y.
+  wall_x = center_x + inner_l/2;     // right interior wall plane
+  led_y  = center_y - led_btn_spacing/2;
+  btn_y  = center_y + led_btn_spacing/2;
+
+  // USB on the +Y top wall, aligned to the Pico's top end.
+  wall_y_top = center_y + inner_w/2;
 
   difference() {
     union() {
-      // outer shell (open top)
+      // outer shell (open top), centered at (center_x, center_y)
       difference() {
-        translate([0, 0, body_h/2])
+        translate([center_x, center_y, body_h/2])
           rounded_box(body_l, body_w, body_h, box_corner_r);
-        translate([0, 0, body_h/2 + wall])
+        translate([center_x, center_y, body_h/2 + wall])
           rounded_box(inner_l, inner_w, body_h,
                       box_corner_r - wall > 0 ? box_corner_r - wall : 0.5);
       }
-      // bottom mount face
+      // bottom mount face (also centered at center_x/center_y internally)
       mount_plate();
-      // Pico standoffs (footprint centered at (pico_x, pico_y)).
-      // Sunk to wall*0.5 so the boss base overlaps the floor (z=0..wall) by
-      // wall*0.5, fusing them into one solid. The pilot holes start at
-      // wall*0.5 - 0.1 > 0, so they do not breach the bottom face.
+      // Pico standoffs, long axis along Y
       translate([pico_x, pico_y, wall*0.5])
-        pico_w_mounts();
+        rotate([0, 0, 90]) pico_w_mounts();
     }
 
-    // servo pocket (shaft down through bottom)
+    // servo pocket at the axis (shaft down through the bottom)
     translate([servo_x, servo_y, wall + servo_body_h/2])
       sg90_cutout();
 
-    // MOSFET floor clearance
+    // MOSFET floor clearance (lifted off the floor like v1)
     translate([mosfet_x, mosfet_y, wall + wall*2])
       mosfet_space();
 
-    // front-wall LED + button (+Y wall)
-    translate([led_x, body_w/2, body_h*0.5])
-      rotate([90, 0, 0]) led_hole();
-    translate([btn_x, body_w/2, body_h*0.5])
-      rotate([90, 0, 0]) button_hole();
+    // LED + button on the +X right wall (pierce along X)
+    translate([wall_x, led_y, body_h*0.5])
+      rotate([0, 90, 0]) led_hole();
+    translate([wall_x, btn_y, body_h*0.5])
+      rotate([0, 90, 0]) button_hole();
 
-    // USB on the +X end wall (Pico's USB end), aligned to the Pico in Y
-    translate([body_l/2, pico_y, body_h*0.4])
-      rotate([0, 0, 90])
-        usb_cutout();
+    // USB on the +Y top wall (pierce along Y), at the Pico's top end
+    translate([pico_x, wall_y_top, body_h*0.4])
+      usb_cutout();
   }
 }
 
