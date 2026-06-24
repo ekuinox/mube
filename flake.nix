@@ -11,10 +11,9 @@
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
           packages = [
-            pkgs.openscad     # render .scad -> STL (headless)
-            pkgs.python3      # static file server for the viewer
-            pkgs.cloudflared  # quick tunnel to expose the viewer
-            pkgs.gh           # GitHub CLI (also the git credential helper)
+            pkgs.openscad     # render .scad -> STL (headless); cannot be pip-installed
+            pkgs.uv           # runs viewer/serve.py (PEP 723), provisions its own Python
+            pkgs.cloudflared  # quick tunnel binary (pip's pycloudflared lacks aarch64)
           ];
         };
       });
