@@ -46,7 +46,7 @@ module body() {
       sg90_cutout();
 
     // MOSFET floor clearance
-    translate([mosfet_x, mosfet_y, wall*2])
+    translate([mosfet_x, mosfet_y, wall + wall*2])
       mosfet_space();
 
     // front-wall LED + button (+Y wall)
@@ -55,9 +55,10 @@ module body() {
     translate([btn_x, body_w/2, body_h*0.5])
       rotate([90, 0, 0]) button_hole();
 
-    // USB port on -Y wall near Pico
-    translate([pico_x + pico_l/2 - usb_w, -body_w/2, body_h*0.4])
-      usb_cutout();
+    // USB on the +X end wall (Pico's USB end), aligned to the Pico in Y
+    translate([body_l/2, pico_y, body_h*0.4])
+      rotate([0, 0, 90])
+        usb_cutout();
   }
 }
 
