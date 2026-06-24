@@ -5,7 +5,7 @@ use <mount_plate.scad>
 // Servo and Pico sit SIDE BY SIDE along the WIDTH (Y axis) — matching the
 // inner_w derivation: inner_w = servo_body_w + pico_w + 8.
 // Servo is centered in X on the -Y half; Pico on the +Y half.
-// LED/button on the +Y front wall (body_w/2). USB on the -Y wall.
+// LED/button on the +Y front wall (body_w/2). USB on the +X end wall (Pico's USB end).
 module body() {
   // Both components centered in X.
   servo_x = 0;
