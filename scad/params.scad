@@ -4,6 +4,7 @@
 wall          = 2.4;
 fit_clearance = 0.4;
 $fn           = 64;
+box_corner_r  = 3;      // outer shell corner fillet radius
 
 // --- SG90 servo (datasheet nominal) ---
 servo_body_l  = 22.8;
@@ -31,6 +32,7 @@ usb_h         = 6.0;
 // --- Indicators ---
 led_hole_d    = 5.2;
 button_hole_d = 6.2;
+led_btn_spacing = 16;   // center-to-center distance between LED and button
 
 // --- MOSFET footprint (small module) ---
 mosfet_w      = 12.0;
