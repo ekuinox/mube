@@ -10,7 +10,12 @@
     in {
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
-          packages = [ pkgs.openscad ];
+          packages = [
+            pkgs.openscad     # render .scad -> STL (headless)
+            pkgs.python3      # static file server for the viewer
+            pkgs.cloudflared  # quick tunnel to expose the viewer
+            pkgs.gh           # GitHub CLI (also the git credential helper)
+          ];
         };
       });
     };

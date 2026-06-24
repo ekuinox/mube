@@ -3,7 +3,7 @@
 既存ドアのサムターンに後付けする SG90 サーボ式スマートロックの筐体（OpenSCAD）。
 
 ## 開発環境（Nix）
-    nix develop           # OpenSCAD が入った devShell に入る
+    nix develop           # devShell に入る（openscad / python3 / cloudflared / gh）
 
 ## ビルド
     ./build.sh            # build/ に body.stl / lid.stl / socket.stl を出力（dev シェル外でも自動で nix develop 経由で実行）
@@ -14,6 +14,13 @@
 ## テスト
     ./test/render.sh test/params_test.scad
     ./test/render.sh scad/smartlock.scad
+
+## 3D プレビュー（ブラウザ + Cloudflare quick tunnel）
+    ./viewer/serve.sh     # STL再生成 → ビューア配置 → 配信 → 公開URL(https://*.trycloudflare.com)を表示
+
+ブラウザで表示された URL を開くと Three.js のビューアでパーツを確認できる。
+URL は起動ごとに変わり、Ctrl-C でサーバとトンネルを停止する。
+STL は build/ に再生成される派生物なのでコミットしない（.gitignore 済み）。
 
 ## 採寸後にやること
 - `scad/params.scad` の `knob_w/knob_t/knob_h`（サムターン実寸）を更新。
