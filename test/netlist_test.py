@@ -1,10 +1,10 @@
-#!/usr/bin/env -S uv run --script
+#!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
 # dependencies = []
 # ///
 """Tests for circuit/netlist.py. Run: ./test/netlist_test.py"""
-import sys, pathlib
+import sys, pathlib, subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "circuit"))
@@ -72,6 +72,36 @@ def test_gen_bom_rows():
     assert "| Rg | Resistor | 220R | 1 |" in md
 
 
+def test_real_circuit_passes_erc():
+    assert n.check(n.PARTS, n.NETS, n.REQUIRED) == []
+
+
+def test_every_part_pin_is_used():
+    used = {(ref, pin) for eps in n.NETS.values() for ref, pin in eps}
+    for ref, pins in n.PARTS.items():
+        for pin in pins:
+            assert (ref, pin) in used, f"{ref}.{pin} unused"
+
+
+def test_gpio_change_flows_to_from_to():
+    saved = dict(n.GPIO)
+    try:
+        n.GPIO["servo"] = "GP99"
+        nets = n.build_nets(n.GPIO)
+        assert any(("U1", "GP99") in eps for eps in nets.values())
+    finally:
+        n.GPIO.clear()
+        n.GPIO.update(saved)
+
+
+def test_main_generates_files():
+    out = subprocess.run([str(ROOT / "circuit" / "netlist.py")],
+                         capture_output=True, text=True)
+    assert out.returncode == 0, out.stderr
+    assert (ROOT / "build" / "from-to.md").exists()
+    assert (ROOT / "build" / "bom.md").exists()
+
+
 TESTS = [
     test_good_netlist_passes,
     test_unconnected_pin_detected,
@@ -82,6 +112,10 @@ TESTS = [
     test_gen_from_to_chains_endpoints,
     test_gen_from_to_single_pair,
     test_gen_bom_rows,
+    test_real_circuit_passes_erc,
+    test_every_part_pin_is_used,
+    test_gpio_change_flows_to_from_to,
+    test_main_generates_files,
 ]
 
 

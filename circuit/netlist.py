@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run --script
+#!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
 # dependencies = []
@@ -62,3 +62,71 @@ def gen_bom(part_meta):
     for ref, (name, value) in part_meta.items():
         lines.append(f"| {ref} | {name} | {value} | 1 |")
     return "\n".join(lines) + "\n"
+
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+# Provisional GPIO assignment — finalized in the firmware phase. Change here and
+# from-to.md follows.
+GPIO = {"servo": "GP15", "gate": "GP14", "led": "GP16", "btn": "GP17"}
+
+PARTS = {
+    "U1": ["VBUS", "GND", GPIO["servo"], GPIO["gate"], GPIO["led"], GPIO["btn"]],
+    "M1": ["V+", "GND", "SIG"],
+    "Q1": ["G", "D", "S"],
+    "Rg": ["1", "2"],
+    "Rgs": ["1", "2"],
+    "Rled": ["1", "2"],
+    "D1": ["A", "K"],
+    "SW1": ["1", "2"],
+    "C1": ["+", "-"],
+}
+
+PART_META = {
+    "U1": ("Raspberry Pi Pico W", "-"),
+    "M1": ("SG90 servo", "3-wire"),
+    "Q1": ("N-ch MOSFET (logic level)", "AO3400 / IRLZ44N"),
+    "Rg": ("Resistor", "220R"),
+    "Rgs": ("Resistor", "10k"),
+    "Rled": ("Resistor", "330R"),
+    "D1": ("LED", "5mm"),
+    "SW1": ("Tactile switch", "-"),
+    "C1": ("Electrolytic cap", "470uF"),
+}
+
+
+def build_nets(gpio):
+    """Build the net dict from a GPIO assignment so changes flow into outputs."""
+    return {
+        "+5V": [("U1", "VBUS"), ("M1", "V+"), ("C1", "+")],
+        "GND": [("U1", "GND"), ("Q1", "S"), ("C1", "-"),
+                ("Rgs", "2"), ("D1", "K"), ("SW1", "2")],
+        "SERVO_RTN": [("M1", "GND"), ("Q1", "D")],
+        "SERVO_SIG": [("U1", gpio["servo"]), ("M1", "SIG")],
+        "GATE_DRV": [("U1", gpio["gate"]), ("Rg", "1")],
+        "GATE": [("Rg", "2"), ("Q1", "G"), ("Rgs", "1")],
+        "LED_DRV": [("U1", gpio["led"]), ("Rled", "1")],
+        "LED_A": [("Rled", "2"), ("D1", "A")],
+        "BTN": [("U1", gpio["btn"]), ("SW1", "1")],
+    }
+
+
+NETS = build_nets(GPIO)
+REQUIRED = ["+5V", "GND", "SERVO_RTN"]
+
+
+def main():
+    errors = check(PARTS, NETS, REQUIRED)
+    if errors:
+        for e in errors:
+            print(f"ERC: {e}", file=sys.stderr)
+        sys.exit(1)
+    out = ROOT / "build"
+    out.mkdir(exist_ok=True)
+    (out / "from-to.md").write_text(gen_from_to(NETS))
+    (out / "bom.md").write_text(gen_bom(PART_META))
+    print("wrote build/from-to.md, build/bom.md")
+
+
+if __name__ == "__main__":
+    main()
