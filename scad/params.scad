@@ -39,23 +39,42 @@ led_btn_spacing = 16;   // center-to-center distance between LED and button
 mosfet_w      = 12.0;
 mosfet_l      = 16.0;
 
-// --- Thumb-turn knob: PLACEHOLDER — measure real part, then set ---
-knob_w        = 8.0;
-knob_t        = 4.0;
-knob_h        = 12.0;
-socket_wall   = 2.0;
+// --- Door-fit clearances from the thumb-turn axis (origin = rosette center) ---
+clear_left  = 30;   // -X to door edge/frame
+clear_down  = 40;   // -Y to door handle
+rosette_d   = 46;   // circular escutcheon diameter (registration only)
 
-// --- Derived enclosure dimensions ---
-inner_l = max(servo_tab_l, pico_l) + 6;
-inner_w = servo_body_w + pico_w + 8;
+// --- Thumb-turn knob (measured; trapezoid) ---
+knob_w_base = 28;   // width at the door (base, wider)
+knob_w_top  = 25;   // width at the tip (narrower)
+knob_t      = 3;    // thickness
+knob_h      = 11;   // protrusion from the door
+knob_engage = 10;   // socket engagement depth (< knob_h)
+socket_wall = 2.0;
+knob_w      = knob_w_base;  // TEMP: removed in the socket task; keeps old socket.scad valid
+
+// --- Interior extents from the axis at origin (mm) ---
+ext_left  = 20;   // -X toward frame; must be <= clear_left
+ext_right = 30;   // +X free
+ext_down  = 14;   // -Y toward handle; must be <= clear_down
+ext_up    = 64;   // +Y free; houses the Pico
+
+inner_l = ext_left + ext_right;          // 50
+inner_w = ext_down + ext_up;             // 78
 inner_h = servo_body_h + pico_boss_h + 6;
 
 body_l = inner_l + 2*wall;
 body_w = inner_w + 2*wall;
 body_h = inner_h + 2*wall;
 
-// --- Sanity checks ---
+// body center relative to the axis (axis sits low-left, body grows up-right)
+center_x = (ext_right - ext_left) / 2;   // 5
+center_y = (ext_up - ext_down) / 2;      // 25
+
+// --- Sanity / clearance checks ---
 assert(wall > 0, "wall must be positive");
 assert(fit_clearance >= 0, "fit_clearance must be >= 0");
-assert(inner_l >= pico_l, "body too short for Pico");
-assert(inner_h >= servo_body_h, "body too short for servo");
+assert(ext_left <= clear_left, "left extent exceeds door clearance");
+assert(ext_down <= clear_down, "down extent exceeds handle clearance");
+assert(knob_w_top <= knob_w_base, "knob tapers base->top");
+assert(knob_engage < knob_h, "engagement shallower than protrusion");
