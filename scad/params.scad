@@ -43,6 +43,7 @@ mosfet_l      = 16.0;
 clear_left  = 30;   // -X to door edge/frame
 clear_down  = 40;   // -Y to door handle
 rosette_d   = 46;   // circular escutcheon diameter (registration only)
+rosette_recess = 1.5;  // escutcheon clearance recess depth (< wall; keeps floor + brace stub attached)
 brace_stub_w = 12;  // width of the downward torque-brace stub (toward the handle)
 
 // --- Thumb-turn knob (measured; trapezoid) ---
@@ -76,5 +77,9 @@ assert(wall > 0, "wall must be positive");
 assert(fit_clearance >= 0, "fit_clearance must be >= 0");
 assert(ext_left <= clear_left, "left extent exceeds door clearance");
 assert(ext_down <= clear_down, "down extent exceeds handle clearance");
+// Realized outer extents: body outer edge from origin = body_l/2 - center_x (-X) and body_w/2 - center_y (-Y)
+assert(body_l/2 - center_x <= clear_left, "realized left extent exceeds door clearance");
+assert(body_w/2 - center_y <= clear_down, "realized down extent exceeds handle clearance");
+assert(clear_down - 4 <= clear_down, "brace stub tip within handle clearance");
 assert(knob_w_top <= knob_w_base, "knob tapers base->top");
 assert(knob_engage < knob_h, "engagement shallower than protrusion");
