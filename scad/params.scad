@@ -51,7 +51,6 @@ knob_t      = 3;    // thickness
 knob_h      = 11;   // protrusion from the door
 knob_engage = 10;   // socket engagement depth (< knob_h)
 socket_wall = 2.0;
-knob_w      = knob_w_base;  // TEMP: removed in the socket task; keeps old socket.scad valid
 
 // --- Interior extents from the axis at origin (mm) ---
 ext_left  = 20;   // -X toward frame; must be <= clear_left
