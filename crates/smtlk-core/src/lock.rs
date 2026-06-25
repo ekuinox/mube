@@ -1,4 +1,4 @@
-//! ロック状態。`LockController`/`Outcome`（状態機械）は Task 3 で実装する。
+//! ロック状態と状態機械（`LockController` / `Outcome` / `handle_line`）。
 
 /// 施錠/解錠の 2 状態。
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -89,6 +89,15 @@ mod tests {
         let o = c.handle_line(b"LOCK\n");
         assert_eq!(o.servo, Some(LockState::Locked)); // 同状態でも指令する
         assert_eq!(o.reply, "LOCKED\n");
+    }
+
+    #[test]
+    fn reunlock_still_commands_servo() {
+        let mut c = LockController::new();
+        c.handle_line(b"UNLOCK\n"); // 一度 Unlocked へ
+        let o = c.handle_line(b"UNLOCK\n"); // 同状態でも再主張
+        assert_eq!(o.servo, Some(LockState::Unlocked));
+        assert_eq!(o.reply, "UNLOCKED\n");
     }
 
     #[test]
