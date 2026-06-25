@@ -1520,7 +1520,7 @@ version = "0.1.0"
 dependencies = [
  "defmt 0.3.100",
  "embassy-futures",
- "embedded-io-async 0.6.1",
+ "embedded-io-async 0.7.0",
 ]
 
 [[package]]

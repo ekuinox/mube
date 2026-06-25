@@ -88,6 +88,12 @@ mod tests {
 
     #[derive(Debug)]
     struct MockError;
+    impl core::fmt::Display for MockError {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            write!(f, "MockError")
+        }
+    }
+    impl std::error::Error for MockError {}
     impl embedded_io_async::Error for MockError {
         fn kind(&self) -> embedded_io_async::ErrorKind {
             embedded_io_async::ErrorKind::Other
