@@ -46,18 +46,36 @@ STL は build/ に再生成される派生物なのでコミットしない（.g
 
 ## Pico W ファームウェア（Rust / Embassy）
 
-リポジトリ直下が Rust パッケージ（`Cargo.toml` / `src/`）も兼ねる。Embassy(async) + CYW43 WiFi
-の雛形で、現状は「WiFi 接続 → DHCP → オンボード LED 点滅」まで。サーボ制御や遠隔操作は
-`src/main.rs` の TODO を参照。
+リポジトリルートは Cargo workspace。`crates/firmware/` が embassy/CYW43 WiFi/PWM の接合部、
+`crates/smtlk-core/` がハード非依存のロジック（LockState・コマンド解釈・状態機械・
+サーボ角度変換）で、実機なしで host テストできる。
+
+現状は「WiFi 接続 → DHCP → オンボード LED 点滅 + サーボ bench 動作」まで。遠隔操作の
+ソケット I/O は次サイクル。
+
+### ソース構成
+
+    crates/
+      firmware/      # embassy/WiFi/PWM の接合部（Pico W 向け thumbv6m ビルド）
+      smtlk-core/    # ハード非依存ロジック（LockState / コマンド解釈 / LockController / サーボ角度）
 
 ### 準備
     nix develop                                   # rustup を用意（rust-toolchain.toml が stable + thumbv6m を自動導入）
     # CYW43 ファームウェアブロブを取得（ライセンス物のため未コミット）
     #   詳細は cyw43-firmware/README.md
-    # src/config.rs の WIFI_SSID / WIFI_PASSWORD を実値に書き換える
+    # crates/firmware/src/config.rs の WIFI_SSID / WIFI_PASSWORD を実値に書き換える
 
 ### ビルド
-    cargo build --release                         # thumbv6m-none-eabi（.cargo/config.toml で既定ターゲット指定済み）
+    nix develop -c cargo build                    # thumbv6m-none-eabi（.cargo/config.toml で既定ターゲット指定済み）
+
+### ロジックの host テスト（実機不要）
+    nix develop -c cargo host-test
+
+ロック・コマンド（LOCK/UNLOCK/STATUS）の解釈と状態機械を host で検証する。
+内部的には `cargo test -p smtlk-core --target aarch64-unknown-linux-gnu` の alias。
+
+TCP 受信ハンドラの判断ロジック（`smtlk_core::lock::LockController` / `command`）は
+実装・テスト済みだが、ソケット I/O の配線は実機/シミュレータ確認が要るため次サイクル。
 
 ### 書き込み・実行
 - デバッグプローブあり: `cargo run --release`（runner = `probe-rs run --chip RP2040`、defmt ログが出る）
@@ -69,7 +87,7 @@ STL は build/ に再生成される派生物なのでコミットしない（.g
 probe-rs か BOOTSEL+UF2 で焼くと、起動・WiFi 接続後に約3秒ごとに施錠⇄解錠を繰り返す
 （オンボード LED がハートビート）。サーボ給電は動作時だけ ON（GP14 の電源ゲート）。
 
-**実機合わせ:** `src/servo.rs` 冒頭のキャリブ定数 5 つ（SERVO_MIN_US / SERVO_MAX_US /
+**実機合わせ:** `crates/firmware/src/servo.rs` 冒頭のキャリブ定数 5 つ（SERVO_MIN_US / SERVO_MAX_US /
 LOCK_DEG / UNLOCK_DEG / SETTLE_MS）だけを調整する。SG90 は個体差が大きいので、
 まず安全側（狭い MIN/MAX）で焼き、唸らない・突き当てない範囲を実測で広げること。
 初回はサムターンを手で止められる状態で投入する（突き当て保護）。
