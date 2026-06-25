@@ -1,15 +1,16 @@
 //! smtlk Pico W ファームウェアの土台。
 //!
 //! 現状: CYW43439 を起動し、WPA2 で WiFi に接続して DHCP で IP を取得したうえで、
-//! SG90 サーボ（GP15 PWM + GP14 電源ゲート）を Signal 経由のデモループで
-//! 3 秒ごとに施錠/解錠する。オンボード LED は疎通確認のハートビートとして点滅する
+//! TCP ポート 6000 を listen し、`smtlk_core::serve_connection` でロックコマンドを捌く。
+//! SG90 サーボ（GP15 PWM + GP14 電源ゲート）への指令は `SERVO_CMD: Signal` 経由で
+//! `servo_task` が受け取る。オンボード LED は接続中に点灯する
 //!（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっているため、
-//! 点滅にも WiFi チップの初期化が要る）。
+//! 制御にも WiFi チップの初期化が要る）。
 //!
-//! サーボ指令の継ぎ目（`SERVO_CMD: Signal`）は将来 TCP 受信ハンドラから叩く想定。
+//! サーボ指令の継ぎ目（`SERVO_CMD: Signal`）は `SignalSink` アダプタ経由で
+//! `serve_connection` から叩かれる。
 //!
 //! ここから先（スマートロック本体）の積み残し:
-//!   - 遠隔操作の口（embassy-net の TCP/HTTP サーバ等）→ `SERVO_CMD.signal(state)` を叩く
 //!   - 手回し後の状態再同期・省電力運用
 //!
 //! 注意: このコードは embassy の公式 examples（examples/rp の wifi 系）に倣っている。
@@ -26,6 +27,7 @@ use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_net::{Config as NetConfig, StackResources};
+use embassy_net::tcp::TcpSocket;
 use embassy_rp::bind_interrupts;
 use embassy_rp::dma::{Channel, InterruptHandler as DmaInterruptHandler};
 use embassy_rp::gpio::{Level, Output};
@@ -36,7 +38,8 @@ use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use servo::Servo;
-use smtlk_core::LockState;
+use smtlk_core::serve::{serve_connection, ServoSink};
+use smtlk_core::{LockController, LockState};
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -45,9 +48,21 @@ bind_interrupts!(struct Irqs {
     DMA_IRQ_0 => DmaInterruptHandler<DMA_CH0>;
 });
 
-/// サーボへの施錠/解錠指令。デモループが送り、将来は TCP 受信ハンドラが同じ口を叩く。
+/// 遠隔ロック操作を受ける TCP ポート。
+const LOCK_PORT: u16 = 6000;
+
+/// サーボへの施錠/解錠指令。TCP 受信ハンドラが `SignalSink` 経由で叩く。
 /// Signal は最新値のみ保持するため、指令が連続しても安全側（最新状態）へ収束する。
 static SERVO_CMD: Signal<CriticalSectionRawMutex, LockState> = Signal::new();
+
+/// `ServoSink` を `SERVO_CMD` で実装するアダプタ。serve_connection の結論をサーボタスクへ橋渡しする。
+struct SignalSink(&'static Signal<CriticalSectionRawMutex, LockState>);
+
+impl ServoSink for SignalSink {
+    fn send(&self, state: LockState) {
+        self.0.signal(state);
+    }
+}
 
 /// 指令を待ってサーボをワンショット駆動し続けるタスク。
 #[embassy_executor::task]
@@ -148,18 +163,25 @@ async fn main(spawner: Spawner) {
         info!("DHCP up: IP = {}", cfg.address);
     }
 
-    // 施錠/解錠デモ: 数秒ごとに状態を反転して SERVO_CMD へ送る。
-    // LED は疎通確認のハートビート。将来この送出を TCP 受信ハンドラへ置き換える。
-    let period = Duration::from_secs(3);
-    let mut state = LockState::Locked;
+    // 遠隔ロック操作: ポート LOCK_PORT を listen し、1 接続ずつ serve する。
+    // 判断ロジックは smtlk_core::serve_connection（host テスト済み）。ここはアダプタ配線。
+    let mut rx_buf = [0u8; 512];
+    let mut tx_buf = [0u8; 512];
+    let mut controller = LockController::new(); // 接続をまたいで状態保持
+    let sink = SignalSink(&SERVO_CMD);
+
     loop {
-        SERVO_CMD.signal(state);
-        control.gpio_set(0, true).await;
-        Timer::after(period).await;
-        control.gpio_set(0, false).await;
-        state = match state {
-            LockState::Locked => LockState::Unlocked,
-            LockState::Unlocked => LockState::Locked,
-        };
+        let mut socket = TcpSocket::new(stack, &mut rx_buf, &mut tx_buf);
+        control.gpio_set(0, false).await; // 待受中: LED 消灯
+        if let Err(e) = socket.accept(LOCK_PORT).await {
+            warn!("accept failed: {:?}", e);
+            continue;
+        }
+        info!("client connected on :{}", LOCK_PORT);
+        control.gpio_set(0, true).await; // 接続中: LED 点灯
+        if let Err(e) = serve_connection(&mut socket, &mut controller, &sink).await {
+            warn!("serve error: {:?}", e);
+        }
+        info!("client disconnected");
     }
 }

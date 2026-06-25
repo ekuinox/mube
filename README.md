@@ -50,8 +50,8 @@ STL は build/ に再生成される派生物なのでコミットしない（.g
 `crates/smtlk-core/` がハード非依存のロジック（LockState・コマンド解釈・状態機械・
 サーボ角度変換）で、実機なしで host テストできる。
 
-現状は「WiFi 接続 → DHCP → オンボード LED 点滅 + サーボ bench 動作」まで。遠隔操作の
-ソケット I/O は次サイクル。
+現状は「WiFi 接続 → DHCP → TCP ポート 6000 でコマンド受信 → サーボ施錠/解錠」まで。
+serve ループは host テスト済み、実機での実 TCP 確認は次サイクル。
 
 ### ソース構成
 
@@ -71,11 +71,31 @@ STL は build/ に再生成される派生物なのでコミットしない（.g
 ### ロジックの host テスト（実機不要）
     nix develop -c cargo host-test
 
-ロック・コマンド（LOCK/UNLOCK/STATUS）の解釈と状態機械を host で検証する。
+ロック・コマンド（LOCK/UNLOCK/STATUS）の解釈と状態機械、および TCP serve ループ
+（行分割・接続ライフサイクル・エラー処理・長すぎ行の棄却）を host でモック通しテスト済み。
 内部的には `cargo test -p smtlk-core --target aarch64-unknown-linux-gnu` の alias。
 
-TCP 受信ハンドラの判断ロジック（`smtlk_core::lock::LockController` / `command`）は
-実装・テスト済みだが、ソケット I/O の配線は実機/シミュレータ確認が要るため次サイクル。
+未検証で残るのは `TcpSocket` を `serve_connection` に渡すアダプタ配線のみ。
+実機での実 TCP 接続確認は次サイクル。
+
+### 遠隔操作（TCP）
+
+WiFi 接続後、TCP ポート 6000 で 1 接続ずつコマンドを受け付ける。1 行 1 コマンド（`\n` 区切り）。
+接続中はオンボード LED が点灯する。
+
+| コマンド | 応答 | 動作 |
+| -------- | ------ | ------------ |
+| UNLOCK   | UNLOCKED | 解錠 |
+| LOCK     | LOCKED   | 施錠 |
+| STATUS   | LOCKED / UNLOCKED | 現在の状態を返す |
+| （不正）  | ERR    | 無視して次の行へ |
+
+bench 確認例:
+    nc <Pico W の IP> 6000
+    UNLOCK
+
+serve ループ自体（行分割・接続終了・エラー処理）は `smtlk_core::serve::serve_connection` に
+実装され、`nix develop -c cargo host-test` でモックにより通しテスト済み。
 
 ### 書き込み・実行
 - デバッグプローブあり: `cargo run --release`（runner = `probe-rs run --chip RP2040`、defmt ログが出る）
@@ -97,4 +117,4 @@ LOCK_DEG / UNLOCK_DEG / SETTLE_MS）だけを調整する。SG90 は個体差が
 ## 未確定（積み残し）
 - ドア固定の突っ張り先（mount_plate で隔離）。
 - サムターン実寸（socket パラメータで隔離）。
-- Pico W ファームウェア: SG90 サーボ PWM 制御 / 遠隔操作の口 / 省電力運用 / 手回し後の状態再同期。
+- Pico W ファームウェア: SG90 サーボ PWM 制御 / 実機での実 TCP 接続確認 / 省電力運用 / 手回し後の状態再同期。

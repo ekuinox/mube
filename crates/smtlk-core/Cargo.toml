@@ -7,6 +7,10 @@ description = "Hardware-agnostic lock-control logic for smtlk (host-testable)"
 
 [dependencies]
 defmt = { version = "0.3", optional = true }
+embedded-io-async = "0.7"
+
+[dev-dependencies]
+embassy-futures = "0.1"
 
 [features]
 defmt = ["dep:defmt"]
