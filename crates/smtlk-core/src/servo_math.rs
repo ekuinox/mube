@@ -22,3 +22,22 @@ pub const fn pulse_us_for(state: LockState) -> u16 {
     };
     pulse_us(deg)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lock::LockState;
+
+    #[test]
+    fn pulse_us_endpoints() {
+        assert_eq!(pulse_us(0), 1000);
+        assert_eq!(pulse_us(90), 1500);
+        assert_eq!(pulse_us(180), 2000);
+    }
+
+    #[test]
+    fn pulse_us_for_states() {
+        assert_eq!(pulse_us_for(LockState::Locked), 1000);
+        assert_eq!(pulse_us_for(LockState::Unlocked), 1500);
+    }
+}
