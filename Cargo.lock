@@ -1539,7 +1539,6 @@ dependencies = [
  "embassy-sync",
  "embassy-time",
  "embedded-hal-async",
- "embedded-io-async 0.6.1",
  "fixed",
  "heapless 0.8.0",
  "panic-probe",
