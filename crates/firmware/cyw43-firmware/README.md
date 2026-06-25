@@ -13,7 +13,7 @@ Pico W の無線チップ CYW43439 は、起動時にファームウェア／CLM
 
 置いた後のレイアウト:
 
-    cyw43-firmware/
+    crates/firmware/cyw43-firmware/
       ├── 43439A0.bin       # WiFi ファームウェア
       ├── 43439A0_clm.bin   # 国別 CLM
       └── README.md         # このファイル

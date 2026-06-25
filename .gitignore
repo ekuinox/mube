@@ -6,5 +6,5 @@ __pycache__/
 
 # Rust / Pico W firmware
 /target
-# CYW43 ファームウェアブロブはライセンス物。各自で取得（cyw43-firmware/README.md 参照）。
-/cyw43-firmware/*.bin
+# CYW43 ファームウェアブロブはライセンス物。各自で取得（crates/firmware/cyw43-firmware/README.md 参照）。
+/crates/firmware/cyw43-firmware/*.bin

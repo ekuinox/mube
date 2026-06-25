@@ -35,7 +35,8 @@ use embassy_rp::pwm::{Config as PwmConfig, Pwm};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
-use servo::{LockState, Servo};
+use servo::Servo;
+use smtlk_core::LockState;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
