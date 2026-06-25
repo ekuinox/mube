@@ -4,6 +4,8 @@
 
 pub mod command;
 pub mod lock;
+pub mod serve;
 pub mod servo_math;
 
 pub use lock::{LockController, LockState, Outcome};
+pub use serve::{serve_connection, ServoSink, LINE_MAX};
