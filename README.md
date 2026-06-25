@@ -107,8 +107,9 @@ serve ループ自体（行分割・接続終了・エラー処理）は `smtlk_
 probe-rs か BOOTSEL+UF2 で焼くと、起動・WiFi 接続後に約3秒ごとに施錠⇄解錠を繰り返す
 （オンボード LED がハートビート）。サーボ給電は動作時だけ ON（GP14 の電源ゲート）。
 
-**実機合わせ:** `crates/firmware/src/servo.rs` 冒頭のキャリブ定数 5 つ（SERVO_MIN_US / SERVO_MAX_US /
-LOCK_DEG / UNLOCK_DEG / SETTLE_MS）だけを調整する。SG90 は個体差が大きいので、
+**実機合わせ:** キャリブ定数だけを調整する。角度→パルス変換の 4 つ（SERVO_MIN_US / SERVO_MAX_US /
+LOCK_DEG / UNLOCK_DEG）は `crates/smtlk-core/src/servo_math.rs` に集約、整定待ち SETTLE_MS は
+`crates/firmware/src/servo.rs` にある。SG90 は個体差が大きいので、
 まず安全側（狭い MIN/MAX）で焼き、唸らない・突き当てない範囲を実測で広げること。
 初回はサムターンを手で止められる状態で投入する（突き当て保護）。
 
