@@ -6,4 +6,4 @@ pub mod command;
 pub mod lock;
 pub mod servo_math;
 
-pub use lock::LockState;
+pub use lock::{LockController, LockState, Outcome};
