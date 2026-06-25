@@ -64,7 +64,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lock::LockController;
     use core::cell::RefCell;
     use embassy_futures::block_on;
     use std::vec::Vec;
@@ -190,6 +189,16 @@ mod tests {
         block_on(serve_connection(&mut t, &mut ctrl, &sink)).unwrap();
         assert_eq!(&t.out[..], b"ERR\nLOCKED\n");
         assert_eq!(sink.sent.borrow().as_slice(), &[LockState::Locked]);
+    }
+
+    #[test]
+    fn crlf_and_lowercase_command() {
+        let mut t = MockTransport::new(&[b"unlock\r\n"]);
+        let mut ctrl = LockController::new();
+        let sink = MockSink::new();
+        block_on(serve_connection(&mut t, &mut ctrl, &sink)).unwrap();
+        assert_eq!(&t.out[..], b"UNLOCKED\n");
+        assert_eq!(sink.sent.borrow().as_slice(), &[LockState::Unlocked]);
     }
 
     #[test]
