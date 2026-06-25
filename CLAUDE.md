@@ -13,13 +13,12 @@
 - `build/` — 派生物（STL/netlist 出力。非コミット）
 - `test/`, `docs/` — テスト / 設計ドキュメント
 
-## コマンドの打ち方（最重要の落とし穴）
+## コマンドの打ち方（落とし穴）
 
-`openscad` / `cargo` / `uv` は素の PATH に無い。
+`openscad` / `cargo` / `uv` は nix dev シェルの中にしか無い。
 
 - `.sh` 系（`./build.sh`, `./test/render.sh`）は自分で nix dev シェルに再突入するのでそのまま実行可。
 - 素の `cargo` / `uv` / `openscad` / `./test/netlist_test.py` は **`nix develop -c <cmd>`** 経由で実行する。
-- `nix` 自体が非対話 PATH に無いときは `/nix/var/nix/profiles/default/bin` を PATH に足す（`build.sh` が実例）。
 
 | やりたいこと | コマンド |
 | --- | --- |
