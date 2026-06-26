@@ -42,10 +42,14 @@ module body() {
       // Pico standoffs, long axis along Y
       translate([pico_x, pico_y, wall*0.5])
         rotate([0, 0, 90]) pico_w_mounts();
+      // Servo screw bosses, rising from the floor at the shaft axis
+      translate([servo_x, servo_y, wall])
+        servo_mounts();
     }
 
-    // servo pocket at the axis (shaft down through the bottom)
-    translate([servo_x, servo_y, wall + servo_body_h/2])
+    // servo pocket at the axis (shaft down through the bottom); lifted by
+    // servo_boss_h so the mounting tabs rest on the screw bosses.
+    translate([servo_x, servo_y, wall + servo_boss_h + servo_body_h/2])
       sg90_cutout();
 
     // MOSFET floor clearance (lifted off the floor like v1)
