@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- ビルド・検証は必ず Nix devShell 経由。素の PATH に `nix`/`cargo` は無い: `export PATH="/nix/var/nix/profiles/default/bin:$HOME/.cargo/bin:$PATH"` してから `nix develop -c cargo ...`。
+- ビルド・検証は必ず Nix devShell 経由: `nix develop -c cargo ...`（`nix` は PATH 上にある前提。`cargo` は dev シェルの rustup が供給）。
 - 既定ターゲットは `thumbv6m-none-eabi`（ルート `.cargo/config.toml` の `[build] target`）。`firmware` は no_std/no_main で host ビルド不可。
 - host テストのターゲットは `aarch64-unknown-linux-gnu`（dev 機固定）。cargo alias `host-test` で叩く: `cargo host-test` = `cargo test -p smtlk-core --target aarch64-unknown-linux-gnu`。
 - `smtlk-core` は `#![cfg_attr(not(test), no_std)]`。依存ほぼゼロ。`defmt` は任意フィーチャ（`[features] defmt = ["dep:defmt"]`）で firmware が有効化。`fixed` は firmware に残す。
@@ -239,7 +239,6 @@ host-test = "test -p smtlk-core --target aarch64-unknown-linux-gnu"
 - [ ] **Step 12: firmware の thumbv6m ビルドと lock 整合を確認**
 
 ```bash
-export PATH="/nix/var/nix/profiles/default/bin:$HOME/.cargo/bin:$PATH"
 nix develop -c cargo build 2>&1 | tail -20
 nix develop -c cargo build --locked 2>&1 | tail -5
 ```
@@ -295,7 +294,6 @@ mod tests {
 - [ ] **Step 2: host-test を走らせてハーネスが動くことを確認**
 
 ```bash
-export PATH="/nix/var/nix/profiles/default/bin:$HOME/.cargo/bin:$PATH"
 nix develop -c cargo host-test 2>&1 | tail -20
 ```
 Expected: PASS（`test result: ok. 2 passed`）。ここで host ターゲットでビルド・実行が成立することを確認する。alias やターゲットの問題があればここで露見する。
@@ -514,7 +512,6 @@ mod tests {
 - [ ] **Step 2: テストが失敗することを確認**
 
 ```bash
-export PATH="/nix/var/nix/profiles/default/bin:$HOME/.cargo/bin:$PATH"
 nix develop -c cargo host-test 2>&1 | tail -20
 ```
 Expected: lock の5テストが panic（`unimplemented`）で FAIL（servo_math/command は引き続き PASS）。

@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- ターゲットは `thumbv6m-none-eabi`。ビルド・確認は必ず `nix develop -c cargo build` で行う（`nix` は `/nix/var/nix/profiles/default/bin/nix`、`cargo` は `~/.cargo/bin/cargo`。素の PATH には無い）。
+- ターゲットは `thumbv6m-none-eabi`。ビルド・確認は必ず `nix develop -c cargo build` で行う（`nix` は PATH 上にある前提。`cargo` は dev シェルの rustup が供給）。
 - クレートは `#![no_std]` バイナリ。host で動く自動テストは持たない（spec §5）。各タスクの検証は「`cargo build` 緑」＋「コメントで固定した期待値」。
 - embassy 依存は crates.io 公開バージョン指定（git 参照禁止）。確認済み版: embassy-executor 0.10.0 / embassy-rp 0.10.0 / embassy-time 0.5.1 / embassy-sync 0.8.0 / embassy-net 0.9.1 / cyw43 0.7.0 / cyw43-pio 0.10.0。
 - GPIO 割当（`circuit/netlist.py` の `GPIO` と一致させる）: サーボ信号 = GP15、電源ゲート = GP14。GP14 の Q1 は SERVO_RTN（サーボの GND 戻り）を切る低側 N-MOSFET なので、ゲート **High = 給電**（active-high）。
