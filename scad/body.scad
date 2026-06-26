@@ -13,7 +13,8 @@ module body() {
   // Pico stacked above the servo in free +Y space; long axis along Y
   // (rotate the X-oriented pico_w_mounts by 90 deg).
   pico_x = 0;
-  pico_y = servo_body_w/2 + 6 + pico_l/2;
+  pico_gap = max(6, rosette_d/2 - servo_body_w/2 + 2);
+  pico_y = servo_body_w/2 + pico_gap + pico_l/2;
 
   // MOSFET keep-out on the free +X side, clear of servo and Pico.
   mosfet_x = ext_right - mosfet_l/2 - 2;

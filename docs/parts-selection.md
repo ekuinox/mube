@@ -22,7 +22,7 @@
 | D1 LED | 5mm砲弾型赤色LED 640nm 1200mcd 15° OSDR5113A | 秋月 | [I-11655](https://akizukidenshi.com/catalog/g/g111655/) | ¥20 | 1 | 1 | ¥20 |
 | SW1 タクト | タクトスイッチ(黒色) | 秋月 | [P-03647](https://akizukidenshi.com/catalog/g/g103647/) | ¥15 | 1 | 1 | ¥15 |
 | C1 470µF | 電解コンデンサー 470µF16V105℃ ルビコンPX | 秋月 | [P-10273](https://akizukidenshi.com/catalog/g/g110273/) | ¥10 | 1 | 1 | ¥10 |
-| - ユニバーサル基板 | 片面ユニバーサル基板 Dタイプ(47×36mm) ガラスコンポジット | 秋月 | [P-08241](https://akizukidenshi.com/catalog/g/g108241/) | ¥80 | 1 | 1 | ¥80 |
+| - ユニバーサル基板 | 片面ガラスコンポジット・ユニバーサル基板 Cタイプ(72×47mm) めっき仕上げ | 秋月 | [P-03229](https://akizukidenshi.com/catalog/g/g103229/) | ¥130 | 1 | 1 | ¥130 |
 | - 配線材 | 耐熱電子ワイヤー 1m×10色 導体外径0.36mm(AWG28相当) | 秋月 | [P-11640](https://akizukidenshi.com/catalog/g/g111640/) | ¥350 | 10 | 1 | ¥35 |
 | - ピンヘッダ | ピンヘッダー 1×40 (40P) | 秋月 | [C-00167](https://akizukidenshi.com/catalog/g/g100167/) | ¥35 | 1 | 2 | ¥70 |
 | - USB電源 | スイッチングACアダプター(USB ACアダプター) Type-Aメス 5V1A | 秋月 | [M-08312](https://akizukidenshi.com/catalog/g/g108312/) | ¥770 | 1 | 1 | ¥770 |
@@ -30,9 +30,9 @@
 
 ## 概算サマリ
 
-- ① 1台分の理論按分合計: ¥3,185（按分額列の総和。理論上 1 台が消費する分だけの価値）
-- ② 実際に 1 台作るために払う総額: ¥3,925（パック品も丸ごと買う前提の実支出。送料別）
-  - 内訳: 秋月 ¥3,925（全点秋月、他店送りなし）
+- ① 1台分の理論按分合計: ¥3,235（按分額列の総和。理論上 1 台が消費する分だけの価値）
+- ② 実際に 1 台作るために払う総額: ¥3,975（パック品も丸ごと買う前提の実支出。送料別）
+  - 内訳: 秋月 ¥3,975（全点秋月、他店送りなし）
   - 送料の目安: 秋月電子は注文金額により変動。発注前に各店の送料条件を確認。
 - 補足: ②は初回 1 台の実支出。抵抗等のパック余剰（各 99 本残）により 2 台目以降は①に近づく。
 
@@ -51,7 +51,7 @@
 | 秋月電子通商 | [I-11655](https://akizukidenshi.com/catalog/g/g111655/) | 5mm砲弾型赤色LED 単品 |
 | 秋月電子通商 | [P-03647](https://akizukidenshi.com/catalog/g/g103647/) | タクトスイッチ(黒色) |
 | 秋月電子通商 | [P-10273](https://akizukidenshi.com/catalog/g/g110273/) | 電解コンデンサー 470µF16V |
-| 秋月電子通商 | [P-08241](https://akizukidenshi.com/catalog/g/g108241/) | 片面ユニバーサル基板 Dタイプ(47×36mm) |
+| 秋月電子通商 | [P-03229](https://akizukidenshi.com/catalog/g/g103229/) | 片面ユニバーサル基板 Cタイプ(72×47mm) めっき仕上げ |
 | 秋月電子通商 | [P-11640](https://akizukidenshi.com/catalog/g/g111640/) | 耐熱電子ワイヤー 1m×10色 AWG28 |
 | 秋月電子通商 | [C-00167](https://akizukidenshi.com/catalog/g/g100167/) | ピンヘッダー 1×40 ×2本 |
 | 秋月電子通商 | [M-08312](https://akizukidenshi.com/catalog/g/g108312/) | USB ACアダプター Type-Aメス 5V1A |

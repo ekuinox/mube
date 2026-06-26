@@ -15,10 +15,16 @@
             pkgs.uv           # runs viewer/serve.py (PEP 723), provisions its own Python
             pkgs.cloudflared  # quick tunnel binary (pip's pycloudflared lacks aarch64)
             pkgs.rustup       # Pico W firmware toolchain; rust-toolchain.toml が stable + thumbv6m を自動導入
+            pkgs.librsvg      # SVG -> PNG 変換（layout_check 等の寸法図出力用）
             # デバッグプローブで書き込み/ログするなら probe-rs を追加（nixpkgs の版で attr 名が
             # probe-rs-tools / probe-rs と揺れるので、お使いの nixpkgs に合う方を有効化する）:
             # pkgs.probe-rs-tools
           ];
+          FONTCONFIG_FILE = let
+            fontconfig = pkgs.makeFontsConf {
+              fontDirectories = [ pkgs.noto-fonts-cjk-sans ];
+            };
+          in fontconfig;
         };
       });
     };

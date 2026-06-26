@@ -58,10 +58,10 @@ knob_engage = 10;   // socket engagement depth (< knob_h)
 socket_wall = 2.0;
 
 // --- Interior extents from the axis at origin (mm) ---
-ext_left  = 20;   // -X toward frame; must be <= clear_left
-ext_right = 30;   // +X free
-ext_down  = 14;   // -Y toward handle; must be <= clear_down
-ext_up    = 64;   // +Y free; houses the Pico
+ext_left  = 27;   // -X toward frame; must be <= clear_left (>= rosette_d/2)
+ext_right = 27;   // +X; symmetric with ext_left
+ext_down  = 23;   // -Y toward handle; must be <= clear_down (>= rosette_d/2)
+ext_up    = 86;   // +Y free; houses Pico + universal board (72mm)
 
 inner_l = ext_left + ext_right;          // 50
 inner_w = ext_down + ext_up;             // 78
