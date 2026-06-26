@@ -36,7 +36,7 @@
 servo_screw_span  = 27.6;  // 耳のネジ穴 中心間距離（データシート公称・要実測補正）
 servo_screw_pilot = 1.8;   // M2 セルフタッピング下穴径
 servo_boss_d      = 4.5;   // 耳ボス外径（Pico ボスと同径。ポケット/タブ干渉を回避）
-servo_boss_h      = 4.0;   // 床からの耳ボス高さ（M2 ねじ山確保＋出力ホーン逃げ）
+servo_boss_h      = 4.5;   // 床からの耳ボス高さ（実効噛み合い = servo_boss_h − fit_clearance ≈ 4.1mm）
 ```
 
 サニティチェックを追加する。
@@ -69,9 +69,10 @@ assert(servo_screw_span/2 + servo_boss_d/2 <= ext_left, "screw boss within inter
 
 ## 物理前提・注意点
 
-- サーボを `servo_boss_h`（≈4mm）持ち上げるため、**シャフトのサムターン socket への差し込み深さが約4mm浅くなる**。socket はキャリブ隔離パーツであり、実機合わせで吸収する想定。気になる場合は `servo_boss_h` を詰める／socket 側を調整する。
+- サーボを `servo_boss_h`（≈4.5mm）持ち上げるため、**シャフトのサムターン socket への差し込み深さが約4.5mm浅くなる**。socket はキャリブ隔離パーツであり、実機合わせで吸収する想定。気になる場合は `servo_boss_h` を詰める／socket 側を調整する。
+- タブ逃げキューブはボス上端と `fit_clearance`（0.4mm）だけ重なる。そのため M2 タッピングねじの実効噛み合い深さは `servo_boss_h − fit_clearance ≈ 4.1mm` となる（ボス高さをそのまま噛み合い深さとしないこと）。
 - タブ穴間隔 `servo_screw_span = 27.6` はデータシート公称値。実測後はこの値を直すだけで合わせられる。
-- 推奨ねじ: **M2 セルフタッピング × 6〜8mm**（耳厚 `servo_tab_h=2.5` ＋ボス `servo_boss_h=4` を貫き、床を突き抜けない長さ）。下穴 `servo_screw_pilot = 1.8`。
+- 推奨ねじ: **M2 × 6mm 推奨（7mm まで。8mm は床残り約0.5mmと際どいため避ける）**（耳厚 `servo_tab_h=2.5` ＋ボス `servo_boss_h=4.5` を貫き、床を突き抜けない長さ）。下穴 `servo_screw_pilot = 1.8`。
 
 ## テスト・検証
 

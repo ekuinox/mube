@@ -17,7 +17,7 @@ servo_shaft_d = 4.8;    // output boss / horn clearance
 servo_screw_span  = 27.6;  // 耳のネジ穴 中心間（データシート公称・要実測補正）
 servo_screw_pilot = 1.8;   // M2 セルフタッピング下穴径
 servo_boss_d      = 4.5;   // 耳ボス外径（Pico ボスと同径。ポケット/タブ干渉を回避）
-servo_boss_h      = 4.0;   // 床からの耳ボス高さ（M2 ねじ山確保＋出力ホーン逃げ）
+servo_boss_h      = 4.5;   // 床からの耳ボス高さ（実効噛み合い = servo_boss_h − fit_clearance ≈ 4.1mm）
 
 // --- Raspberry Pi Pico W ---
 pico_l        = 51.0;
@@ -89,5 +89,6 @@ assert(knob_engage < knob_h, "engagement shallower than protrusion");
 
 // --- Servo screw-mount checks ---
 assert(servo_screw_pilot < servo_boss_d, "pilot hole smaller than boss");
-assert(servo_boss_h >= servo_tab_h, "boss tall enough to seat the tab");
+assert(servo_boss_h >= servo_tab_h, "boss must be taller than tab to preserve thread engagement depth");
 assert(servo_screw_span/2 + servo_boss_d/2 <= ext_left, "screw boss within interior (-X side)");
+assert(servo_tab_l/2 + fit_clearance <= ext_left, "tab pocket within interior (-X side)");
