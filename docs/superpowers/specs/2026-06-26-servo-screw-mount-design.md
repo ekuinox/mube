@@ -62,7 +62,7 @@ assert(servo_screw_span/2 + servo_boss_d/2 <= ext_left, "screw boss within inter
 ボス位置 `x = ±servo_screw_span/2 ≈ ±13.8`, `y = 0`、外径 `servo_boss_d = 4.5`（半径2.25）。
 
 - 本体側壁: 内側 X 範囲は `-20 〜 +30`。ボスは `-16.05〜-11.55` / `11.55〜16.05` で壁に当たらない（`-X` 側が最も近く、内壁 `-20` まで約4mm余裕）。
-- サーボ本体ポケット: ボスは床〜`servo_boss_h`(4mm) の高さに立ち、サーボ本体ポケットの底（持ち上げ後 `z ≈ wall + servo_boss_h`）はボス上面とほぼ接する。Z 方向の重なりは持ち上げクリアランス `fit_clearance`(0.4mm) 分のみで、ボス上端内側の微小な角が削れる程度（構造・ねじ穴には無影響）。
+- サーボ本体ポケット: ボスは床〜`servo_boss_h`(4.5mm) の高さに立ち、サーボ本体ポケットの底（持ち上げ後 `z ≈ wall + servo_boss_h`）はボス上面とほぼ接する。Z 方向の重なりは持ち上げクリアランス `fit_clearance`(0.4mm) 分のみで、ボス上端内側の微小な角が削れる程度（構造・ねじ穴には無影響）。
 - MOSFET キープアウト: `y ≈ 19〜31` に位置。ボスは `y = 0` で Y 方向に重ならない。
 - Pico スタンドオフ: 遠い `+Y` 側。干渉なし。
 - ロゼット凹み（Ø46）: ボスは凹みの真上に来るが、ねじ山はボス本体（高さ `servo_boss_h`）で受けるため薄い床（凹み部 ≈0.9mm）に依存しない。
@@ -76,8 +76,8 @@ assert(servo_screw_span/2 + servo_boss_d/2 <= ext_left, "screw boss within inter
 
 ## テスト・検証
 
-- `./test/render.sh scad/smartlock.scad` がエラーなく STL を生成すること（assert を含む幾何整合）。
-- 個別モジュール確認のため `./test/render.sh scad/body.scad` も通ること。
+- `./test/render.sh scad/smartlock.scad` がエラーなく STL を生成すること（assert を含む幾何整合）。`scad/body.scad` は top-level 呼び出しが無く単体では空になるため、アセンブリ `smartlock.scad` を検証対象にする。
+- `servo_mounts()` 単体は `./test/render.sh test/servo_mount_test.scad` で確認する。
 - 目視: 生成 STL で耳ボス2本がサーボポケット床側に立ち、下穴が貫通していること、ボスが壁・MOSFET 域と干渉しないこと。
 
 ## スコープ外
