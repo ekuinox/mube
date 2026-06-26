@@ -41,7 +41,7 @@
 
 ### Task 1: プロジェクト雛形・Nix 環境・テストハーネス
 
-**注記（実装者向け）:** リポジトリは既に `git init` 済みで、root コミットが1つある。`git init` は不要。`/nix/var/nix/profiles/default/bin` に nix がある（PATH 未通の場合はそこを使う）。OpenSCAD はヘッドレスで STL 出力でき xvfb は不要（検証済み）。
+**注記（実装者向け）:** リポジトリは既に `git init` 済みで、root コミットが1つある。`git init` は不要。`nix` は PATH 上にある前提（`nix develop -c ...` で dev シェルのツールを使う）。OpenSCAD はヘッドレスで STL 出力でき xvfb は不要（検証済み）。
 
 **Files:**
 - Create: `flake.nix`
@@ -81,7 +81,6 @@ Create `flake.nix`:
 
 Run:
 ```bash
-export PATH="/nix/var/nix/profiles/default/bin:$PATH"
 nix develop -c openscad --version
 ```
 Expected: `OpenSCAD version 2021.01` が表示される（初回は依存取得で時間がかかる）。`flake.lock` が生成される。

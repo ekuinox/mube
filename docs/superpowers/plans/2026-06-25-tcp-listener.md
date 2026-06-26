@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- ビルド・検証は Nix devShell 経由: `export PATH="/nix/var/nix/profiles/default/bin:$HOME/.cargo/bin:$PATH"` してから `nix develop -c cargo ...`。
+- ビルド・検証は Nix devShell 経由: `nix develop -c cargo ...`（`nix` は PATH 上にある前提。dev シェル外でも `nix develop -c` を付ければ動く）。
 - host テスト: `nix develop -c cargo host-test`（alias = `cargo test -p smtlk-core --target aarch64-unknown-linux-gnu`）。firmware クロスビルド: `nix develop -c cargo build`（thumbv6m）。
 - `smtlk-core` は `#![cfg_attr(not(test), no_std)]`。本サイクルで増える依存は通常依存 `embedded-io-async = "0.6"` と dev-dependency `embassy-futures = "0.1"` のみ。`heapless` は使わず素の配列＋カーソル。
 - I/O 抽象は自前トレイトを作らず `embedded-io-async` の `Read`/`Write` に乗る（embassy-net `TcpSocket` が実装済み）。
@@ -193,7 +193,6 @@ mod tests {
 - [ ] **Step 2: host-test を走らせて失敗を確認**
 
 ```bash
-export PATH="/nix/var/nix/profiles/default/bin:$HOME/.cargo/bin:$PATH"
 nix develop -c cargo host-test 2>&1 | tail -20
 ```
 Expected: `single_command_drives_and_replies` が `todo!`/`not yet implemented` で FAIL（既存テストは PASS）。
@@ -418,7 +417,6 @@ impl ServoSink for SignalSink {
 - [ ] **Step 4: thumbv6m ビルドと lock 整合を確認**
 
 ```bash
-export PATH="/nix/var/nix/profiles/default/bin:$HOME/.cargo/bin:$PATH"
 nix develop -c cargo build 2>&1 | tail -20
 nix develop -c cargo build --locked 2>&1 | tail -5
 ```
