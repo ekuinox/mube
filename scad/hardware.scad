@@ -7,8 +7,9 @@ module sg90_cutout() {
     // body
     translate([0, 0, 0])
       cube([servo_body_l + 2*c, servo_body_w + 2*c, servo_body_h + 2*c], center = true);
-    // mounting tabs (wider in length)
-    translate([0, 0, servo_body_h/2 - servo_tab_h/2])
+    // mounting tabs (wider in length) — at the shaft/floor end, matching the
+    // real SG90 where the tabs sit on the output-shaft side.
+    translate([0, 0, -(servo_body_h/2 - servo_tab_h/2)])
       cube([servo_tab_l + 2*c, servo_body_w + 2*c, servo_tab_h + 2*c], center = true);
     // output shaft / horn clearance through the bottom face
     translate([0, 0, -servo_body_h])
@@ -52,4 +53,17 @@ module button_hole() {
 module mosfet_space() {
   c = fit_clearance;
   cube([mosfet_l + 2*c, mosfet_w + 2*c, wall*4], center = true);
+}
+
+// Two floor-standing bosses with M2 self-tapping pilot holes, under the SG90
+// mounting tabs. Centered on the shaft axis; caller supplies the Z origin
+// (boss base at local Z=0, rising +Z to servo_boss_h).
+module servo_mounts() {
+  for (sx = [-1, 1])
+    translate([sx * servo_screw_span/2, 0, 0])
+      difference() {
+        cylinder(d = servo_boss_d, h = servo_boss_h);
+        translate([0, 0, -0.1])
+          cylinder(d = servo_screw_pilot, h = servo_boss_h + 0.2);
+      }
 }
