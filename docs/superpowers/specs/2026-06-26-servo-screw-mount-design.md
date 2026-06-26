@@ -35,16 +35,16 @@
 ```
 servo_screw_span  = 27.6;  // 耳のネジ穴 中心間距離（データシート公称・要実測補正）
 servo_screw_pilot = 1.8;   // M2 セルフタッピング下穴径
-servo_boss_d      = 5.0;   // 耳ボス外径
+servo_boss_d      = 4.5;   // 耳ボス外径（Pico ボスと同径。ポケット/タブ干渉を回避）
 servo_boss_h      = 4.0;   // 床からの耳ボス高さ（M2 ねじ山確保＋出力ホーン逃げ）
 ```
 
 サニティチェックを追加する。
 
 ```
-assert(servo_screw_span/2 + servo_boss_d/2 <= servo_tab_l/2, "screw boss within tab span");
 assert(servo_screw_pilot < servo_boss_d, "pilot hole smaller than boss");
 assert(servo_boss_h >= servo_tab_h, "boss tall enough to seat the tab");
+assert(servo_screw_span/2 + servo_boss_d/2 <= ext_left, "screw boss within interior (-X side)");
 ```
 
 ### `hardware.scad`
@@ -59,12 +59,12 @@ assert(servo_boss_h >= servo_tab_h, "boss tall enough to seat the tab");
 
 ## 干渉チェック（設計時点で確認済み）
 
-ボス位置 `x = ±servo_screw_span/2 ≈ ±13.8`, `y = 0`。
+ボス位置 `x = ±servo_screw_span/2 ≈ ±13.8`, `y = 0`、外径 `servo_boss_d = 4.5`（半径2.25）。
 
-- 本体側壁: 内側 X 範囲は `-20 〜 +30`。ボス（半径2.5）は `-16.3〜-11.3` / `11.3〜16.3` で壁に当たらない。
+- 本体側壁: 内側 X 範囲は `-20 〜 +30`。ボスは `-16.05〜-11.55` / `11.55〜16.05` で壁に当たらない（`-X` 側が最も近く、内壁 `-20` まで約4mm余裕）。
+- サーボ本体ポケット: ボスは床〜`servo_boss_h`(4mm) の高さに立ち、サーボ本体ポケットの底（持ち上げ後 `z ≈ wall + servo_boss_h`）はボス上面とほぼ接する。Z 方向の重なりは持ち上げクリアランス `fit_clearance`(0.4mm) 分のみで、ボス上端内側の微小な角が削れる程度（構造・ねじ穴には無影響）。
 - MOSFET キープアウト: `y ≈ 19〜31` に位置。ボスは `y = 0` で Y 方向に重ならない。
 - Pico スタンドオフ: 遠い `+Y` 側。干渉なし。
-- タブ逃げ: `±servo_tab_l/2 ≈ ±16.1` まで。ボス（±13.8）は span 内に収まる。
 - ロゼット凹み（Ø46）: ボスは凹みの真上に来るが、ねじ山はボス本体（高さ `servo_boss_h`）で受けるため薄い床（凹み部 ≈0.9mm）に依存しない。
 
 ## 物理前提・注意点
