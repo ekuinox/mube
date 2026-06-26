@@ -47,7 +47,7 @@
 
 ### 3.3 コマンドの正しい打ち方（落とし穴）
 本体。Claude が間違えやすい所を凝縮:
-- `openscad`/`cargo`/`uv` は素の PATH に無い → **`nix develop -c <cmd>`** 経由で実行。`nix` 自体が非対話 PATH に無い時は `/nix/var/nix/profiles/default/bin` を PATH に足す（`build.sh` が実例）。
+- `openscad`/`cargo`/`uv` は nix dev シェルの中にしか無い → **`nix develop -c <cmd>`** 経由で実行。`.sh` 系（`build.sh`/`render.sh`）は自分で dev シェルに再突入するのでそのまま実行可。（注: `nix` CLI 本体が PATH に乗るかは環境側の問題。ホスト固有の PATH 設定は CLAUDE.md に焼かない方針。）
 - 筐体ビルド: `./build.sh`（dev シェル外でも自動で nix 経由で再実行）。
 - ファームビルド: `nix develop -c cargo build --locked`（既定ターゲット thumbv6m）。
 - ロジックの host テスト: `nix develop -c cargo host-test`（実機不要）。
