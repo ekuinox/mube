@@ -119,11 +119,54 @@ module outline_rect(x, y, w, h) {
   }
 }
 
+// 直線
+module hline(x1, x2, y) {
+  translate([min(x1,x2), y - lw/2]) square([abs(x2-x1), lw]);
+}
+module vline(x, y1, y2) {
+  translate([x - lw/2, min(y1,y2)]) square([lw, abs(y2-y1)]);
+}
+
+// 垂直寸法線
+module vdim(y1, y2, x, label, right=true) {
+  vline(x, y1, y2);
+  hline(x-1.5, x+1.5, y1);
+  hline(x-1.5, x+1.5, y2);
+  tx = right ? x + 2 : x - 2;
+  ha = right ? "left" : "right";
+  translate([tx, (y1+y2)/2])
+    text(label, size=fs3, font=font, halign=ha, valign="center");
+}
+
+// 水平寸法線
+module hdim(x1, x2, y, label, above=true) {
+  hline(x1, x2, y);
+  vline(x1, y-1.5, y+1.5);
+  vline(x2, y-1.5, y+1.5);
+  ty = above ? y + 2 : y - 4;
+  translate([(x1+x2)/2, ty])
+    text(label, size=fs3, font=font, halign="center", valign="center");
+}
+
+// 引出線（点 → 折れ → ラベル）
+module leader(px, py, lx, ly, label) {
+  // 始点マーク
+  translate([px, py]) circle(d=1.5);
+  // 水平線→垂直線→水平バー
+  hline(px, lx, py);
+  vline(lx, py, ly);
+  hline(lx, lx + 20, ly);
+  translate([lx + 1, ly + 2])
+    text(label, size=fs3, font=font);
+}
+
 
 // ===== 正面図 =====
 module front_view() {
   bx1 = center_x - body_l/2;
+  bx2 = center_x + body_l/2;
   by1 = center_y - body_w/2;
+  by2 = center_y + body_w/2;
 
   // 各パーツをワイヤーフレームで投影
   wf_front() part_knob();
@@ -136,17 +179,40 @@ module front_view() {
   wf_front() part_uboard();
   wf_front() part_led_btn();
   wf_front() part_usb();
-  // part_brace は現在無効（両面テープ固定で十分の見込み）
 
   // 外殻枠線
   outline_rect(bx1, by1, body_l, body_w);
 
-  // ラベル
-  translate([center_x, by1 + body_w + 16])
+  // --- パーツ名ラベル（引出線） ---
+  lx_r = bx2 + 8;
+  leader(pedestal_r, 0, lx_r, -5, "台座");
+  leader(servo_body_l/2, 0, lx_r, -12, "SG90 + 耳");
+  leader(0, rosette_d/2, lx_r, rosette_d/2, str("ロゼット Ø", rosette_d));
+
+  leader(pico_w/2, pico_y, lx_r, pico_y, "Pico W");
+  leader(uboard_w/2, pico_y + pico_l/2 - 5, lx_r, pico_y + pico_l/4 + 8,
+         str("基板 ", uboard_l, "x", uboard_w));
+
+  leader(led_hole_d, led_y, lx_r, led_y, "LED");
+  leader(button_hole_d, btn_y, lx_r, btn_y + 6, "BTN");
+
+  // USB（上端）
+  wall_y_top = center_y + inner_w/2;
+  leader(usb_w/2, wall_y_top, lx_r, wall_y_top, "USB");
+
+  // --- 寸法線 ---
+  // body_l（上）
+  hdim(bx1, bx2, by2 + 12, str(body_l, " body_l"));
+  // body_w（右遠く）
+  vdim(by1, by2, lx_r + 35, str(body_w, " body_w"));
+  // 軸→壁
+  hdim(bx1, 0, by1 - 10, str(body_l/2 - center_x, " 軸→左壁"), false);
+  hdim(0, bx2, by1 - 18, str(body_l/2 + center_x, " 軸→右壁"), false);
+
+  // --- タイトル・方向ラベル ---
+  translate([center_x, by2 + 20])
     text("正面図（室内側から）", size=fs, font=font, halign="center");
-  translate([center_x, by1 + body_w + 10])
-    text(str(body_l, " x ", body_w, " mm"), size=fs2, font=font, halign="center");
-  translate([center_x, by1 + body_w + 4])
+  translate([center_x, by2 + 6])
     text("↑ ドア上方向", size=fs3, font=font, halign="center");
   translate([center_x, by1 - 6])
     text("↓ ドアノブ側", size=fs3, font=font, halign="center");
@@ -154,6 +220,7 @@ module front_view() {
 
 
 // ===== 横断面図 =====
+// 投影後の座標: X = Y(3D), Y = Z(3D)
 module side_view() {
   by1 = center_y - body_w/2;
 
@@ -168,17 +235,42 @@ module side_view() {
   wf_side() part_uboard();
   wf_side() part_led_btn();
   wf_side() part_usb();
-  // part_brace は現在無効
 
-  // 外殻枠線 (投影後: 横=Y, 縦=Z)
+  // 外殻枠線
   outline_rect(by1, 0, body_w, body_h);
 
-  // ラベル
-  translate([center_y, body_h + 14])
+  // --- パーツ名ラベル（引出線） ---
+  // 軸まわり（X=0 → 投影後 X=0）
+  lx_l = by1 - 10;  // 引出線の左端
+  leader(0, knob_h/2, lx_l, knob_h/2, "ノブ");
+  leader(0, socket_z + socket_oh/2, lx_l, socket_z + socket_oh/2 + 6, "ソケット");
+  leader(0, socket_top_z + horn_h/2, lx_l, socket_top_z + horn_h/2 + 12, "ホーン");
+  leader(-pedestal_r, pedestal_top_z/2, lx_l - 15, pedestal_top_z/2, "台座");
+  leader(0, servo_z + servo_body_h/2, lx_l, servo_z + servo_body_h/2, "SG90");
+
+  // Pico エリア（X=pico_y → 投影後 X=pico_y）
+  lx_r = by1 + body_w + 10;  // 引出線の右端
+  leader(pico_y, pico_floor_z + pico_boss_h, lx_r, pico_floor_z + pico_boss_h, "Pico W");
+  leader(pico_y, uboard_z + uboard_t, lx_r, uboard_z + uboard_t + 6, str("基板 ", uboard_l, "x", uboard_w));
+
+  // --- 寸法線（左端） ---
+  dx = by1 - 35;
+  vdim(0, knob_h, dx, str(knob_h), false);
+  vdim(socket_z, socket_top_z, dx - 14, str(socket_oh), false);
+  vdim(socket_top_z, pedestal_top_z, dx, str(horn_h), false);
+  vdim(servo_z, servo_top_z, dx - 14, str(servo_body_h), false);
+  vdim(servo_top_z, body_h - wall, dx, str(wire_clearance), false);
+
+  // 全高（右端遠く）
+  vdim(0, body_h, lx_r + 30, str(body_h, " 全高"));
+
+  // body_w（上部に水平寸法）
+  hdim(by1, by1 + body_w, body_h + 20, str(body_w, " body_w"));
+
+  // --- タイトル・方向ラベル ---
+  translate([center_y, body_h + 28])
     text("横断面図（Y-Z 断面）", size=fs, font=font, halign="center");
-  translate([center_y, body_h + 8])
-    text(str("body_h=", body_h, "  body_w=", body_w), size=fs2, font=font, halign="center");
-  translate([center_y, body_h + 3])
+  translate([center_y, body_h + 5])
     text("↑ 室内側", size=fs3, font=font, halign="center");
   translate([center_y, -6])
     text("↓ ドア面", size=fs3, font=font, halign="center");
