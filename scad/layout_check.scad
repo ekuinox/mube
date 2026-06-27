@@ -149,15 +149,21 @@ module hdim(x1, x2, y, label, above=true) {
 }
 
 // 引出線（点 → 折れ → ラベル）
-module leader(px, py, lx, ly, label) {
-  // 始点マーク
+// dir: 1=右向き(デフォルト), -1=左向き
+module leader(px, py, lx, ly, label, dir=1) {
   translate([px, py]) circle(d=1.5);
-  // 水平線→垂直線→水平バー
   hline(px, lx, py);
   vline(lx, py, ly);
-  hline(lx, lx + 20, ly);
-  translate([lx + 1, ly + 2])
-    text(label, size=fs3, font=font);
+  bar_len = 25;
+  if (dir > 0) {
+    hline(lx, lx + bar_len, ly);
+    translate([lx + 1, ly + 2])
+      text(label, size=fs3, font=font);
+  } else {
+    hline(lx - bar_len, lx, ly);
+    translate([lx - 1, ly + 2])
+      text(label, size=fs3, font=font, halign="right");
+  }
 }
 
 
@@ -183,38 +189,36 @@ module front_view() {
   // 外殻枠線
   outline_rect(bx1, by1, body_l, body_w);
 
-  // --- パーツ名ラベル（引出線） ---
-  lx_r = bx2 + 8;
-  leader(pedestal_r, 0, lx_r, -5, "台座");
-  leader(servo_body_l/2, 0, lx_r, -12, "SG90 + 耳");
-  leader(0, rosette_d/2, lx_r, rosette_d/2, str("ロゼット Ø", rosette_d));
+  // --- パーツ名ラベル（引出線、右に間隔6mmずつずらして重ならないように） ---
+  lx1 = bx2 + 8;   // 第1列
+  lx2 = bx2 + 18;  // 第2列
+  // 下から順に Y を十分空けて配置
+  leader(servo_body_l/2, 0, lx1, -15, "SG90 + 耳");
+  leader(pedestal_r, 0, lx2, -8, "台座");
+  leader(0, rosette_d/2, lx1, rosette_d/2 + 3, str("ロゼット Ø", rosette_d));
 
-  leader(pico_w/2, pico_y, lx_r, pico_y, "Pico W");
-  leader(uboard_w/2, pico_y + pico_l/2 - 5, lx_r, pico_y + pico_l/4 + 8,
+  leader(0, led_y, lx1, led_y, "LED");
+  leader(0, btn_y, lx1, btn_y + 6, "BTN");
+  leader(pico_w/2, pico_y, lx2, pico_y - 3, "Pico W");
+  leader(uboard_w/2, pico_y + pico_l/4, lx2, pico_y + pico_l/4 + 8,
          str("基板 ", uboard_l, "x", uboard_w));
-
-  leader(led_hole_d, led_y, lx_r, led_y, "LED");
-  leader(button_hole_d, btn_y, lx_r, btn_y + 6, "BTN");
 
   // USB（上端）
   wall_y_top = center_y + inner_w/2;
-  leader(usb_w/2, wall_y_top, lx_r, wall_y_top, "USB");
+  leader(usb_w/2, wall_y_top, lx1, wall_y_top - 3, "USB");
 
   // --- 寸法線 ---
-  // body_l（上）
-  hdim(bx1, bx2, by2 + 12, str(body_l, " body_l"));
-  // body_w（右遠く）
-  vdim(by1, by2, lx_r + 35, str(body_w, " body_w"));
-  // 軸→壁
-  hdim(bx1, 0, by1 - 10, str(body_l/2 - center_x, " 軸→左壁"), false);
-  hdim(0, bx2, by1 - 18, str(body_l/2 + center_x, " 軸→右壁"), false);
+  hdim(bx1, bx2, by2 + 14, str(body_l, " body_l"));
+  vdim(by1, by2, lx2 + 40, str(body_w, " body_w"));
+  hdim(bx1, 0, by1 - 12, str(body_l/2 - center_x, " 軸→左壁"), false);
+  hdim(0, bx2, by1 - 20, str(body_l/2 + center_x, " 軸→右壁"), false);
 
   // --- タイトル・方向ラベル ---
-  translate([center_x, by2 + 20])
+  translate([center_x, by2 + 22])
     text("正面図（室内側から）", size=fs, font=font, halign="center");
-  translate([center_x, by2 + 6])
+  translate([center_x, by2 + 8])
     text("↑ ドア上方向", size=fs3, font=font, halign="center");
-  translate([center_x, by1 - 6])
+  translate([center_x, by1 - 8])
     text("↓ ドアノブ側", size=fs3, font=font, halign="center");
 }
 
@@ -239,50 +243,54 @@ module side_view() {
   // 外殻枠線
   outline_rect(by1, 0, body_w, body_h);
 
-  // --- パーツ名ラベル（引出線） ---
-  // 軸まわり（X=0 → 投影後 X=0）
-  lx_l = by1 - 10;  // 引出線の左端
-  leader(0, knob_h/2, lx_l, knob_h/2, "ノブ");
-  leader(0, socket_z + socket_oh/2, lx_l, socket_z + socket_oh/2 + 6, "ソケット");
-  leader(0, socket_top_z + horn_h/2, lx_l, socket_top_z + horn_h/2 + 12, "ホーン");
-  leader(-pedestal_r, pedestal_top_z/2, lx_l - 15, pedestal_top_z/2, "台座");
-  leader(0, servo_z + servo_body_h/2, lx_l, servo_z + servo_body_h/2, "SG90");
+  // --- パーツ名ラベル（引出線、左に1列ずつずらして重ならない配置） ---
+  lx1 = by1 - 12;   // 第1列（本体に近い）
+  lx2 = by1 - 28;   // 第2列
+  lx3 = by1 - 44;   // 第3列（最も遠い）
+  // 各ラベルの Y 位置を 8mm 以上空ける
+  leader(0, knob_h/2,                  lx1, 2,   "ノブ", -1);
+  leader(0, socket_z + socket_oh/2,    lx2, 11,  "ソケット", -1);
+  leader(0, socket_top_z + horn_h/2,   lx1, 20,  "ホーン", -1);
+  leader(-pedestal_r, pedestal_top_z/2,lx3, 12,  "台座", -1);
+  leader(0, servo_z + servo_body_h/2,  lx2, servo_z + servo_body_h/2, "SG90", -1);
 
-  // Pico エリア（X=pico_y → 投影後 X=pico_y）
-  lx_r = by1 + body_w + 10;  // 引出線の右端
+  // Pico エリア（右側）
+  lx_r = by1 + body_w + 12;
   leader(pico_y, pico_floor_z + pico_boss_h, lx_r, pico_floor_z + pico_boss_h, "Pico W");
-  leader(pico_y, uboard_z + uboard_t, lx_r, uboard_z + uboard_t + 6, str("基板 ", uboard_l, "x", uboard_w));
+  leader(pico_y, uboard_z + uboard_t, lx_r, uboard_z + uboard_t + 8,
+         str("基板 ", uboard_l, "x", uboard_w));
 
-  // --- 寸法線（左端） ---
-  dx = by1 - 35;
-  vdim(0, knob_h, dx, str(knob_h), false);
-  vdim(socket_z, socket_top_z, dx - 14, str(socket_oh), false);
-  vdim(socket_top_z, pedestal_top_z, dx, str(horn_h), false);
-  vdim(servo_z, servo_top_z, dx - 14, str(servo_body_h), false);
-  vdim(servo_top_z, body_h - wall, dx, str(wire_clearance), false);
+  // --- 寸法線（左端、さらに外） ---
+  dx1 = lx2 - 15;
+  dx2 = dx1 - 14;
+  vdim(0, knob_h, dx1, str(knob_h), false);
+  vdim(socket_z, socket_top_z, dx2, str(socket_oh), false);
+  vdim(socket_top_z, pedestal_top_z, dx1, str(horn_h), false);
+  vdim(servo_z, servo_top_z, dx2, str(servo_body_h), false);
+  vdim(servo_top_z, body_h - wall, dx1, str(wire_clearance), false);
 
   // 全高（右端遠く）
-  vdim(0, body_h, lx_r + 30, str(body_h, " 全高"));
+  vdim(0, body_h, lx_r + 35, str(body_h, " 全高"));
 
   // body_w（上部に水平寸法）
-  hdim(by1, by1 + body_w, body_h + 20, str(body_w, " body_w"));
+  hdim(by1, by1 + body_w, body_h + 22, str(body_w, " body_w"));
 
   // --- タイトル・方向ラベル ---
-  translate([center_y, body_h + 28])
+  translate([center_y, body_h + 30])
     text("横断面図（Y-Z 断面）", size=fs, font=font, halign="center");
-  translate([center_y, body_h + 5])
+  translate([center_y, body_h + 7])
     text("↑ 室内側", size=fs3, font=font, halign="center");
-  translate([center_y, -6])
+  translate([center_y, -8])
     text("↓ ドア面", size=fs3, font=font, halign="center");
-  translate([by1 - 3, -6])
+  translate([by1 - 3, -8])
     text("← ドアノブ側", size=fs3, font=font, halign="right");
-  translate([by1 + body_w + 3, -6])
+  translate([by1 + body_w + 3, -8])
     text("ドア上 →", size=fs3, font=font, halign="left");
 }
 
 
 // ===== メイン =====
-draw_scale = 2;
+draw_scale = 3;
 if (view == "side") {
   scale([draw_scale, draw_scale]) side_view();
 } else if (view == "front") {
