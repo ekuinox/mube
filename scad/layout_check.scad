@@ -77,8 +77,14 @@ module part_servo_tabs() {
     cube([servo_tab_l, servo_body_w, servo_tab_h], center=true);
 }
 module part_pico() {
+  // Pico 基板
   translate([pico_x, pico_y, pico_floor_z + pico_boss_h + pico_h/2])
     cube([pico_w, pico_l, pico_h], center=true);
+  // マウントボス（床から立ち上がる台座）
+  for (sx=[-1,1], sy=[-1,1])
+    translate([pico_x + sx*pico_hole_dy/2, pico_y + sy*pico_hole_dx/2,
+               pico_floor_z + pico_boss_h/2])
+      cylinder(d=pico_boss_d, h=pico_boss_h, center=true);
 }
 module part_uboard() {
   translate([pico_x, pico_y, uboard_z + uboard_t/2])
