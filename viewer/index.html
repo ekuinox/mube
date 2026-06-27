@@ -89,13 +89,20 @@ scene.add(dir2);
 
 // Helpers (sized after first load)
 let grid = null, axes = null;
-const material = new THREE.MeshStandardMaterial({ color: 0x7fb2e6, metalness: 0.15, roughness: 0.55, flatShading: false });
+const defaultMat = new THREE.MeshStandardMaterial({ color: 0x7fb2e6, metalness: 0.15, roughness: 0.55, flatShading: false });
 
-let mesh = null;
+const assemblyParts = [
+  { file: 'asm_body.stl',   color: 0x4682b4, name: '本体' },
+  { file: 'asm_lid.stl',    color: 0x3cb371, name: '蓋' },
+  { file: 'asm_socket.stl', color: 0xf4a460, name: 'ソケット' },
+];
+
+let meshes = [];
 const loader = new STLLoader();
 
-function disposeMesh() {
-  if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); mesh = null; }
+function disposeMeshes() {
+  meshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+  meshes = [];
 }
 
 function frameObject(geometry) {
@@ -132,27 +139,82 @@ function frameObject(geometry) {
     `<br><span style="color:#ff6b6b">X</span> / <span style="color:#6bff6b">Y</span> / <span style="color:#6b9bff">Z</span>`;
 }
 
+function loadSingle(file, mat) {
+  return new Promise((resolve, reject) => {
+    loader.load(file + '?t=' + Date.now(), resolve, undefined, reject);
+  }).then(geometry => {
+    geometry.rotateX(-Math.PI / 2);
+    return new THREE.Mesh(geometry, mat);
+  });
+}
+
 function loadPart(file) {
   statusEl.textContent = `読み込み中: ${file}`;
   statusEl.classList.remove('err');
-  loader.load(
-    file + '?t=' + Date.now(),
-    (geometry) => {
-      disposeMesh();
-      // OpenSCAD exports Z-up; rotate so Z-up maps to three.js Y-up for natural framing
-      geometry.rotateX(-Math.PI / 2);
-      frameObject(geometry);
-      mesh = new THREE.Mesh(geometry, material);
-      scene.add(mesh);
+
+  if (file === 'assembly.stl') {
+    // 色分けアセンブリ: 個別 STL を別色で同時読み込み
+    disposeMeshes();
+    Promise.all(assemblyParts.map(p =>
+      loadSingle(p.file, new THREE.MeshStandardMaterial({
+        color: p.color, metalness: 0.15, roughness: 0.55, flatShading: false,
+      }))
+    )).then(loaded => {
+      // 全パーツをまとめて bounding box 計算
+      const group = new THREE.Group();
+      loaded.forEach(m => group.add(m));
+      const box = new THREE.Box3().setFromObject(group);
+      const size = new THREE.Vector3(); box.getSize(size);
+      const center = new THREE.Vector3(); box.getCenter(center);
+
+      loaded.forEach(m => {
+        m.position.sub(center);
+        scene.add(m);
+        meshes.push(m);
+      });
+
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fitDist = (maxDim / 2) / Math.tan((camera.fov * Math.PI / 180) / 2);
+      const dist = fitDist * 2.1;
+      camera.position.set(dist * 0.7, dist * 0.5, dist * 0.8);
+      camera.near = maxDim / 100;
+      camera.far = maxDim * 100;
+      camera.updateProjectionMatrix();
+      controls.target.set(0, 0, 0);
+      controls.update();
+
+      if (grid) scene.remove(grid);
+      if (axes) scene.remove(axes);
+      const gridSize = Math.ceil(maxDim * 1.6 / 10) * 10;
+      grid = new THREE.GridHelper(gridSize, gridSize / 10, 0x55606b, 0x363c44);
+      grid.position.y = -size.y / 2;
+      scene.add(grid);
+      axes = new THREE.AxesHelper(maxDim * 0.6);
+      scene.add(axes);
+
+      dimsEl.innerHTML =
+        `寸法 (mm): <b>${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}</b>` +
+        `<br><span style="color:#4682b4">■</span> 本体 / <span style="color:#3cb371">■</span> 蓋 / <span style="color:#f4a460">■</span> ソケット`;
+      statusEl.textContent = '表示中: assembly (色分け)';
+    }).catch(err => {
+      statusEl.textContent = '読み込み失敗: assembly';
+      statusEl.classList.add('err');
+      console.error(err);
+    });
+  } else {
+    // 単体パーツ
+    disposeMeshes();
+    loadSingle(file, defaultMat).then(m => {
+      frameObject(m.geometry);
+      scene.add(m);
+      meshes.push(m);
       statusEl.textContent = `表示中: ${file}`;
-    },
-    undefined,
-    (err) => {
+    }).catch(err => {
       statusEl.textContent = `読み込み失敗: ${file}`;
       statusEl.classList.add('err');
       console.error(err);
-    }
-  );
+    });
+  }
 }
 
 partSel.addEventListener('change', () => loadPart(partSel.value));
