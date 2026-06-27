@@ -16,8 +16,9 @@ servo_z  = pedestal_top_z;
 servo_top_z = servo_z + servo_body_h;
 pico_floor_z = wall;
 
-pico_gap = max(6, rosette_d/2 - servo_body_w/2 + 2,
-              rosette_d/2 + uboard_l/2 - pico_l/2 - servo_body_w/2 + 2);
+pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;
+pico_gap = max(6, pedestal_outer - servo_body_w/2 + 2,
+              pedestal_outer + uboard_l/2 - pico_l/2 - servo_body_w/2 + 2);
 pico_x = 0;
 pico_y = servo_body_w/2 + pico_gap + pico_l/2;
 
@@ -33,6 +34,14 @@ btn_y = pico_y + led_btn_spacing/2;
 
 
 // ===== 各パーツの 3D 形状（個別モジュール） =====
+module part_rosette() {
+  // ロゼット（ドア表面の化粧座、参考表示）
+  translate([0, 0, -0.5])
+    difference() {
+      cylinder(d=rosette_d, h=1, center=true);
+      cylinder(d=rosette_d - 3, h=2, center=true);
+    }
+}
 module part_knob() {
   translate([0, 0, knob_h/2])
     cube([knob_w_base, knob_t, knob_h], center=true);
@@ -109,8 +118,8 @@ module wireframe() {
 // パーツを投影してワイヤーフレーム化（正面図用: Z方向投影）
 module wf_front() { wireframe() projection(cut=false) children(); }
 
-// パーツを投影してワイヤーフレーム化（横断面用: X方向投影）
-module wf_side() { wireframe() projection(cut=false) rotate([0, -90, 0]) children(); }
+// パーツを投影してワイヤーフレーム化（横断面用: X方向投影→Y横軸, Z縦軸）
+module wf_side() { wireframe() projection(cut=false) rotate([0, 0, -90]) rotate([0, -90, 0]) children(); }
 
 module outline_rect(x, y, w, h) {
   difference() {
@@ -175,6 +184,7 @@ module front_view() {
   by2 = center_y + body_w/2;
 
   // 各パーツをワイヤーフレームで投影
+  wf_front() part_rosette();
   wf_front() part_knob();
   wf_front() part_socket();
   wf_front() part_horn();
@@ -196,6 +206,7 @@ module front_view() {
   leader(servo_body_l/2, 0, lx1, -15, "SG90 + 耳");
   leader(pedestal_r, 0, lx2, -8, "台座");
   leader(0, rosette_d/2, lx1, rosette_d/2 + 3, str("ロゼット Ø", rosette_d));
+  leader(socket_ow/2, socket_ow/2, lx2, rosette_d/2 + 11, str("ソケット ", socket_ow, "x", socket_ow));
 
   leader(0, led_y, lx1, led_y, "LED");
   leader(0, btn_y, lx1, btn_y + 6, "BTN");
@@ -229,6 +240,7 @@ module side_view() {
   by1 = center_y - body_w/2;
 
   // 各パーツをワイヤーフレームで投影
+  wf_side() part_rosette();
   wf_side() part_knob();
   wf_side() part_socket();
   wf_side() part_horn();

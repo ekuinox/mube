@@ -68,7 +68,7 @@ uboard_w = 47;    // short side (across Pico width = X)
 ext_left  = 27;   // -X toward frame; must be <= clear_left (>= rosette_d/2)
 ext_right = 27;   // +X; symmetric with ext_left
 ext_down  = 26;   // -Y toward handle; must be <= clear_down (>= rosette_d/2 + pedestal)
-ext_up    = 97;   // +Y free; houses Pico + universal board (72mm, clears rosette)
+ext_up    = 100;  // +Y free; houses Pico + universal board (72mm, clears pedestal)
 
 inner_l = ext_left + ext_right;          // 54
 inner_w = ext_down + ext_up;             // 120
