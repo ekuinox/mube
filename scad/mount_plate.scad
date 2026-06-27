@@ -45,9 +45,6 @@ module mount_plate() {
               cylinder(d = servo_screw_pilot, h = servo_boss_h + 0.2);
           }
 
-      // brace stub toward the handle (-Y)
-      translate([-brace_stub_w/2, -(clear_down - 4), 0])
-        cube([brace_stub_w, (clear_down - 4) - ext_down + 1, wall]);
     }
 
     // central floor opening for thumb-turn knob
