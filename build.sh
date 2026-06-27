@@ -7,12 +7,12 @@ if ! command -v openscad >/dev/null 2>&1; then
 fi
 cd "$(dirname "$0")"
 mkdir -p build
-for p in body lid socket; do
+for p in body lid socket asm_body asm_lid asm_socket; do
   echo "== building $p =="
   log="$(openscad -D "part=\"$p\"" -o "build/$p.stl" scad/smartlock.scad 2>&1)"
   status=$?
   echo "$log"
-  if [ "$status" -ne 0 ] || echo "$log" | grep -Eiq 'WARNING|ERROR'; then
+  if [ "$status" -ne 0 ] || echo "$log" | grep -Eiq '^WARNING:|^ERROR:'; then
     echo "FAIL: $p"; exit 1
   fi
 done

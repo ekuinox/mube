@@ -7,9 +7,9 @@ module thumbturn_socket() {
   ow  = knob_w_base + knob_t + 2*socket_wall;   // outer footprint (use widest)
   oh  = knob_engage + socket_wall + 6;          // total height incl. shaft collar
   difference() {
-    // outer body: rounded square prism
+    // outer body: rounded square prism (R=6 for pedestal clearance)
     linear_extrude(height = oh)
-      offset(r = 2) offset(r = -2)
+      offset(r = 6) offset(r = -6)
         square([ow, ow], center = true);
     // tapered knob pocket: base (knob_w_base) at the top opening, narrowing to
     // the tip (knob_w_top) at depth. Built tip-square at bottom, scaled up to base.
