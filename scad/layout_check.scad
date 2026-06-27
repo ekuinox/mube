@@ -12,11 +12,14 @@ include <params.scad>
 
 socket_oh = knob_engage + socket_wall + 6;
 socket_z = knob_h - knob_engage;           // 1
-servo_z  = socket_z + socket_oh;           // 19
-servo_top_z = servo_z + servo_body_h;      // 41.5
+socket_top_z = socket_z + socket_oh;       // 19
+horn_h = 4;                                // ホーン厚 + クリアランス
+pedestal_top_z = socket_top_z + horn_h;    // 23 (台座天面 = サーボ耳が載る面)
+servo_z  = pedestal_top_z;                 // 23
+servo_top_z = servo_z + servo_body_h;      // 45.5
 wire_clearance = 4;
-new_inner_h = servo_top_z + wire_clearance; // 45.5
-new_body_h  = new_inner_h + wall;           // 47.9
+new_inner_h = servo_top_z + wire_clearance; // 49.5
+new_body_h  = new_inner_h + wall;           // 51.9
 pico_floor_z = wall;                       // 2.4
 
 // ユニバーサル基板（Pico の上にスタッキング）
@@ -81,119 +84,141 @@ module part(x, y, w, h, label, _fs=0) {
 }
 
 
-// ===== 横断面図 =====
+// ===== 横断面図（Y-Z 断面） =====
+// 横軸 = Y（ドア上下方向）、縦軸 = Z（ドア面→室内）
 module side_view() {
-  bw = 50;
-  bx = -bw/2;
+  // 本体の Y 範囲（実寸）
+  by1 = -(ext_down + wall);   // 左端（ドアノブ側）
+  by2 = ext_up + wall;        // 右端（ドア上方向）
+
+  // Pico Y 位置（body.scad と同じ計算）
+  pico_gap = max(6, rosette_d/2 - servo_body_w/2 + 2,
+                rosette_d/2 + uboard_l/2 - pico_l/2 - servo_body_w/2 + 2);
+  pico_cy = servo_body_w/2 + pico_gap + pico_l/2;
 
   // タイトル
-  translate([0, new_body_h + 18])
-    text("横断面図（ドア→室内）", size=fs, font=font, halign="center");
-  translate([0, new_body_h + 12])
-    text(str("新 body_h = ", new_body_h, " mm"), size=fs2, font=font, halign="center");
+  translate([(by1+by2)/2, new_body_h + 18])
+    text("横断面図（Y-Z 断面）", size=fs, font=font, halign="center");
+  translate([(by1+by2)/2, new_body_h + 12])
+    text(str("body_h=", new_body_h, "  body_w=", body_w), size=fs2, font=font, halign="center");
 
-  // ドア面
+  // ドア面（太帯）
   color([0.3, 0.3, 0.3]) {
-    translate([bx - 20, -4]) square([bw + 40, 4]);
-    translate([0, -8])
-      text("ドア面", size=fs2, font=font, halign="center", valign="center");
+    translate([by1 - 10, -4]) square([by2 - by1 + 20, 4]);
+    translate([(by1+by2)/2, -8])
+      text("↓ ドア面", size=fs2, font=font, halign="center", valign="center");
+    translate([(by1+by2)/2, new_body_h + 4])
+      text("↑ 室内側", size=fs3, font=font, halign="center", valign="center");
   }
-
-  // ノブ
-  knob_w = 14;
-  color([0.7, 0.5, 0.3])
-    part(-knob_w/2, 0, knob_w, knob_h, "ノブ");
-
-  // ソケット
-  socket_w = 22;
-  color([0.3, 0.6, 0.8])
-    part(-socket_w/2, socket_z, socket_w, socket_oh, "ソケット");
-
-  // SG90
-  servo_w = 16;
-  color([0.4, 0.7, 0.4])
-    part(-servo_w/2, servo_z, servo_w, servo_body_h, "SG90");
-
-  // サーボ軸
-  color([0.5, 0.5, 0.5])
-    translate([-1.5, servo_z - 4]) square([3, 4]);
-
-  // サーボ耳
-  tab_w = 24;
-  color([0.4, 0.7, 0.4])
-    part(-tab_w/2, servo_z, tab_w, servo_tab_h, "耳", fs3);
-
-  // Pico（横にオフセット）
-  px = 18;
-  color([0.8, 0.4, 0.4])
-    part(px, pico_floor_z + pico_boss_h, 12, pico_h + 3, "Pico");
-  color([0.6, 0.6, 0.6]) {
-    part(px + 1, pico_floor_z, 3, pico_boss_h, "");
-    part(px + 8, pico_floor_z, 3, pico_boss_h, "");
+  // ドア上下方向
+  color([0.3, 0.3, 0.3]) {
+    translate([by2 + 3, -8])
+      text("ドア上 →", size=fs3, font=font, halign="left", valign="center");
+    translate([by1 - 3, -8])
+      text("← ドアノブ側", size=fs3, font=font, halign="right", valign="center");
   }
-
-  // ピンヘッダ + ユニバーサル基板（Pico の上）
-  color([0.6, 0.6, 0.6])
-    part(px + 1, pico_floor_z + pico_boss_h + pico_h,
-         2, pin_header_h, "");
-  color([0.6, 0.6, 0.6])
-    part(px + 9, pico_floor_z + pico_boss_h + pico_h,
-         2, pin_header_h, "");
-  color([0.6, 0.3, 0.6])
-    part(px - 2, uboard_z, 16, uboard_t + 4, "基板");
-  // 部品（電解コン等）
-  color([0.5, 0.5, 0.8])
-    part(px + 6, uboard_z + uboard_t, 6, cap_h, "C1");
 
   // 本体外壁
   color([0, 0, 0]) {
-    vline(bx, 0, new_body_h, 0.8);
-    vline(bx + bw, 0, new_body_h, 0.8);
-    hline(bx, bx + bw, new_body_h, 0.8);
-    // 底面（開口あり）
-    hline(bx, -knob_w/2 - 4, wall);
-    hline(knob_w/2 + 4, bx + bw, wall);
-    translate([0, wall + 3])
-      text("開口", size=fs3, font=font, halign="center", valign="center");
+    vline(by1, 0, new_body_h, 0.8);
+    vline(by2, 0, new_body_h, 0.8);
+    hline(by1, by2, new_body_h, 0.8);
+    // 底面（中央に開口）
+    hline(by1, -rosette_d/2 - 2, wall);
+    hline(rosette_d/2 + 2, by2, wall);
   }
 
-  // 寸法線（左側）
-  xl = bx - 8;
-  color([0.2, 0.2, 0.8]) {
-    vdim(0, knob_h, xl, str(knob_h), false);
-    translate([xl - 18, knob_h/2])
-      text("ノブ", size=fs3, font=font, halign="right", valign="center");
+  // --- 軸まわり（Y=0 付近）--- 実寸で描画 ---
+
+  // ノブ（Y-Z 断面でのサイズ = knob_t）
+  color([0.7, 0.5, 0.3])
+    part(-knob_t/2, 0, knob_t, knob_h, "ノブ");
+
+  // ソケット（外寸 = knob_w_base + knob_t + 2*socket_wall）
+  socket_ow = knob_w_base + knob_t + 2*socket_wall;
+  color([0.3, 0.6, 0.8])
+    part(-socket_ow/2, socket_z, socket_ow, socket_oh, "ソケット");
+
+  // ホーン
+  horn_w = 10;
+  color([0.9, 0.9, 0.9])
+    part(-horn_w/2, socket_top_z, horn_w, horn_h, "ホーン", fs3);
+
+  // サーボ軸
+  color([0.5, 0.5, 0.5])
+    translate([-1.5, socket_top_z]) square([3, horn_h]);
+
+  // 台座（ロゼット・ソケットを包み込む）
+  pedestal_inner = rosette_d/2 + 2;
+  pedestal_wall_t = 2.5;
+  color([0.7, 0.6, 0.5]) {
+    translate([-pedestal_inner - pedestal_wall_t, wall])
+      square([pedestal_wall_t, pedestal_top_z - wall]);
+    translate([pedestal_inner, wall])
+      square([pedestal_wall_t, pedestal_top_z - wall]);
+    translate([-pedestal_inner - pedestal_wall_t, pedestal_top_z - pedestal_wall_t])
+      square([pedestal_inner - 4, pedestal_wall_t]);
+    translate([4, pedestal_top_z - pedestal_wall_t])
+      square([pedestal_inner - 4, pedestal_wall_t]);
+    translate([-pedestal_inner - pedestal_wall_t - 3, (wall + pedestal_top_z)/2])
+      text("台座", size=fs3, font=font, halign="right", valign="center");
   }
 
-  // 寸法線（右側）
-  xr1 = bx + bw + 8;
-  xr2 = xr1 + 25;
-  xr3 = xr2 + 25;
+  // SG90（Y 方向の幅 = servo_body_w）
+  color([0.4, 0.7, 0.4])
+    part(-servo_body_w/2, servo_z, servo_body_w, servo_body_h, "SG90");
+
+  // サーボ耳（Y 方向は本体と同じ幅）
+  color([0.4, 0.7, 0.4])
+    part(-servo_body_w/2, servo_z, servo_body_w, servo_tab_h, "耳", fs3);
+
+  // --- Pico + 基板エリア（Y = pico_cy 付近）--- 実寸 ---
+
+  // Pico（Y 方向 = pico_l = 51mm、90° 回転配置）
+  color([0.8, 0.4, 0.4])
+    part(pico_cy - pico_l/2, pico_floor_z + pico_boss_h,
+         pico_l, pico_h, "Pico W");
+  // ボス
+  color([0.6, 0.6, 0.6]) {
+    part(pico_cy - pico_l/2 + 2, pico_floor_z, 3, pico_boss_h, "");
+    part(pico_cy + pico_l/2 - 5, pico_floor_z, 3, pico_boss_h, "");
+  }
+  // ピンヘッダ
+  color([0.6, 0.6, 0.6]) {
+    part(pico_cy - pico_l/2 + 2,
+         pico_floor_z + pico_boss_h + pico_h, 2, pin_header_h, "");
+    part(pico_cy + pico_l/2 - 4,
+         pico_floor_z + pico_boss_h + pico_h, 2, pin_header_h, "");
+  }
+  // ユニバーサル基板（Y 方向 = uboard_l = 72mm）
+  color([0.6, 0.3, 0.6])
+    part(pico_cy - uboard_l/2, uboard_z,
+         uboard_l, uboard_t, "基板 72×47");
+  // C1（基板上の端）
+  color([0.5, 0.5, 0.8])
+    part(pico_cy + pico_l/2 + 2, uboard_z + uboard_t, 5, cap_h, "C1");
+
+  // 底面床（Pico エリア）
+  color([0, 0, 0])
+    hline(rosette_d/2 + 2, by2, wall);
+
+  // 開口ラベル
+  translate([0, wall + 3])
+    text("開口", size=fs3, font=font, halign="center", valign="center");
+
+  // --- 寸法線 ---
+  dim_y = new_body_h + 8;
   color([0.2, 0.2, 0.8]) {
-    vdim(socket_z, socket_z + socket_oh, xr1, str(socket_oh));
-    translate([xr1 + 3, socket_z + socket_oh/2 - 5])
-      text("ソケット", size=fs3, font=font);
-
-    vdim(servo_z, servo_top_z, xr2, str(servo_body_h));
-    translate([xr2 + 3, servo_z + servo_body_h/2 - 5])
-      text("SG90", size=fs3, font=font);
-
-    vdim(servo_top_z, new_body_h - wall, xr1, str(wire_clearance));
-    translate([xr1 + 3, servo_top_z + wire_clearance/2 - 4])
-      text("配線", size=fs3, font=font);
+    // 軸まわりの高さ寸法（左端に）
+    vdim(0, knob_h, by1 - 8, str(knob_h, " ノブ"), false);
+    vdim(socket_z, socket_top_z, by1 - 20, str(socket_oh, " ソケット"), false);
+    vdim(socket_top_z, pedestal_top_z, by1 - 8, str(horn_h, " ホーン"), false);
+    vdim(servo_z, servo_top_z, by1 - 32, str(servo_body_h, " SG90"), false);
   }
 
   // 全高（右端）
   color([0.8, 0.2, 0.2])
-    vdim(0, new_body_h, xr3, str(new_body_h, " 全高"));
-
-  // Z 位置ラベル（全高寸法線の横にまとめて表示）
-  color([0.4, 0.4, 0.4]) {
-    translate([xr3 + 3, -4])
-      text("Z=0", size=fs3, font=font, valign="center");
-    translate([xr3 + 3, new_body_h + 4])
-      text(str("Z=", new_body_h), size=fs3, font=font, valign="center");
-  }
+    vdim(0, new_body_h, by2 + 8, str(new_body_h, " 全高"));
 }
 
 
@@ -268,7 +293,8 @@ module front_view() {
   }
 
   // Pico W + ユニバーサル基板
-  pico_gap = max(6, rosette_d/2 - servo_body_w/2 + 2);
+  pico_gap = max(6, rosette_d/2 - servo_body_w/2 + 2,
+                rosette_d/2 + uboard_l/2 - pico_l/2 - servo_body_w/2 + 2);
   pico_cy = servo_body_w/2 + pico_gap + pico_l/2;
 
   // ユニバーサル基板（72×47mm、Pico に重ねて配置）
@@ -332,6 +358,6 @@ if (view == "side") {
 } else {
   scale([draw_scale, draw_scale]) {
     side_view();
-    translate([140, 0]) front_view();
+    translate([160, 0]) front_view();
   }
 }

@@ -57,11 +57,15 @@ knob_h      = 11;   // protrusion from the door
 knob_engage = 10;   // socket engagement depth (< knob_h)
 socket_wall = 2.0;
 
+// --- Universal board (stacked on Pico via pin headers) ---
+uboard_l = 72;    // long side (along Pico pin direction = Y)
+uboard_w = 47;    // short side (across Pico width = X)
+
 // --- Interior extents from the axis at origin (mm) ---
 ext_left  = 27;   // -X toward frame; must be <= clear_left (>= rosette_d/2)
 ext_right = 27;   // +X; symmetric with ext_left
 ext_down  = 23;   // -Y toward handle; must be <= clear_down (>= rosette_d/2)
-ext_up    = 86;   // +Y free; houses Pico + universal board (72mm)
+ext_up    = 97;   // +Y free; houses Pico + universal board (72mm, clears rosette)
 
 inner_l = ext_left + ext_right;          // 50
 inner_w = ext_down + ext_up;             // 78
