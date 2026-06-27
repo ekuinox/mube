@@ -36,7 +36,7 @@ btn_y = pico_y + led_btn_spacing/2;
 // ===== 各パーツの 3D 形状（個別モジュール） =====
 module part_rosette() {
   // ロゼット（ドア表面の化粧座、参考表示）
-  translate([0, 0, -0.5])
+  translate([0, 0, 0.5])
     difference() {
       cylinder(d=rosette_d, h=1, center=true);
       cylinder(d=rosette_d - 3, h=2, center=true);
@@ -54,17 +54,19 @@ module part_horn() {
   translate([0, 0, socket_top_z + horn_h/2])
     cube([12, 12, horn_h], center=true);
 }
-module part_pedestal() {
-  // 壁
+module part_pedestal_walls() {
+  // 円筒壁のみ（天面は別パーツ）
   translate([0, 0, pedestal_top_z/2])
     difference() {
       cylinder(r=pedestal_r, h=pedestal_top_z, center=true);
       cylinder(r=pedestal_r - pedestal_wall_t, h=pedestal_top_z+1, center=true);
     }
-  // 天面
+}
+module part_pedestal_top() {
+  // 天面（サーボ穴あり）
   translate([0, 0, pedestal_top_z - wall/2])
     difference() {
-      cylinder(r=pedestal_r, h=wall, center=true);
+      cylinder(r=pedestal_r - pedestal_wall_t, h=wall, center=true);
       cylinder(d=servo_shaft_d + 2*fit_clearance, h=wall+1, center=true);
     }
 }
@@ -99,10 +101,33 @@ module part_usb() {
   translate([pico_x, wall_y_top, body_h*0.4])
     cube([usb_w, wall*2, usb_h], center=true);
 }
-module part_brace() {
-  stub_len = clear_down - 4 - ext_down + 1;
-  translate([0, -(ext_down) - stub_len/2 + 1, wall/2])
-    cube([brace_stub_w, stub_len, wall], center=true);
+// 外殻を壁・床・蓋に分離して、各投影で壁厚が見えるようにする
+module part_body_walls() {
+  // 4面の壁のみ（上下オープン）
+  difference() {
+    translate([center_x, center_y, body_h/2])
+      cube([body_l, body_w, body_h], center=true);
+    translate([center_x, center_y, body_h/2])
+      cube([inner_l, inner_w, body_h + 1], center=true);
+  }
+}
+module part_floor() {
+  difference() {
+    translate([center_x, center_y, wall/2])
+      cube([inner_l, inner_w, wall], center=true);
+    cylinder(d=rosette_d + fit_clearance, h=wall+1, center=true);
+  }
+}
+module part_lid() {
+  translate([center_x, center_y, body_h + wall/2]) {
+    difference() {
+      cube([body_l, body_w, wall], center=true);
+      translate([0 - center_x, led_y - center_y, 0])
+        cylinder(d=led_hole_d, h=wall+1, center=true);
+      translate([0 - center_x, btn_y - center_y, 0])
+        cylinder(d=button_hole_d, h=wall+1, center=true);
+    }
+  }
 }
 
 
@@ -126,13 +151,6 @@ module wf_front() { wireframe() projection(cut=false) children(); }
 
 // パーツを投影してワイヤーフレーム化（横断面用: X方向投影→Y横軸, Z縦軸）
 module wf_side() { wireframe() projection(cut=false) rotate([0, 0, -90]) rotate([0, -90, 0]) children(); }
-
-module outline_rect(x, y, w, h) {
-  difference() {
-    translate([x, y]) square([w, h]);
-    translate([x+lw, y+lw]) square([w-2*lw, h-2*lw]);
-  }
-}
 
 // 直線
 module hline(x1, x2, y) {
@@ -189,21 +207,22 @@ module front_view() {
   by1 = center_y - body_w/2;
   by2 = center_y + body_w/2;
 
-  // 各パーツをワイヤーフレームで投影
+  // 各パーツをワイヤーフレームで投影（外殻・蓋・床も 3D から）
+  wf_front() part_body_walls();
+  wf_front() part_floor();
+  wf_front() part_lid();
   wf_front() part_rosette();
   wf_front() part_knob();
   wf_front() part_socket();
   wf_front() part_horn();
-  wf_front() part_pedestal();
+  wf_front() part_pedestal_walls();
+  wf_front() part_pedestal_top();
   wf_front() part_servo();
   wf_front() part_servo_tabs();
   wf_front() part_pico();
   wf_front() part_uboard();
   wf_front() part_led_btn();
   wf_front() part_usb();
-
-  // 外殻枠線
-  outline_rect(bx1, by1, body_l, body_w);
 
   // --- パーツ名ラベル（引出線、右に間隔6mmずつずらして重ならないように） ---
   lx1 = bx2 + 8;   // 第1列
@@ -245,21 +264,22 @@ module front_view() {
 module side_view() {
   by1 = center_y - body_w/2;
 
-  // 各パーツをワイヤーフレームで投影
+  // 各パーツをワイヤーフレームで投影（外殻・蓋・床も 3D から）
+  wf_side() part_body_walls();
+  wf_side() part_floor();
+  wf_side() part_lid();
   wf_side() part_rosette();
   wf_side() part_knob();
   wf_side() part_socket();
   wf_side() part_horn();
-  wf_side() part_pedestal();
+  wf_side() part_pedestal_walls();
+  wf_side() part_pedestal_top();
   wf_side() part_servo();
   wf_side() part_servo_tabs();
   wf_side() part_pico();
   wf_side() part_uboard();
   wf_side() part_led_btn();
   wf_side() part_usb();
-
-  // 外殻枠線
-  outline_rect(by1, 0, body_w, body_h);
 
   // --- パーツ名ラベル（引出線、左に1列ずつずらして重ならない配置） ---
   lx1 = by1 - 12;   // 第1列（本体に近い）
