@@ -1,33 +1,57 @@
 include <params.scad>
 
-// Fit-check mount face:
-//  - flat tape face over the body footprint (centered at the body center)
-//  - rosette recess at the axis (origin) — Ø46+clearance shallow recess
-//    (depth = rosette_recess) that registers/clears the raised escutcheon
-//    while leaving a thin floor so the brace stub bridge stays attached.
-//    If the real escutcheon is taller than rosette_recess, increase it
-//    (fit-check), accepting a thinner floor.
-//    (circular => registration only, no torque reaction)
-//    Note: the central servo-shaft passage is cut by body.scad's sg90_cutout.
-//  - downward brace stub toward the door handle (-Y); a fit-check placeholder
-//    for the torque reaction, refined against the real handle next phase
-// FUTURE (Q6): replace the brace stub with the measured handle/frame engagement.
+// Pedestal: cup-shaped structure that wraps around the rosette/socket area,
+// providing a platform for the SG90 servo tabs.
+//
+// Structure (Z cross-section at the axis):
+//   Z=0..wall:              body floor (with central opening for knob)
+//   Z=wall..pedestal_top_z: pedestal walls rising around the rosette
+//   Z=pedestal_top_z:       platform where servo tabs rest (with shaft hole)
+//
+// The brace stub is retained for torque reaction toward the door handle (-Y).
 module mount_plate() {
+  c = fit_clearance;
+  pedestal_r = rosette_d/2 + pedestal_wall_t + c;
+
   difference() {
     union() {
-      // flat footprint
+      // body floor — full footprint
       translate([center_x, center_y, 0])
         linear_extrude(height = wall)
           offset(r = 2) offset(r = -2)
             square([body_l, body_w], center = true);
-      // downward brace stub: from the bottom wall toward the handle, stopping
-      // 4mm short of clear_down. Overlaps the floor to fuse with the plate.
+
+      // pedestal walls — cylindrical ring from floor to platform
+      linear_extrude(height = pedestal_top_z)
+        difference() {
+          circle(r = pedestal_r);
+          circle(r = pedestal_r - pedestal_wall_t);
+        }
+
+      // pedestal top platform — disc with shaft hole
+      translate([0, 0, pedestal_top_z - wall])
+        linear_extrude(height = wall)
+          difference() {
+            circle(r = pedestal_r);
+            circle(d = servo_shaft_d + 2*c);
+          }
+
+      // servo screw bosses on pedestal top
+      for (sx = [-1, 1])
+        translate([sx * servo_screw_span/2, 0, pedestal_top_z])
+          difference() {
+            cylinder(d = servo_boss_d, h = servo_boss_h);
+            translate([0, 0, -0.1])
+              cylinder(d = servo_screw_pilot, h = servo_boss_h + 0.2);
+          }
+
+      // brace stub toward the handle (-Y)
       translate([-brace_stub_w/2, -(clear_down - 4), 0])
         cube([brace_stub_w, (clear_down - 4) - ext_down + 1, wall]);
     }
-    // rosette shallow recess at the axis — depth rosette_recess only,
-    // so the floor and brace stub bridge are never severed.
+
+    // central floor opening for thumb-turn knob
     translate([0, 0, -0.1])
-      cylinder(d = rosette_d + fit_clearance, h = rosette_recess + 0.1);
+      cylinder(d = rosette_d + c, h = wall + 0.2);
   }
 }

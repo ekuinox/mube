@@ -38,10 +38,6 @@ led_hole_d    = 5.2;
 button_hole_d = 6.2;
 led_btn_spacing = 16;   // center-to-center distance between LED and button
 
-// --- MOSFET footprint (small module) ---
-mosfet_w      = 12.0;
-mosfet_l      = 16.0;
-
 // --- Door-fit clearances from the thumb-turn axis (origin = rosette center) ---
 clear_left  = 30;   // -X to door edge/frame
 clear_down  = 40;   // -Y to door handle
@@ -57,6 +53,13 @@ knob_h      = 11;   // protrusion from the door
 knob_engage = 10;   // socket engagement depth (< knob_h)
 socket_wall = 2.0;
 
+// --- Servo horn + pedestal ---
+horn_h            = 4;      // horn thickness + clearance between socket top and servo tabs
+socket_oh         = knob_engage + socket_wall + 6;   // socket total height (18)
+pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 23: servo tabs rest here
+pedestal_wall_t   = 2.5;    // pedestal wall thickness
+wire_clearance    = 4;      // space above servo for wiring
+
 // --- Universal board (stacked on Pico via pin headers) ---
 uboard_l = 72;    // long side (along Pico pin direction = Y)
 uboard_w = 47;    // short side (across Pico width = X)
@@ -64,12 +67,13 @@ uboard_w = 47;    // short side (across Pico width = X)
 // --- Interior extents from the axis at origin (mm) ---
 ext_left  = 27;   // -X toward frame; must be <= clear_left (>= rosette_d/2)
 ext_right = 27;   // +X; symmetric with ext_left
-ext_down  = 23;   // -Y toward handle; must be <= clear_down (>= rosette_d/2)
+ext_down  = 26;   // -Y toward handle; must be <= clear_down (>= rosette_d/2 + pedestal)
 ext_up    = 97;   // +Y free; houses Pico + universal board (72mm, clears rosette)
 
-inner_l = ext_left + ext_right;          // 50
-inner_w = ext_down + ext_up;             // 78
-inner_h = servo_body_h + pico_boss_h + 6;
+inner_l = ext_left + ext_right;          // 54
+inner_w = ext_down + ext_up;             // 120
+// inner_h: servo stack is the tallest — pedestal_top(23) + servo(22.5) + clearance(4) - floor wall
+inner_h = pedestal_top_z + servo_body_h + wire_clearance - wall; // 47.1
 
 body_l = inner_l + 2*wall;
 body_w = inner_w + 2*wall;
@@ -91,8 +95,7 @@ assert(clear_down - 4 <= clear_down, "brace stub tip within handle clearance");
 assert(knob_w_top <= knob_w_base, "knob tapers base->top");
 assert(knob_engage < knob_h, "engagement shallower than protrusion");
 
-// --- Servo screw-mount checks ---
+// --- Servo mount checks ---
 assert(servo_screw_pilot < servo_boss_d, "pilot hole smaller than boss");
-assert(servo_boss_h >= servo_tab_h, "boss must be taller than tab to preserve thread engagement depth");
-assert(servo_screw_span/2 + servo_boss_d/2 <= ext_left, "screw boss within interior (-X side)");
-assert(servo_tab_l/2 + fit_clearance <= ext_left, "tab pocket within interior (-X side)");
+assert(rosette_d/2 + pedestal_wall_t <= ext_left, "pedestal within interior (-X)");
+assert(rosette_d/2 + pedestal_wall_t <= ext_down, "pedestal within interior (-Y)");

@@ -8,30 +8,22 @@ view = "both";
 
 include <params.scad>
 
-// ===== 新レイアウトの算出寸法 =====
+// ===== params.scad からの派生値 =====
+// socket_oh, pedestal_top_z, horn_h, wire_clearance は params.scad で定義済み
 
-socket_oh = knob_engage + socket_wall + 6;
-socket_z = knob_h - knob_engage;           // 1
-socket_top_z = socket_z + socket_oh;       // 19
-horn_h = 4;                                // ホーン厚 + クリアランス
-pedestal_top_z = socket_top_z + horn_h;    // 23 (台座天面 = サーボ耳が載る面)
-servo_z  = pedestal_top_z;                 // 23
-servo_top_z = servo_z + servo_body_h;      // 45.5
-wire_clearance = 4;
-new_inner_h = servo_top_z + wire_clearance; // 49.5
-new_body_h  = new_inner_h + wall;           // 51.9
-pico_floor_z = wall;                       // 2.4
+socket_z = knob_h - knob_engage;                          // 1
+socket_top_z = socket_z + socket_oh;                      // 19
+servo_z  = pedestal_top_z;                                // 23
+servo_top_z = servo_z + servo_body_h;                     // 45.5
+pico_floor_z = wall;                                      // 2.4
 
-// ユニバーサル基板（Pico の上にスタッキング）
-uboard_l = 72;    // 長辺（Pico ピン列方向 = Y）
-uboard_w = 47;    // 短辺（Pico 幅方向 = X）
-uboard_t = 1.6;   // 基板厚み
+// レイアウト図用の追加パラメータ（params 外）
+uboard_t = 1.6;    // 基板厚み
 pin_header_h = 8.5; // ピンヘッダ高さ
-cap_h = 12;        // 最も背の高い部品（電解コン）
+cap_h = 12;         // 最も背の高い部品（電解コン）
 
 // 基板の Z 位置
-uboard_z = pico_floor_z + pico_boss_h + pico_h + pin_header_h; // ≈14.9
-uboard_top_z = uboard_z + uboard_t + cap_h;                   // ≈28.5
+uboard_z = pico_floor_z + pico_boss_h + pico_h + pin_header_h;
 
 // ロゼットはみ出し量
 rosette_overhang = rosette_d/2 - (body_l/2 - center_x);
@@ -97,17 +89,17 @@ module side_view() {
   pico_cy = servo_body_w/2 + pico_gap + pico_l/2;
 
   // タイトル
-  translate([(by1+by2)/2, new_body_h + 18])
+  translate([(by1+by2)/2, body_h + 18])
     text("横断面図（Y-Z 断面）", size=fs, font=font, halign="center");
-  translate([(by1+by2)/2, new_body_h + 12])
-    text(str("body_h=", new_body_h, "  body_w=", body_w), size=fs2, font=font, halign="center");
+  translate([(by1+by2)/2, body_h + 12])
+    text(str("body_h=", body_h, "  body_w=", body_w), size=fs2, font=font, halign="center");
 
   // ドア面（太帯）
   color([0.3, 0.3, 0.3]) {
     translate([by1 - 10, -4]) square([by2 - by1 + 20, 4]);
     translate([(by1+by2)/2, -8])
       text("↓ ドア面", size=fs2, font=font, halign="center", valign="center");
-    translate([(by1+by2)/2, new_body_h + 4])
+    translate([(by1+by2)/2, body_h + 4])
       text("↑ 室内側", size=fs3, font=font, halign="center", valign="center");
   }
   // ドア上下方向
@@ -120,9 +112,9 @@ module side_view() {
 
   // 本体外壁
   color([0, 0, 0]) {
-    vline(by1, 0, new_body_h, 0.8);
-    vline(by2, 0, new_body_h, 0.8);
-    hline(by1, by2, new_body_h, 0.8);
+    vline(by1, 0, body_h, 0.8);
+    vline(by2, 0, body_h, 0.8);
+    hline(by1, by2, body_h, 0.8);
     // 底面（中央に開口）
     hline(by1, -rosette_d/2 - 2, wall);
     hline(rosette_d/2 + 2, by2, wall);
@@ -207,7 +199,7 @@ module side_view() {
     text("開口", size=fs3, font=font, halign="center", valign="center");
 
   // --- 寸法線 ---
-  dim_y = new_body_h + 8;
+  dim_y = body_h + 8;
   color([0.2, 0.2, 0.8]) {
     // 軸まわりの高さ寸法（左端に）
     vdim(0, knob_h, by1 - 8, str(knob_h, " ノブ"), false);
@@ -218,7 +210,7 @@ module side_view() {
 
   // 全高（右端）
   color([0.8, 0.2, 0.2])
-    vdim(0, new_body_h, by2 + 8, str(new_body_h, " 全高"));
+    vdim(0, body_h, by2 + 8, str(body_h, " 全高"));
 }
 
 
