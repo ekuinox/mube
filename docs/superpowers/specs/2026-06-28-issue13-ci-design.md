@@ -59,6 +59,10 @@ spawner.spawn(net_task(net_runner)).unwrap();
 
 firmware crate の `main.rs` は `cyw43::aligned_bytes!("../cyw43-firmware/43439A0.bin")` でバイナリブロブを埋め込む。このマクロは `include_bytes!` のアライメント付き版で、ファイルが存在しないとコンパイルが失敗する。CI ではライセンス物のブロブをコミットできないため、空ファイルをステップ内で作成してマクロ展開を通す。これにより型検査まで到達でき、Issue #13 のような括弧位置バグを検出できる。
 
+## 3. CLAUDE.md へのルール追記
+
+「触る時の注意」セクションに、Rust コード変更時はコミット前に `nix develop -c cargo host-test` を通すルールを追記する。CI と同じ基準をローカルでも守る運用。
+
 ## スコープ外
 
 - OpenSCAD レンダリングテスト (Nix + Mesa 環境が必要)
