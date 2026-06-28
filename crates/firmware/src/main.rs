@@ -97,7 +97,7 @@ async fn main(spawner: Spawner) {
     let gate = Output::new(p.PIN_14, Level::Low);
     let servo_pwm = Pwm::new_output_b(p.PWM_SLICE7, p.PIN_15, PwmConfig::default());
     let servo = Servo::new(servo_pwm, gate);
-    spawner.spawn(servo_task(servo).unwrap());
+    spawner.spawn(servo_task(servo)).unwrap();
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
     // cyw43 v0.7.0 では aligned_bytes! マクロで A4 アライメントが要る。
@@ -124,7 +124,7 @@ async fn main(spawner: Spawner) {
     let state = STATE.init(cyw43::State::new());
     // cyw43 v0.7.0: new() takes fw and clm (nvram) as Aligned<A4, [u8]>; control.init() は廃止。
     let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw, clm).await;
-    spawner.spawn(cyw43_task(runner).unwrap());
+    spawner.spawn(cyw43_task(runner)).unwrap();
 
     control
         .set_power_management(cyw43::PowerManagementMode::PowerSave)
@@ -141,7 +141,7 @@ async fn main(spawner: Spawner) {
         RESOURCES.init(StackResources::new()),
         seed,
     );
-    spawner.spawn(net_task(net_runner).unwrap());
+    spawner.spawn(net_task(net_runner)).unwrap();
 
     // WPA2 で接続。失敗したら少し待って再試行。
     loop {
