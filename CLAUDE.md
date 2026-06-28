@@ -30,6 +30,7 @@
 
 ## 触る時の注意（規約・地雷）
 
+- Rust コードを変更したらコミット前に `nix develop -c cargo host-test` を通すこと。テストが落ちたまま完了扱いにしない。
 - `build/` と `*.stl` は派生物。コミットしない（.gitignore 済み）。
 - 秘密扱い・未コミット: WiFi 認証（`crates/firmware/src/config.rs` の `WIFI_SSID` / `WIFI_PASSWORD`）と CYW43 ブロブ（`crates/firmware/cyw43-firmware/*.bin`、ライセンス物）。実値を会話やコミットに載せない。
 - サーボ実機合わせはキャリブ定数だけを安全側から調整する。角度→パルス変換（`SERVO_MIN_US` / `SERVO_MAX_US` / `LOCK_DEG` / `UNLOCK_DEG`）は `crates/smtlk-core/src/servo_math.rs`、整定待ち `SETTLE_MS` は `crates/firmware/src/servo.rs`。
