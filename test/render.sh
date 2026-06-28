@@ -13,5 +13,8 @@ log="$(openscad -o "$out" "$scad" 2>&1)"
 status=$?
 echo "$log"
 if [ "$status" -ne 0 ]; then echo "FAIL: openscad exit $status"; exit 1; fi
-if echo "$log" | grep -Eiq 'WARNING|ERROR'; then echo "FAIL: warnings/errors present"; exit 1; fi
+# Match OpenSCAD's own diagnostics ("WARNING:" / "ERROR:") only. Case-sensitive
+# with the trailing colon so we don't false-match the manifold success line
+# ("Status: NoError") or environmental noise (nix "warning: Git tree ... dirty").
+if echo "$log" | grep -Eq 'WARNING:|ERROR:'; then echo "FAIL: warnings/errors present"; exit 1; fi
 echo "OK: $out"
