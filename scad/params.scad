@@ -76,7 +76,7 @@ ext_down  = 26;   // -Y toward handle; must be <= clear_down (>= rosette_d/2 + p
 ext_up    = 100;  // +Y free; houses Pico + universal board (72mm, clears pedestal)
 
 inner_l = ext_left + ext_right;          // 54
-inner_w = ext_down + ext_up;             // 120
+inner_w = ext_down + ext_up;             // 126
 // inner_h: servo stack is the tallest — pedestal_top(23) + servo(22.5) + clearance(4) - floor wall
 inner_h = pedestal_top_z + servo_body_h + wire_clearance - wall; // 47.1
 
@@ -85,8 +85,8 @@ body_w = inner_w + 2*wall;
 body_h = inner_h + 2*wall;
 
 // body center relative to the axis (axis sits low-left, body grows up-right)
-center_x = (ext_right - ext_left) / 2;   // 5
-center_y = (ext_up - ext_down) / 2;      // 25
+center_x = (ext_right - ext_left) / 2;   // 0
+center_y = (ext_up - ext_down) / 2;      // 37
 
 // --- Sanity / clearance checks ---
 assert(wall > 0, "wall must be positive");
