@@ -19,7 +19,7 @@
 | Rg 220Ω | カーボン抵抗(炭素皮膜抵抗) 1/4W220Ω | 秋月 | [R-25221](https://akizukidenshi.com/catalog/g/g125221/) | ¥150 | 100 | 1 | ¥2 |
 | Rgs 10kΩ | カーボン抵抗(炭素皮膜抵抗) 1/4W10kΩ | 秋月 | [R-25103](https://akizukidenshi.com/catalog/g/g125103/) | ¥100 | 100 | 1 | ¥1 |
 | Rled 330Ω | カーボン抵抗(炭素皮膜抵抗) 1/4W330Ω | 秋月 | [R-25331](https://akizukidenshi.com/catalog/g/g125331/) | ¥180 | 100 | 2 | ¥4 |
-| D1 2色LED | 2色LED 赤・黄緑5mm カソードコモン 乳白色 OSRGHC5B32A（10個入） | 秋月 | [I-06314](https://akizukidenshi.com/catalog/g/gI-06314/) | ¥150 | 10 | 1 | ¥15 |
+| D1 2色LED | 2色LED 赤・黄緑5mm カソードコモン 乳白色 OSRGHC5B32A（10個入） | 秋月 | [I-06314](https://akizukidenshi.com/catalog/g/g106314/) | ¥150 | 10 | 1 | ¥15 |
 | SW1 タクト | タクトスイッチ(黒色) | 秋月 | [P-03647](https://akizukidenshi.com/catalog/g/g103647/) | ¥15 | 1 | 1 | ¥15 |
 | C1 470µF | 電解コンデンサー 470µF16V105℃ ルビコンPX | 秋月 | [P-10273](https://akizukidenshi.com/catalog/g/g110273/) | ¥10 | 1 | 1 | ¥10 |
 | - ユニバーサル基板 | 片面ガラスコンポジット・ユニバーサル基板 Cタイプ(72×47mm) めっき仕上げ | 秋月 | [P-03229](https://akizukidenshi.com/catalog/g/g103229/) | ¥130 | 1 | 1 | ¥130 |
@@ -48,7 +48,7 @@
 | 秋月電子通商 | [R-25221](https://akizukidenshi.com/catalog/g/g125221/) | カーボン抵抗 1/4W 220Ω（100本入） |
 | 秋月電子通商 | [R-25103](https://akizukidenshi.com/catalog/g/g125103/) | カーボン抵抗 1/4W 10kΩ（100本入） |
 | 秋月電子通商 | [R-25331](https://akizukidenshi.com/catalog/g/g125331/) | カーボン抵抗 1/4W 330Ω（100本入, 2本使用） |
-| 秋月電子通商 | [I-06314](https://akizukidenshi.com/catalog/g/gI-06314/) | 2色LED 赤・黄緑 5mm カソードコモン 乳白色 OSRGHC5B32A（10個入） |
+| 秋月電子通商 | [I-06314](https://akizukidenshi.com/catalog/g/g106314/) | 2色LED 赤・黄緑 5mm カソードコモン 乳白色 OSRGHC5B32A（10個入） |
 | 秋月電子通商 | [P-03647](https://akizukidenshi.com/catalog/g/g103647/) | タクトスイッチ(黒色) |
 | 秋月電子通商 | [P-10273](https://akizukidenshi.com/catalog/g/g110273/) | 電解コンデンサー 470µF16V |
 | 秋月電子通商 | [P-03229](https://akizukidenshi.com/catalog/g/g103229/) | 片面ユニバーサル基板 Cタイプ(72×47mm) めっき仕上げ |
