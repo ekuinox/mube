@@ -15,6 +15,8 @@ socket_top_z = socket_z + socket_oh;
 servo_z  = pedestal_top_z;
 servo_top_z = servo_z + servo_body_h;
 pico_floor_z = wall;
+pico_z = wall * 0.5;
+usb_z = pico_z + pico_boss_h + pico_h + usb_connector_h/2;
 
 pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;
 pico_gap = max(6, pedestal_outer - servo_body_w/2 + 2,
@@ -98,7 +100,7 @@ module part_led_btn() {
 }
 module part_usb() {
   wall_y_top = center_y + inner_w/2;
-  translate([pico_x, wall_y_top, body_h*0.4])
+  translate([pico_x, wall_y_top, usb_z])
     cube([usb_w, wall*2, usb_h], center=true);
 }
 // 外殻を壁・床・蓋に分離して、各投影で壁厚が見えるようにする
