@@ -88,7 +88,7 @@ PARTS = {
 PART_META = {
     "U1": ("Raspberry Pi Pico W", "-"),
     "M1": ("SG90 servo", "3-wire"),
-    "Q1": ("N-ch MOSFET (logic level)", "AO3400 / IRLZ44N"),
+    "Q1": ("N-ch MOSFET (logic level)", "IRLB3813PBF"),
     "Rg": ("Resistor", "220R"),
     "Rgs": ("Resistor", "10k"),
     "Rled": ("Resistor", "330R"),

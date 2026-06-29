@@ -64,11 +64,11 @@ def test_gen_from_to_single_pair():
 
 
 def test_gen_bom_rows():
-    meta = {"Q1": ("N-ch MOSFET (logic level)", "AO3400 / IRLZ44N"),
+    meta = {"Q1": ("N-ch MOSFET (logic level)", "IRLB3813PBF"),
             "Rg": ("Resistor", "220R")}
     md = n.gen_bom(meta)
     assert "| Ref | Part | Value | Qty |" in md
-    assert "| Q1 | N-ch MOSFET (logic level) | AO3400 / IRLZ44N | 1 |" in md
+    assert "| Q1 | N-ch MOSFET (logic level) | IRLB3813PBF | 1 |" in md
     assert "| Rg | Resistor | 220R | 1 |" in md
 
 
