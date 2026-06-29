@@ -86,4 +86,16 @@ mod tests {
         assert_eq!(o.servo, None);
         assert_eq!(o.reply, "ERR\n");
     }
+
+    #[test]
+    fn lock_idempotent_still_drives_servo() {
+        let o = decide(b"LOCK\n", LockState::Locked); // 同状態でも駆動を指令する
+        assert_eq!(o.servo, Some(LockState::Locked));
+    }
+
+    #[test]
+    fn unlock_idempotent_still_drives_servo() {
+        let o = decide(b"UNLOCK\n", LockState::Unlocked); // 同状態でも駆動を指令する
+        assert_eq!(o.servo, Some(LockState::Unlocked));
+    }
 }
