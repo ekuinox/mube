@@ -7,9 +7,6 @@
 //!（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっているため、
 //! 制御にも WiFi チップの初期化が要る）。
 //!
-//! ロック状態の単一ソースは `LOCK_STATE`（BlockingMutex で保護）。
-//! TCP コマンドは `FwLockPort` 経由で `apply_target` を呼ぶ。
-//!
 //! ロック状態は単一ソース `LOCK_STATE` に集約し、TCP コマンド・GP17 ボタン（トグル）・
 //! 二色ステータス LED（GP16=赤=施錠 / GP18=黄緑=解錠）が同じ状態を参照する。
 //! オンボード LED（CYW43）は TCP 接続状態の表示。ボタンは内部プルアップ（アクティブ Low）。
