@@ -29,9 +29,10 @@ pico_hole_dy  = 11.4;   // mounting hole spacing across width
 pico_boss_d   = 4.5;
 pico_boss_h   = 3.0;
 
-// --- USB micro-B plug clearance (Pico W) ---
-usb_w         = 9.0;
-usb_h         = 6.0;
+// --- USB micro-B connector (Pico W) ---
+usb_w           = 9.0;
+usb_h           = 6.0;
+usb_connector_h = 2.6;   // connector body height above PCB (measured)
 
 // --- MOSFET footprint (Q1 power-gate module keep-out) ---
 mosfet_l      = 16.0;

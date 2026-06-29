@@ -20,7 +20,7 @@ module body() {
 
   // USB on the +Y top wall, aligned to the Pico's top end.
   wall_y_top = center_y + inner_w/2;
-  usb_z = pico_z + pico_boss_h + pico_h;
+  usb_z = pico_z + pico_boss_h + pico_h + usb_connector_h/2;
 
   difference() {
     union() {
