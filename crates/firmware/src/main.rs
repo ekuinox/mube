@@ -81,13 +81,34 @@ impl LockPort for FwLockPort {
     }
 }
 
-/// 指令を待ってサーボをワンショット駆動し続けるタスク。
+/// 二色ステータス LED を状態に合わせて点灯する（施錠=赤 / 解錠=黄緑、同時点灯はしない）。
+fn set_status_led(led_r: &mut Output<'static>, led_g: &mut Output<'static>, state: LockState) {
+    match state {
+        LockState::Locked => {
+            led_r.set_high();
+            led_g.set_low();
+        }
+        LockState::Unlocked => {
+            led_r.set_low();
+            led_g.set_high();
+        }
+    }
+}
+
+/// 指令を待ってサーボをワンショット駆動し、二色 LED を最新状態に更新し続けるタスク。
 #[embassy_executor::task]
-async fn servo_task(mut servo: Servo<'static>) -> ! {
+async fn servo_task(
+    mut servo: Servo<'static>,
+    mut led_r: Output<'static>,
+    mut led_g: Output<'static>,
+) -> ! {
+    // 起動時は安全側 Locked を表示（LOCK_STATE 初期値に追従）。
+    set_status_led(&mut led_r, &mut led_g, LOCK_STATE.lock(|c| c.get()));
     loop {
         let state = SERVO_CMD.wait().await;
         info!("servo: move_to {}", state);
         servo.move_to(state).await;
+        set_status_led(&mut led_r, &mut led_g, state);
     }
 }
 
@@ -110,11 +131,13 @@ async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
     // サーボ駆動: PWM 信号 = GP15（slice7 ch B）、電源ゲート = GP14（active-high）。
-    // Servo::new が divider/top を設定するため、ここは PwmConfig::default() を渡せばよい。
     let gate = Output::new(p.PIN_14, Level::Low);
     let servo_pwm = Pwm::new_output_b(p.PWM_SLICE7, p.PIN_15, PwmConfig::default());
     let servo = Servo::new(servo_pwm, gate);
-    spawner.spawn(servo_task(servo).unwrap());
+    // 二色ステータス LED: 赤=GP16（施錠）, 黄緑=GP18（解錠）。コモンカソード、active-high。
+    let led_r = Output::new(p.PIN_16, Level::Low);
+    let led_g = Output::new(p.PIN_18, Level::Low);
+    spawner.spawn(servo_task(servo, led_r, led_g).unwrap());
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
     // cyw43 v0.7.0 では aligned_bytes! マクロで A4 アライメントが要る。
