@@ -7,5 +7,5 @@ pub mod lock;
 pub mod serve;
 pub mod servo_math;
 
-pub use lock::{LockController, LockState, Outcome};
-pub use serve::{serve_connection, ServoSink, LINE_MAX};
+pub use lock::{decide, LockState, Outcome};
+pub use serve::{serve_connection, LockPort, LINE_MAX};

@@ -7,8 +7,9 @@
 //!（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっているため、
 //! 制御にも WiFi チップの初期化が要る）。
 //!
-//! サーボ指令の継ぎ目（`SERVO_CMD: Signal`）は `SignalSink` アダプタ経由で
-//! `serve_connection` から叩かれる。
+//! ロック状態は単一ソース `LOCK_STATE` に集約し、TCP コマンド・GP17 ボタン（トグル）・
+//! 二色ステータス LED（GP16=赤=施錠 / GP18=黄緑=解錠）が同じ状態を参照する。
+//! オンボード LED（CYW43）は TCP 接続状態の表示。ボタンは内部プルアップ（アクティブ Low）。
 //!
 //! ここから先（スマートロック本体）の積み残し:
 //!   - 手回し後の状態再同期・省電力運用
@@ -21,25 +22,28 @@
 mod config;
 mod servo;
 
+use core::cell::Cell;
+
 use config::{WIFI_PASSWORD, WIFI_SSID};
 use cyw43::SpiBus;
 use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_net::{Config as NetConfig, StackResources};
 use embassy_net::tcp::TcpSocket;
+use embassy_net::{Config as NetConfig, StackResources};
 use embassy_rp::bind_interrupts;
 use embassy_rp::dma::{Channel, InterruptHandler as DmaInterruptHandler};
-use embassy_rp::gpio::{Level, Output};
+use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_rp::pwm::{Config as PwmConfig, Pwm};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::blocking_mutex::Mutex as BlockingMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use servo::Servo;
-use smtlk_core::serve::{serve_connection, ServoSink};
-use smtlk_core::{LockController, LockState};
+use smtlk_core::serve::serve_connection;
+use smtlk_core::{LockPort, LockState};
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -51,26 +55,77 @@ bind_interrupts!(struct Irqs {
 /// 遠隔ロック操作を受ける TCP ポート。
 const LOCK_PORT: u16 = 6000;
 
-/// サーボへの施錠/解錠指令。TCP 受信ハンドラが `SignalSink` 経由で叩く。
+/// サーボへの施錠/解錠指令。`apply_target` が叩く。
 /// Signal は最新値のみ保持するため、指令が連続しても安全側（最新状態）へ収束する。
 static SERVO_CMD: Signal<CriticalSectionRawMutex, LockState> = Signal::new();
 
-/// `ServoSink` を `SERVO_CMD` で実装するアダプタ。serve_connection の結論をサーボタスクへ橋渡しする。
-struct SignalSink(&'static Signal<CriticalSectionRawMutex, LockState>);
+/// 唯一の現在ロック状態。TCP STATUS とボタンのトグルが参照する単一ソース。
+/// 起動時は安全側に施錠。
+static LOCK_STATE: BlockingMutex<CriticalSectionRawMutex, Cell<LockState>> =
+    BlockingMutex::new(Cell::new(LockState::Locked));
 
-impl ServoSink for SignalSink {
-    fn send(&self, state: LockState) {
-        self.0.signal(state);
+/// 目標状態を適用する: 現在状態を即時更新し、サーボタスクへ駆動指令を送る。
+/// TCP コマンドもボタンも必ずこれを通すことで状態が一意になる。
+fn apply_target(target: LockState) {
+    LOCK_STATE.lock(|c| c.set(target));
+    SERVO_CMD.signal(target);
+}
+
+/// firmware 側 `LockPort`: 現在状態は LOCK_STATE、適用は apply_target。
+struct FwLockPort;
+impl LockPort for FwLockPort {
+    fn current(&self) -> LockState {
+        LOCK_STATE.lock(|c| c.get())
+    }
+    fn apply(&self, target: LockState) {
+        apply_target(target);
     }
 }
 
-/// 指令を待ってサーボをワンショット駆動し続けるタスク。
+/// 二色ステータス LED を状態に合わせて点灯する（施錠=赤 / 解錠=黄緑、同時点灯はしない）。
+fn set_status_led(led_r: &mut Output<'static>, led_g: &mut Output<'static>, state: LockState) {
+    match state {
+        LockState::Locked => {
+            led_r.set_high();
+            led_g.set_low();
+        }
+        LockState::Unlocked => {
+            led_r.set_low();
+            led_g.set_high();
+        }
+    }
+}
+
+/// 指令を待ってサーボをワンショット駆動し、二色 LED を最新状態に更新し続けるタスク。
 #[embassy_executor::task]
-async fn servo_task(mut servo: Servo<'static>) -> ! {
+async fn servo_task(
+    mut servo: Servo<'static>,
+    mut led_r: Output<'static>,
+    mut led_g: Output<'static>,
+) -> ! {
+    // 起動時は安全側 Locked を表示（LOCK_STATE 初期値に追従）。
+    set_status_led(&mut led_r, &mut led_g, LOCK_STATE.lock(|c| c.get()));
     loop {
         let state = SERVO_CMD.wait().await;
         info!("servo: move_to {}", state);
         servo.move_to(state).await;
+        set_status_led(&mut led_r, &mut led_g, state);
+    }
+}
+
+/// GP17 のタクトスイッチ（内部プルアップ・アクティブ Low）を監視し、押下ごとにロックをトグルする。
+/// 内部プルアップに依存（外付け抵抗なし＝ Issue #27 の方針）。20ms デバウンスでチャタを除く。
+#[embassy_executor::task]
+async fn button_task(mut btn: Input<'static>) -> ! {
+    loop {
+        btn.wait_for_falling_edge().await; // 押下（High→Low）
+        Timer::after(Duration::from_millis(20)).await; // デバウンス
+        if btn.is_low() {
+            let target = LOCK_STATE.lock(|c| c.get()).toggled();
+            info!("button: toggle -> {}", target);
+            apply_target(target);
+        }
+        btn.wait_for_high().await; // リリースまで待ち、押しっぱなしの連発を防ぐ
     }
 }
 
@@ -93,11 +148,16 @@ async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
     // サーボ駆動: PWM 信号 = GP15（slice7 ch B）、電源ゲート = GP14（active-high）。
-    // Servo::new が divider/top を設定するため、ここは PwmConfig::default() を渡せばよい。
     let gate = Output::new(p.PIN_14, Level::Low);
     let servo_pwm = Pwm::new_output_b(p.PWM_SLICE7, p.PIN_15, PwmConfig::default());
     let servo = Servo::new(servo_pwm, gate);
-    spawner.spawn(servo_task(servo).unwrap());
+    // 二色ステータス LED: 赤=GP16（施錠）, 黄緑=GP18（解錠）。コモンカソード、active-high。
+    let led_r = Output::new(p.PIN_16, Level::Low);
+    let led_g = Output::new(p.PIN_18, Level::Low);
+    spawner.spawn(servo_task(servo, led_r, led_g).unwrap());
+    // ボタン: GP17 内部プルアップ（アクティブ Low）。押下でロックをトグル。
+    let button = Input::new(p.PIN_17, Pull::Up);
+    spawner.spawn(button_task(button).unwrap());
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
     // cyw43 v0.7.0 では aligned_bytes! マクロで A4 アライメントが要る。
@@ -167,19 +227,18 @@ async fn main(spawner: Spawner) {
     // 判断ロジックは smtlk_core::serve_connection（host テスト済み）。ここはアダプタ配線。
     let mut rx_buf = [0u8; 512];
     let mut tx_buf = [0u8; 512];
-    let mut controller = LockController::new(); // 接続をまたいで状態保持
-    let sink = SignalSink(&SERVO_CMD);
+    let port = FwLockPort;
 
     loop {
         let mut socket = TcpSocket::new(stack, &mut rx_buf, &mut tx_buf);
-        control.gpio_set(0, false).await; // 待受中: LED 消灯
+        control.gpio_set(0, false).await; // 待受中: オンボード LED 消灯
         if let Err(e) = socket.accept(LOCK_PORT).await {
             warn!("accept failed: {:?}", e);
             continue;
         }
         info!("client connected on :{}", LOCK_PORT);
-        control.gpio_set(0, true).await; // 接続中: LED 点灯
-        if let Err(e) = serve_connection(&mut socket, &mut controller, &sink).await {
+        control.gpio_set(0, true).await; // 接続中: オンボード LED 点灯
+        if let Err(e) = serve_connection(&mut socket, &port).await {
             warn!("serve error: {:?}", e);
         }
         info!("client disconnected");

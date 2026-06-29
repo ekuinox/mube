@@ -68,18 +68,19 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # Provisional GPIO assignment — finalized in the firmware phase. Change here and
 # from-to.md follows.
-GPIO = {"servo": "GP15", "gate": "GP14", "led": "GP16", "btn": "GP17"}
+GPIO = {"servo": "GP15", "gate": "GP14", "led_r": "GP16", "led_g": "GP18", "btn": "GP17"}
 
 # PARTS and NETS both derive from GPIO. If you mutate GPIO at runtime, rebuild
 # both (PARTS' U1 pins and build_nets(GPIO)) together so they stay consistent.
 PARTS = {
-    "U1": ["VBUS", "GND", GPIO["servo"], GPIO["gate"], GPIO["led"], GPIO["btn"]],
+    "U1": ["VBUS", "GND", GPIO["servo"], GPIO["gate"], GPIO["led_r"], GPIO["led_g"], GPIO["btn"]],
     "M1": ["V+", "GND", "SIG"],
     "Q1": ["G", "D", "S"],
     "Rg": ["1", "2"],
     "Rgs": ["1", "2"],
     "Rled": ["1", "2"],
-    "D1": ["A", "K"],
+    "Rled2": ["1", "2"],
+    "D1": ["R", "G", "K"],
     "SW1": ["1", "2"],
     "C1": ["+", "-"],
 }
@@ -91,7 +92,8 @@ PART_META = {
     "Rg": ("Resistor", "220R"),
     "Rgs": ("Resistor", "10k"),
     "Rled": ("Resistor", "330R"),
-    "D1": ("LED", "5mm"),
+    "Rled2": ("Resistor", "330R"),
+    "D1": ("2-color LED (R/YG, common-cathode)", "OSRGHC5B32A"),
     "SW1": ("Tactile switch", "-"),
     "C1": ("Electrolytic cap", "470uF"),
 }
@@ -109,8 +111,10 @@ def build_nets(gpio):
         "SERVO_SIG": [("U1", gpio["servo"]), ("M1", "SIG")],
         "GATE_DRV": [("U1", gpio["gate"]), ("Rg", "1")],
         "GATE": [("Rg", "2"), ("Q1", "G"), ("Rgs", "1")],
-        "LED_DRV": [("U1", gpio["led"]), ("Rled", "1")],
-        "LED_A": [("Rled", "2"), ("D1", "A")],
+        "LED_DRV_R": [("U1", gpio["led_r"]), ("Rled", "1")],
+        "LED_A_R": [("Rled", "2"), ("D1", "R")],
+        "LED_DRV_G": [("U1", gpio["led_g"]), ("Rled2", "1")],
+        "LED_A_G": [("Rled2", "2"), ("D1", "G")],
         "BTN": [("U1", gpio["btn"]), ("SW1", "1")],
     }
 
