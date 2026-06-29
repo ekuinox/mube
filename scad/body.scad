@@ -12,6 +12,7 @@ module body() {
 
   // Pico stacked above the servo in free +Y space; long axis along Y
   pico_x = 0;
+  pico_z = wall * 0.5;
   pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;
   pico_gap = max(6, pedestal_outer - servo_body_w/2 + 2,
                 pedestal_outer + uboard_l/2 - pico_l/2 - servo_body_w/2 + 2);
@@ -19,6 +20,7 @@ module body() {
 
   // USB on the +Y top wall, aligned to the Pico's top end.
   wall_y_top = center_y + inner_w/2;
+  usb_z = pico_z + pico_boss_h + pico_h;
 
   difference() {
     union() {
@@ -33,7 +35,7 @@ module body() {
       // bottom mount face with pedestal
       mount_plate();
       // Pico standoffs, long axis along Y
-      translate([pico_x, pico_y, wall*0.5])
+      translate([pico_x, pico_y, pico_z])
         rotate([0, 0, 90]) pico_w_mounts();
     }
 
@@ -46,7 +48,7 @@ module body() {
       cylinder(d = rosette_d + fit_clearance, h = wall + 0.2);
 
     // USB on the +Y top wall
-    translate([pico_x, wall_y_top, body_h*0.4])
+    translate([pico_x, wall_y_top, usb_z])
       usb_cutout();
   }
 }
