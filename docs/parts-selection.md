@@ -18,8 +18,8 @@
 | Q1 FET | NchパワーMOSFET 30V260A IRLB3813PBF | 秋月 | [I-06270](https://akizukidenshi.com/catalog/g/g106270/) | ¥140 | 1 | 1 | ¥140 |
 | Rg 220Ω | カーボン抵抗(炭素皮膜抵抗) 1/4W220Ω | 秋月 | [R-25221](https://akizukidenshi.com/catalog/g/g125221/) | ¥150 | 100 | 1 | ¥2 |
 | Rgs 10kΩ | カーボン抵抗(炭素皮膜抵抗) 1/4W10kΩ | 秋月 | [R-25103](https://akizukidenshi.com/catalog/g/g125103/) | ¥100 | 100 | 1 | ¥1 |
-| Rled 330Ω | カーボン抵抗(炭素皮膜抵抗) 1/4W330Ω | 秋月 | [R-25331](https://akizukidenshi.com/catalog/g/g125331/) | ¥180 | 100 | 1 | ¥2 |
-| D1 LED | 5mm砲弾型赤色LED 640nm 1200mcd 15° OSDR5113A | 秋月 | [I-11655](https://akizukidenshi.com/catalog/g/g111655/) | ¥20 | 1 | 1 | ¥20 |
+| Rled 330Ω | カーボン抵抗(炭素皮膜抵抗) 1/4W330Ω | 秋月 | [R-25331](https://akizukidenshi.com/catalog/g/g125331/) | ¥180 | 100 | 2 | ¥4 |
+| D1 2色LED | 2色LED 赤・黄緑5mm カソードコモン 乳白色 OSRGHC5B32A（10個入） | 秋月 | [I-06314](https://akizukidenshi.com/catalog/g/gI-06314/) | ¥150 | 10 | 1 | ¥15 |
 | SW1 タクト | タクトスイッチ(黒色) | 秋月 | [P-03647](https://akizukidenshi.com/catalog/g/g103647/) | ¥15 | 1 | 1 | ¥15 |
 | C1 470µF | 電解コンデンサー 470µF16V105℃ ルビコンPX | 秋月 | [P-10273](https://akizukidenshi.com/catalog/g/g110273/) | ¥10 | 1 | 1 | ¥10 |
 | - ユニバーサル基板 | 片面ガラスコンポジット・ユニバーサル基板 Cタイプ(72×47mm) めっき仕上げ | 秋月 | [P-03229](https://akizukidenshi.com/catalog/g/g103229/) | ¥130 | 1 | 1 | ¥130 |
@@ -30,9 +30,9 @@
 
 ## 概算サマリ
 
-- ① 1台分の理論按分合計: ¥3,235（按分額列の総和。理論上 1 台が消費する分だけの価値）
-- ② 実際に 1 台作るために払う総額: ¥3,975（パック品も丸ごと買う前提の実支出。送料別）
-  - 内訳: 秋月 ¥3,975（全点秋月、他店送りなし）
+- ① 1台分の理論按分合計: ¥3,232（按分額列の総和。理論上 1 台が消費する分だけの価値）
+- ② 実際に 1 台作るために払う総額: ¥4,105（パック品も丸ごと買う前提の実支出。送料別）
+  - 内訳: 秋月 ¥4,105（全点秋月、他店送りなし）
   - 送料の目安: 秋月電子は注文金額により変動。発注前に各店の送料条件を確認。
 - 補足: ②は初回 1 台の実支出。抵抗等のパック余剰（各 99 本残）により 2 台目以降は①に近づく。
 
@@ -47,8 +47,8 @@
 | 秋月電子通商 | [I-06270](https://akizukidenshi.com/catalog/g/g106270/) | NchパワーMOSFET IRLB3813PBF |
 | 秋月電子通商 | [R-25221](https://akizukidenshi.com/catalog/g/g125221/) | カーボン抵抗 1/4W 220Ω（100本入） |
 | 秋月電子通商 | [R-25103](https://akizukidenshi.com/catalog/g/g125103/) | カーボン抵抗 1/4W 10kΩ（100本入） |
-| 秋月電子通商 | [R-25331](https://akizukidenshi.com/catalog/g/g125331/) | カーボン抵抗 1/4W 330Ω（100本入） |
-| 秋月電子通商 | [I-11655](https://akizukidenshi.com/catalog/g/g111655/) | 5mm砲弾型赤色LED 単品 |
+| 秋月電子通商 | [R-25331](https://akizukidenshi.com/catalog/g/g125331/) | カーボン抵抗 1/4W 330Ω（100本入, 2本使用） |
+| 秋月電子通商 | [I-06314](https://akizukidenshi.com/catalog/g/gI-06314/) | 2色LED 赤・黄緑 5mm カソードコモン 乳白色 OSRGHC5B32A（10個入） |
 | 秋月電子通商 | [P-03647](https://akizukidenshi.com/catalog/g/g103647/) | タクトスイッチ(黒色) |
 | 秋月電子通商 | [P-10273](https://akizukidenshi.com/catalog/g/g110273/) | 電解コンデンサー 470µF16V |
 | 秋月電子通商 | [P-03229](https://akizukidenshi.com/catalog/g/g103229/) | 片面ユニバーサル基板 Cタイプ(72×47mm) めっき仕上げ |
@@ -71,12 +71,12 @@
 
 - Pico WH ヘッダ付き（[M-18086](https://akizukidenshi.com/catalog/g/g118086/) ¥1,375）: ピンヘッダ実装済みのため、ピンヘッダ（[C-00167](https://akizukidenshi.com/catalog/g/g100167/)）の購入が不要になる。
 - 電解コンデンサ 25V 品（[P-17883](https://akizukidenshi.com/catalog/g/g117883/) ¥20）: 耐圧に余裕が欲しい場合の代替。
-- 5mm 赤色 LED 10個パック（[I-01318](https://akizukidenshi.com/catalog/g/g101318/) ¥150）: 1 個あたり ¥15 でコスパが高い。複数台予定なら検討。
 - ユニバーサル基板 72×47.5mm（[P-00517](https://akizukidenshi.com/catalog/g/g100517/) ¥100）: 部品点数が増えた場合の代替。
 - USB ACアダプター Micro-Bオス直結 5V3A（[M-12001](https://akizukidenshi.com/catalog/g/g112001/) ¥1,100）: Pico W の Micro-USB 端子に直結でき、品目 14 の micro-USB ケーブルが不要になる。電力余裕あり。
 
 ### 注意点
 
+- 二色LED（D1, OSRGHC5B32A）はコモンカソード。3 本足のうち共通カソード（K）を GND、赤アノード（R）を GP16、黄緑アノード（G）を GP18 へ。足の並びはデータシートで確認すること。赤・黄緑とも Vf=2.1V のため抵抗は両側 330Ω で明るさが揃う。施錠=赤・解錠=黄緑で点灯し、同時点灯はしない。
 - 電解コンデンサ（C1）は極性あり。実装時に＋端子の向きを確認すること。耐圧 16V は VBUS 5V に対し十分な余裕がある。
 - USB ACアダプタは 5V/1A 以上の出力を持つ製品を選ぶこと。
 - Pico W の USB コネクタは Micro-USB B。品目 14 のケーブルが対応していることを確認。
