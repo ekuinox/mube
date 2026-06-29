@@ -33,6 +33,10 @@ pico_boss_h   = 3.0;
 usb_w         = 9.0;
 usb_h         = 6.0;
 
+// --- MOSFET footprint (Q1 power-gate module keep-out) ---
+mosfet_l      = 16.0;
+mosfet_w      = 12.0;
+
 // --- Indicators ---
 led_hole_d    = 5.2;
 button_hole_d = 6.2;

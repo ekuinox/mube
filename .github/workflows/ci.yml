@@ -40,3 +40,23 @@ jobs:
 
       - name: cargo test (smtlk-core)
         run: cargo test -p smtlk-core --locked --target x86_64-unknown-linux-gnu
+
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ローカルと同じ openscad-unstable（Manifold バックエンド）と headless EGL 環境を
+      # flake の devShell から得るため Nix を使う。apt の安定版 openscad には Manifold
+      # バックエンドが無く、レンダリング挙動が一致しない。
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Render SCAD models to STL (fails on WARNING/ERROR)
+        run: |
+          nix develop --command bash -euo pipefail -c '
+            for f in scad/smartlock.scad scad/smoke.scad test/*.scad; do
+              echo "::group::render $f"
+              ./test/render.sh "$f"
+              echo "::endgroup::"
+            done
+          '
