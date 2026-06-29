@@ -32,7 +32,7 @@ use embassy_net::tcp::TcpSocket;
 use embassy_net::{Config as NetConfig, StackResources};
 use embassy_rp::bind_interrupts;
 use embassy_rp::dma::{Channel, InterruptHandler as DmaInterruptHandler};
-use embassy_rp::gpio::{Level, Output};
+use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_rp::pwm::{Config as PwmConfig, Pwm};
@@ -112,6 +112,22 @@ async fn servo_task(
     }
 }
 
+/// GP17 のタクトスイッチ（内部プルアップ・アクティブ Low）を監視し、押下ごとにロックをトグルする。
+/// 内部プルアップに依存（外付け抵抗なし＝ Issue #27 の方針）。20ms デバウンスでチャタを除く。
+#[embassy_executor::task]
+async fn button_task(mut btn: Input<'static>) -> ! {
+    loop {
+        btn.wait_for_falling_edge().await; // 押下（High→Low）
+        Timer::after(Duration::from_millis(20)).await; // デバウンス
+        if btn.is_low() {
+            let target = LOCK_STATE.lock(|c| c.get()).toggled();
+            info!("button: toggle -> {}", target);
+            apply_target(target);
+        }
+        btn.wait_for_high().await; // リリースまで待ち、押しっぱなしの連発を防ぐ
+    }
+}
+
 /// CYW43 ドライバを回し続けるタスク。
 #[embassy_executor::task]
 async fn cyw43_task(
@@ -138,6 +154,9 @@ async fn main(spawner: Spawner) {
     let led_r = Output::new(p.PIN_16, Level::Low);
     let led_g = Output::new(p.PIN_18, Level::Low);
     spawner.spawn(servo_task(servo, led_r, led_g).unwrap());
+    // ボタン: GP17 内部プルアップ（アクティブ Low）。押下でロックをトグル。
+    let button = Input::new(p.PIN_17, Pull::Up);
+    spawner.spawn(button_task(button).unwrap());
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
     // cyw43 v0.7.0 では aligned_bytes! マクロで A4 アライメントが要る。
