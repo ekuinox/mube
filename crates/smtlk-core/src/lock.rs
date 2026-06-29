@@ -8,6 +8,16 @@ pub enum LockState {
     Unlocked,
 }
 
+impl LockState {
+    /// 施錠⇄解錠を反転する。ボタンのトグル操作で使う。
+    pub fn toggled(self) -> LockState {
+        match self {
+            LockState::Locked => LockState::Unlocked,
+            LockState::Unlocked => LockState::Locked,
+        }
+    }
+}
+
 use crate::command::{parse, Command};
 
 /// `handle_line` の結果。`servo` が `Some` ならその状態へサーボを駆動する。
@@ -115,5 +125,11 @@ mod tests {
         c.handle_line(b"UNLOCK\n");
         let s = c.handle_line(b"STATUS\n");
         assert_eq!(s.reply, "UNLOCKED\n");
+    }
+
+    #[test]
+    fn toggled_flips_state() {
+        assert_eq!(LockState::Locked.toggled(), LockState::Unlocked);
+        assert_eq!(LockState::Unlocked.toggled(), LockState::Locked);
     }
 }
