@@ -1543,7 +1543,6 @@ dependencies = [
  "heapless 0.8.0",
  "panic-probe",
  "portable-atomic",
- "rand_core 0.6.4",
  "smtlk-core",
  "static_cell",
 ]
