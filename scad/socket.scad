@@ -16,8 +16,17 @@ module thumbturn_socket() {
     translate([0, 0, oh - knob_engage])
       linear_extrude(height = knob_engage + 0.1, scale = [knob_w_base/knob_w_top, 1])
         offset(r = c) square([knob_w_top, knob_t], center = true);
-    // servo shaft bore (bottom)
-    translate([0, 0, -0.1])
-      cylinder(d = servo_shaft_d + c, h = 6 + 0.1);
+    // cross-horn pocket (bottom face = shaft side when assembled)
+    hc = horn_clearance;
+    translate([0, 0, -0.1]) {
+      linear_extrude(height = horn_thick + hc + 0.1)
+        union() {
+          for (a = [0, 90])
+            rotate([0, 0, a])
+              square([2*(horn_arm_l + hc), horn_arm_w + 2*hc], center = true);
+          circle(d = horn_hub_d + 2*hc);
+        }
+      cylinder(d = horn_screw_d + hc, h = 6 + 0.1);
+    }
   }
 }
