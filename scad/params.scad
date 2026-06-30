@@ -20,7 +20,7 @@ servo_boss_d      = 4.5;   // 耳ボス外径（Pico ボスと同径。ポケッ
 servo_boss_h      = 4.5;   // 床からの耳ボス高さ（実効噛み合い = servo_boss_h − fit_clearance ≈ 4.1mm）
 
 // --- SG90 cross horn (付属十字ホーン, 仮寸法・要実測) ---
-horn_arm_l      = servo_tab_l / 2;  // 16.1: 長辺腕の中心→先端 (≈タブ出っ張り)
+horn_arm_l      = servo_tab_l / 2;  // 16.1: 仮値。servo_tab_l と偶然一致するが独立測定で確定すること
 horn_arm_w      = 2;        // 腕幅 (概算)
 horn_hub_d      = 7;        // 中央ハブ外径 (概算)
 horn_thick      = 2;        // ホーン厚 (概算)
