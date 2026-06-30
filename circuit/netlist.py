@@ -83,6 +83,8 @@ PARTS = {
     "D1": ["R", "G", "K"],
     "SW1": ["1", "2"],
     "C1": ["+", "-"],
+    "C2": ["1", "2"],
+    "D2": ["A", "K"],
 }
 
 PART_META = {
@@ -96,6 +98,8 @@ PART_META = {
     "D1": ("2-color LED (R/YG, common-cathode)", "OSRGHC5B32A"),
     "SW1": ("Tactile switch", "-"),
     "C1": ("Electrolytic cap", "470uF"),
+    "C2": ("Ceramic cap", "100nF"),
+    "D2": ("Schottky diode", "1N5819"),
 }
 
 
@@ -104,10 +108,10 @@ def build_nets(gpio):
     return {
         # C1 is the bulk cap: keep it adjacent to U1 in the from-to order so it
         # gets soldered close to the Pico's VBUS/GND (brownout suppression).
-        "+5V": [("U1", "VBUS"), ("C1", "+"), ("M1", "V+")],
+        "+5V": [("U1", "VBUS"), ("C1", "+"), ("M1", "V+"), ("C2", "1"), ("D2", "K")],
         "GND": [("U1", "GND"), ("C1", "-"), ("Q1", "S"),
-                ("Rgs", "2"), ("D1", "K"), ("SW1", "2")],
-        "SERVO_RTN": [("M1", "GND"), ("Q1", "D")],
+                ("Rgs", "2"), ("D1", "K"), ("SW1", "2"), ("C2", "2")],
+        "SERVO_RTN": [("M1", "GND"), ("Q1", "D"), ("D2", "A")],
         "SERVO_SIG": [("U1", gpio["servo"]), ("M1", "SIG")],
         "GATE_DRV": [("U1", gpio["gate"]), ("Rg", "1")],
         "GATE": [("Rg", "2"), ("Q1", "G"), ("Rgs", "1")],
