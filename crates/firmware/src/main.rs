@@ -32,6 +32,7 @@ use embassy_executor::Spawner;
 use embassy_net::tcp::TcpSocket;
 use embassy_net::{Config as NetConfig, StackResources};
 use embassy_rp::bind_interrupts;
+use embassy_rp::clocks::RoscRng;
 use embassy_rp::dma::{Channel, InterruptHandler as DmaInterruptHandler};
 use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
@@ -192,8 +193,7 @@ async fn main(spawner: Spawner) {
 
     // ネットワークスタック（DHCPv4）。
     let net_config = NetConfig::dhcpv4(Default::default());
-    // TODO: seed はハードウェア RNG (embassy_rp::clocks::RoscRng 等) から取るべき。
-    let seed = 0x0123_4567_89ab_cdef;
+    let seed = RoscRng.next_u64();
     static RESOURCES: StaticCell<StackResources<5>> = StaticCell::new();
     let (stack, net_runner) = embassy_net::new(
         net_device,
