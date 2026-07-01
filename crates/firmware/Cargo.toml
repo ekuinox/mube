@@ -27,6 +27,5 @@ cortex-m-rt = "0.7"
 static_cell = "2"
 portable-atomic = { version = "1", features = ["critical-section"] }
 embedded-hal-async = "1.0"
-embedded-io-async = "0.7"
 heapless = "0.8"
 fixed = "1"

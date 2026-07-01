@@ -41,7 +41,7 @@ use embassy_rp::pwm::{Config as PwmConfig, Pwm};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::blocking_mutex::Mutex as BlockingMutex;
 use embassy_sync::signal::Signal;
-use embassy_time::{Duration, Timer, with_timeout};
+use embassy_time::{Duration, Timer};
 use servo::Servo;
 use smtlk_core::serve::serve_connection;
 use smtlk_core::{LockPort, LockState};
@@ -56,41 +56,8 @@ bind_interrupts!(struct Irqs {
 /// 遠隔ロック操作を受ける TCP ポート。
 const LOCK_PORT: u16 = 6000;
 
-/// read が無いまま切断するまでの秒数。シングル接続サーバーでの占有を防ぐ。
+/// 無通信で切断するまでの秒数。シングル接続サーバーでの占有を防ぐ。
 const IDLE_TIMEOUT_SECS: u64 = 30;
-
-/// TcpSocket に per-read アイドルタイムアウトを付与するラッパー。
-/// タイムアウト時は Ok(0) を返し、serve_connection が EOF として正常終了する。
-struct IdleTimeoutSocket<'a, 'b> {
-    inner: &'a mut TcpSocket<'b>,
-    timeout: Duration,
-    timed_out: bool,
-}
-
-impl embedded_io_async::ErrorType for IdleTimeoutSocket<'_, '_> {
-    type Error = embassy_net::tcp::Error;
-}
-
-impl embedded_io_async::Read for IdleTimeoutSocket<'_, '_> {
-    async fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
-        match with_timeout(self.timeout, self.inner.read(buf)).await {
-            Ok(result) => result,
-            Err(_) => {
-                self.timed_out = true;
-                Ok(0)
-            }
-        }
-    }
-}
-
-impl embedded_io_async::Write for IdleTimeoutSocket<'_, '_> {
-    async fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
-        self.inner.write(buf).await
-    }
-    async fn flush(&mut self) -> Result<(), Self::Error> {
-        self.inner.flush().await
-    }
-}
 
 /// サーボへの施錠/解錠指令。`apply_target` が叩く。
 /// Signal は最新値のみ保持するため、指令が連続しても安全側（最新状態）へ収束する。
@@ -274,18 +241,10 @@ async fn main(spawner: Spawner) {
         }
         info!("client connected on :{}", LOCK_PORT);
         control.gpio_set(0, true).await; // 接続中: オンボード LED 点灯
-        let mut timed = IdleTimeoutSocket {
-            inner: &mut socket,
-            timeout: Duration::from_secs(IDLE_TIMEOUT_SECS),
-            timed_out: false,
-        };
-        if let Err(e) = serve_connection(&mut timed, &port).await {
+        socket.set_timeout(Some(Duration::from_secs(IDLE_TIMEOUT_SECS)));
+        if let Err(e) = serve_connection(&mut socket, &port).await {
             warn!("serve error: {:?}", e);
         }
-        if timed.timed_out {
-            info!("client idle-timed out ({}s)", IDLE_TIMEOUT_SECS);
-        } else {
-            info!("client disconnected");
-        }
+        info!("client disconnected");
     }
 }
