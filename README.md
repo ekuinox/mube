@@ -73,7 +73,7 @@ serve ループは host テスト済み、実機での実 TCP 確認は次サイ
 
 ロック・コマンド（LOCK/UNLOCK/STATUS）の解釈と状態機械、および TCP serve ループ
 （行分割・接続ライフサイクル・エラー処理・長すぎ行の棄却）を host でモック通しテスト済み。
-内部的には `cargo test -p smtlk-core --target aarch64-unknown-linux-gnu` の alias。
+内部的には `cargo test -p smtlk-core --target <host-triple>` を実行する外部サブコマンド（`cargo-host-test`）で実装しており、`uname -m` でホストトリプルを動的に解決する。x86_64 / aarch64 のどちらの環境でも同じコマンドで動く。
 
 未検証で残るのは `TcpSocket` を `serve_connection` に渡すアダプタ配線のみ。
 実機での実 TCP 接続確認は次サイクル。

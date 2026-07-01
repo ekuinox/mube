@@ -10,7 +10,6 @@ target = "thumbv6m-none-eabi"
 # defmt のログレベル。trace/debug/info/warn/error。
 DEFMT_LOG = "debug"
 
-[alias]
-# host でロジックの単体テストを回す（既定ターゲットは thumbv6m なので明示上書き）。
-# dev 機が別アーキの場合はトリプルを合わせること。
-host-test = "test -p smtlk-core --target aarch64-unknown-linux-gnu"
+# host-test は .cargo/config.toml の alias ではなく、flake.nix の devShell が提供する
+# 外部サブコマンド cargo-host-test で実装している。uname -m でホストトリプルを動的に
+# 解決するため、x86_64 / aarch64 どちらの環境でも `cargo host-test` がそのまま動く。
