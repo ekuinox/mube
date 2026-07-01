@@ -36,34 +36,3 @@ module usb_cutout() {
       linear_extrude(height = wall*4)
         offset(r = c) square([usb_w, usb_h], center = true);
 }
-
-// 5mm LED through-hole along Z.
-module led_hole() {
-  translate([0, 0, -wall*2])
-    cylinder(d = led_hole_d, h = wall*4);
-}
-
-// Tactile button panel hole along Z.
-module button_hole() {
-  translate([0, 0, -wall*2])
-    cylinder(d = button_hole_d, h = wall*4);
-}
-
-// MOSFET module keep-out box, centered at origin.
-module mosfet_space() {
-  c = fit_clearance;
-  cube([mosfet_l + 2*c, mosfet_w + 2*c, wall*4], center = true);
-}
-
-// Two floor-standing bosses with M2 self-tapping pilot holes, under the SG90
-// mounting tabs. Centered on the shaft axis; caller supplies the Z origin
-// (boss base at local Z=0, rising +Z to servo_boss_h).
-module servo_mounts() {
-  for (sx = [-1, 1])
-    translate([sx * servo_screw_span/2, 0, 0])
-      difference() {
-        cylinder(d = servo_boss_d, h = servo_boss_h);
-        translate([0, 0, -0.1])
-          cylinder(d = servo_screw_pilot, h = servo_boss_h + 0.2);
-      }
-}

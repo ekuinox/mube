@@ -17,7 +17,7 @@ servo_shaft_d = 4.8;    // output boss / horn clearance
 servo_screw_span  = 27.6;  // 耳のネジ穴 中心間（データシート公称・要実測補正）
 servo_screw_pilot = 1.8;   // M2 セルフタッピング下穴径
 servo_boss_d      = 4.5;   // 耳ボス外径（Pico ボスと同径。ポケット/タブ干渉を回避）
-servo_boss_h      = 4.5;   // 床からの耳ボス高さ（実効噛み合い = servo_boss_h − fit_clearance ≈ 4.1mm）
+servo_boss_h      = 4.5;   // pedestal_top からの耳ボス高さ。実効ネジ噛み合いは sg90_cutout のタブスロット(Z≈22.6..25.9)がボス(Z≈23..27.5)を削るため上側 ~1.6mm のみ。M2 には浅く、ボス配置ごと要実測・要設計見直し
 
 // --- SG90 cross horn (付属十字ホーン, 仮寸法・要実測) ---
 horn_arm_l      = servo_tab_l / 2;  // 16.1: 仮値。servo_tab_l と偶然一致するが独立測定で確定すること
@@ -41,10 +41,6 @@ pico_boss_h   = 3.0;
 usb_w           = 9.0;
 usb_h           = 6.0;
 usb_connector_h = 2.6;   // connector body height above PCB (measured)
-
-// --- MOSFET footprint (Q1 power-gate module keep-out) ---
-mosfet_l      = 16.0;
-mosfet_w      = 12.0;
 
 // --- Indicators ---
 led_hole_d    = 5.2;
@@ -102,7 +98,6 @@ assert(ext_down <= clear_down, "down extent exceeds handle clearance");
 // Realized outer extents: body outer edge from origin = body_l/2 - center_x (-X) and body_w/2 - center_y (-Y)
 assert(body_l/2 - center_x <= clear_left, "realized left extent exceeds door clearance");
 assert(body_w/2 - center_y <= clear_down, "realized down extent exceeds handle clearance");
-assert(clear_down - 4 <= clear_down, "brace stub tip within handle clearance");
 assert(knob_w_top <= knob_w_base, "knob tapers base->top");
 assert(knob_engage < knob_h, "engagement shallower than protrusion");
 
