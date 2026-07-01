@@ -56,6 +56,9 @@ bind_interrupts!(struct Irqs {
 /// 遠隔ロック操作を受ける TCP ポート。
 const LOCK_PORT: u16 = 6000;
 
+/// 無通信で切断するまでの秒数。シングル接続サーバーでの占有を防ぐ。
+const IDLE_TIMEOUT_SECS: u64 = 30;
+
 /// サーボへの施錠/解錠指令。`apply_target` が叩く。
 /// Signal は最新値のみ保持するため、指令が連続しても安全側（最新状態）へ収束する。
 static SERVO_CMD: Signal<CriticalSectionRawMutex, LockState> = Signal::new();
@@ -238,6 +241,7 @@ async fn main(spawner: Spawner) {
         }
         info!("client connected on :{}", LOCK_PORT);
         control.gpio_set(0, true).await; // 接続中: オンボード LED 点灯
+        socket.set_timeout(Some(Duration::from_secs(IDLE_TIMEOUT_SECS)));
         if let Err(e) = serve_connection(&mut socket, &port).await {
             warn!("serve error: {:?}", e);
         }
