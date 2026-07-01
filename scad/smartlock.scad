@@ -8,7 +8,6 @@ part = "assembly";
 // exploded=0: assembled, exploded=1: exploded view
 exploded = 1;
 
-socket_oh = knob_engage + socket_wall + 6;
 socket_z = knob_h - knob_engage;
 horn_h = 4;
 
