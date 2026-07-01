@@ -19,12 +19,12 @@ servo_screw_pilot = 1.8;   // M2 セルフタッピング下穴径
 servo_boss_d      = 4.5;   // 耳ボス外径（Pico ボスと同径。ポケット/タブ干渉を回避）
 servo_boss_h      = 4.5;   // pedestal_top からの耳ボス高さ。実効ネジ噛み合いは sg90_cutout のタブスロット(Z≈22.6..25.9)がボス(Z≈23..27.5)を削るため上側 ~1.6mm のみ。M2 には浅く、ボス配置ごと要実測・要設計見直し
 
-// --- SG90 cross horn (付属十字ホーン, 仮寸法・要実測) ---
-horn_arm_l      = servo_tab_l / 2;  // 16.1: 仮値。servo_tab_l と偶然一致するが独立測定で確定すること
-horn_arm_w      = 2;        // 腕幅 (概算)
-horn_hub_d      = 7;        // 中央ハブ外径 (概算)
-horn_thick      = 2;        // ホーン厚 (概算)
-horn_screw_d    = 2.2;      // 中心ネジ穴径 (概算)
+// --- SG90 cross horn (付属十字ホーン, 実測反映済み) ---
+horn_arm_l      = 15.7;     // 腕の長さ 中心→先端（実測）
+horn_arm_w      = 6.2;      // 腕幅 見下ろし方向・腕の長さに直交（実測。テーパーする場合は代表幅）
+horn_hub_d      = 7.3;      // 中央ハブ外径（実測）
+horn_thick      = 1.7;      // ホーン厚 Z方向の押し出し深さ（実測）
+horn_screw_d    = 1.5;      // 中心ネジ穴径（実測）
 horn_clearance  = 0.3;      // ホーンポケット専用クリアランス (fit_clearance とは独立)
 
 // --- Raspberry Pi Pico W ---
@@ -48,22 +48,22 @@ button_hole_d = 6.2;
 led_btn_spacing = 16;   // center-to-center distance between LED and button
 
 // --- Door-fit clearances from the thumb-turn axis (origin = rosette center) ---
-clear_left  = 30;   // -X to door edge/frame
-clear_down  = 40;   // -Y to door handle
-rosette_d   = 46;   // circular escutcheon diameter (registration only)
+clear_left  = 50;   // -X to door edge/frame（実測: ~50 未満の上限。精密値は未確定）
+clear_down  = 65;   // -Y to door handle（実測: ~65 未満の上限。精密値は未確定）
+rosette_d   = 45;   // circular escutcheon diameter (registration only)（実測）
 
 // --- Thumb-turn knob (measured; trapezoid) ---
-knob_w_base = 28;   // width at the door (base, wider)
-knob_w_top  = 25;   // width at the tip (narrower)
-knob_t      = 3;    // thickness
-knob_h      = 11;   // protrusion from the door
-knob_engage = 10;   // socket engagement depth (< knob_h)
+knob_w_base = 27.8;  // width at the door (base, wider)（実測）
+knob_w_top  = 25.6;  // width at the tip (narrower)（実測）
+knob_t      = 3.1;   // thickness（実測）
+knob_h      = 30;    // protrusion from the door（実測: 仮値 11 から大幅増→台座が背高に）
+knob_engage = 10;    // socket engagement depth (< knob_h)（実測）
 socket_wall = 2.0;
 
 // --- Servo horn + pedestal ---
 horn_h            = 4;      // horn thickness + clearance between socket top and servo tabs
 socket_oh         = knob_engage + socket_wall + 6;   // socket total height (18)
-pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 23: servo tabs rest here
+pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 42: servo tabs rest here
 pedestal_wall_t   = 2.5;    // pedestal wall thickness
 wire_clearance    = 4;      // space above servo for wiring
 
@@ -79,8 +79,8 @@ ext_up    = 100;  // +Y free; houses Pico + universal board (72mm, clears pedest
 
 inner_l = ext_left + ext_right;          // 54
 inner_w = ext_down + ext_up;             // 126
-// inner_h: servo stack is the tallest — pedestal_top(23) + servo(22.5) + clearance(4) - floor wall
-inner_h = pedestal_top_z + servo_body_h + wire_clearance - wall; // 47.1
+// inner_h: servo stack is the tallest — pedestal_top(42) + servo(22.5) + clearance(4) - floor wall
+inner_h = pedestal_top_z + servo_body_h + wire_clearance - wall; // 66.1
 
 body_l = inner_l + 2*wall;
 body_w = inner_w + 2*wall;
