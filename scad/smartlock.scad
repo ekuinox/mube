@@ -9,7 +9,6 @@ part = "assembly";
 exploded = 1;
 
 socket_z = knob_h - knob_engage;
-horn_h = 4;
 
 exp = exploded ? 1 : 0;
 
