@@ -18,4 +18,6 @@ for p in body lid socket asm_body asm_lid asm_socket; do
 done
 echo "== generating netlist (from-to / bom) =="
 uv run --script circuit/netlist.py || { echo "FAIL: netlist"; exit 1; }
-echo "All parts + netlist built to build/"
+echo "== generating wokwi diagram =="
+uv run --script circuit/wokwi.py || { echo "FAIL: wokwi"; exit 1; }
+echo "All parts + netlist + wokwi built to build/"
