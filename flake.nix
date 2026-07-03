@@ -8,9 +8,32 @@
       systems = [ "x86_64-linux" "aarch64-linux" ];
       forAll = f: nixpkgs.lib.genAttrs systems (s: f nixpkgs.legacyPackages.${s});
     in {
-      devShells = forAll (pkgs: {
+      devShells = forAll (pkgs: let
+        # wokwi-cli は nixpkgs 未収録。GitHub リリースのスタティックバイナリを包む。
+        wokwiCliBin = {
+          x86_64-linux = {
+            suffix = "x64";
+            sha256 = "04g873ypgdpxpkzr3vygwg1sd5asp0g79dvsqhr7bbxb1caninbj";
+          };
+          aarch64-linux = {
+            suffix = "arm64";
+            sha256 = "1rxi05ci5jj0q1kdh0nx9lr0633vy7lpzcglydmsqkxrdk7w0p90";
+          };
+        }.${pkgs.system};
+        wokwi-cli = pkgs.runCommand "wokwi-cli-0.26.1" {
+          src = pkgs.fetchurl {
+            url = "https://github.com/wokwi/wokwi-cli/releases/download/v0.26.1/wokwi-cli-linuxstatic-${wokwiCliBin.suffix}";
+            inherit (wokwiCliBin) sha256;
+          };
+        } ''
+          mkdir -p $out/bin
+          cp $src $out/bin/wokwi-cli
+          chmod +x $out/bin/wokwi-cli
+        '';
+      in {
         default = pkgs.mkShell {
           packages = [
+            wokwi-cli         # Wokwi シミュレーション CLI（WOKWI_CLI_TOKEN が必要）
             pkgs.openscad-unstable  # 3D render with Manifold backend (headless via Mesa EGL)
             pkgs.uv           # runs viewer/serve.py (PEP 723), provisions its own Python
             pkgs.cloudflared  # quick tunnel binary (pip's pycloudflared lacks aarch64)
