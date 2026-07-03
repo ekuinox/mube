@@ -18,15 +18,21 @@ module thumbturn_socket() {
     translate([0, 0, socket_oh - knob_engage])
       linear_extrude(height = knob_engage + 0.1, scale = [knob_w_base/knob_w_top, 1])
         offset(r = c) square([knob_w_top, knob_t], center = true);
-    // cross-horn pocket (bottom face = shaft side when assembled)
+    // horn bar pocket: single tapered bar + hub circle (bottom face = shaft side)
     translate([0, 0, -0.1]) {
       linear_extrude(height = horn_thick + hc + 0.1)
-        union() {
-          for (a = [0, 90])
-            rotate([0, 0, a])
-              square([2*(horn_arm_l + hc), horn_arm_w + 2*hc], center = true);
-          circle(d = horn_hub_d + 2*hc);
-        }
+        offset(r = hc)
+          union() {
+            polygon([
+              [-horn_arm_l, -horn_arm_w_tip/2],
+              [          0, -horn_arm_w_base/2],
+              [ horn_arm_l, -horn_arm_w_tip/2],
+              [ horn_arm_l,  horn_arm_w_tip/2],
+              [          0,  horn_arm_w_base/2],
+              [-horn_arm_l,  horn_arm_w_tip/2]
+            ]);
+            circle(d = horn_hub_d);
+          }
     }
   }
   // center registration stub: a nub protruding from the pocket floor (~half the horn
