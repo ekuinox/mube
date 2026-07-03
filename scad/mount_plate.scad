@@ -36,8 +36,10 @@ module mount_plate() {
           difference() {
             circle(r = pedestal_r);
             circle(d = servo_shaft_d + 2*c);
+            // pilot holes are centered on the servo BODY (shifted by
+            // servo_shaft_offset), not on the shaft axis at the origin
             for (sx = [-1, 1])
-              translate([sx * servo_screw_span/2, 0])
+              translate([servo_shaft_offset + sx * servo_screw_span/2, 0])
                 circle(d = servo_screw_pilot);
           }
 

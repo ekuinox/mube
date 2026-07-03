@@ -1,15 +1,17 @@
 include <params.scad>
 
 // SG90 body + mounting tabs + shaft clearance. Shaft axis = Z.
+// The real SG90's output shaft is offset from the body center, so the body
+// and tabs shift +X by servo_shaft_offset to keep the shaft on the origin.
 module sg90_cutout() {
   c = fit_clearance;
   union() {
     // body
-    translate([0, 0, 0])
+    translate([servo_shaft_offset, 0, 0])
       cube([servo_body_l + 2*c, servo_body_w + 2*c, servo_body_h + 2*c], center = true);
     // mounting tabs (wider in length) — at the shaft/floor end, matching the
     // real SG90 where the tabs sit on the output-shaft side.
-    translate([0, 0, -(servo_body_h/2 - servo_tab_h/2)])
+    translate([servo_shaft_offset, 0, -(servo_body_h/2 - servo_tab_h/2)])
       cube([servo_tab_l + 2*c, servo_body_w + 2*c, servo_tab_h + 2*c], center = true);
     // output shaft / horn clearance through the bottom face
     translate([0, 0, -servo_body_h])

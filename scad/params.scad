@@ -11,12 +11,13 @@ lid_lip_h     = 4;      // lid inner-lip depth
 servo_body_l  = 22.8;
 servo_body_w  = 12.2;
 servo_body_h  = 22.5;
-servo_tab_l   = 32.2;   // length across mounting tabs
-servo_tab_h   = 2.5;
+servo_tab_l   = 32.5;   // 耳の先端間の全長（実測）
+servo_tab_h   = 2.7;    // 耳の厚み（実測）
 servo_shaft_d = 4.8;    // output boss / horn clearance
-servo_screw_span  = 27.6;  // 耳のネジ穴 中心間（データシート公称・要実測補正）
+servo_shaft_offset = 5.25; // 出力軸の本体中心からの偏り（実測: 耳先端→軸中心 11、耳全長 32.5 の中央 16.25 との差）。軸=原点なので本体は +X 側へこの分ずれる
+servo_screw_span  = 28.5;  // 耳のネジ穴 中心間（実測から算出: 穴中心は先端から 3-2/2=2mm → 32.5-2*2。穴径2mm・データシート公称27.6。クーポンで要検証）
 servo_screw_pilot = 1.8;   // M2 セルフタッピング下穴径
-servo_plate_t     = 3.5;   // 耳ネジが効くペデスタル天板の厚み。下穴は貫通で M2 実効噛み合い = 3.5mm。天板下面とソケット上面(Z=pedestal_top_z-horn_h)のすき間 = horn_h - servo_plate_t = 0.5mm。M2x6 はタブ厚2.5+3.5=6.0で面一
+servo_plate_t     = 3.5;   // 耳ネジが効くペデスタル天板の厚み。下穴は貫通で M2 噛み合いは最大 3.5mm。天板下面とソケット上面(Z=pedestal_top_z-horn_h)のすき間 = horn_h - servo_plate_t = 0.5mm。手持ち M2x5 だと効き 5-2.7=2.3mm（暫定）、M2x6 調達で 3.3mm となり目標 3mm を満たす
 
 // --- SG90 ホーン (付属ホーン, 一文字バー実装, 実測反映済み) ---
 horn_arm_l      = 16.65;    // 腕の長さ 中心→先端（実測: 横腕 全長 33.3mm の半分）
