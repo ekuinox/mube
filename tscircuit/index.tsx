@@ -17,6 +17,7 @@ export default () => (
       }}
     />
     {/* M1: SG90 サーボ（3 線コネクタとして表現） */}
+    {/* pin2 VPLUS は netlist.py の M1.V+ に対応（tscircuit のピン名に "+" が使えないため） */}
     <chip
       name="M1"
       footprint="pinrow3"
