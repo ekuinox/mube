@@ -182,3 +182,9 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 1. お兄ちゃんの実測（耳ネジ穴の中心間距離 / タブのネジ穴径 / タブ厚 / 手持ち M2 ネジ長）が来たら `servo_screw_span` / `servo_screw_pilot` / `servo_tab_h` / `servo_plate_t` を更新して mount_coupon だけ刷り直す。
 2. フィット確定後、実測値込みで PR を出して Issue #52 をクローズする。
+
+---
+
+## 実装後の注記（2026-07-03）
+
+Task 1 / Task 2 は本プラン通り完了。その後の実機採寸で追加の変更（軸オフセット・貫通穴・高さ再計算）が入った。詳細は設計書の「実装後の追記」を参照。
