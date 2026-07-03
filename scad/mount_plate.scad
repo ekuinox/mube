@@ -29,8 +29,9 @@ module mount_plate() {
         }
 
       // pedestal top platform — thick disc the servo tabs screw straight into.
-      // M2 self-tapping engages the full servo_plate_t (pilot holes are through;
-      // the socket top rotating below keeps horn_h - servo_plate_t of clearance).
+      // M2 self-tapping engages the full servo_plate_t (pilot holes are through).
+      // The servo case/gear head passes through via sg90_cutout's lower block;
+      // only the tabs rest on this plate.
       translate([0, 0, pedestal_top_z - servo_plate_t])
         linear_extrude(height = servo_plate_t)
           difference() {
