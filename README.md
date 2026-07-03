@@ -71,6 +71,23 @@ build/ に body.stl / lid.stl / socket.stl を出力する。dev シェル外で
 GPIO 番号は `netlist.py` の `GPIO` 変数に集約し、ファームの割り当て（GP15/14/16/18/17）と一致させている。
 生成物は STL と同様 build/ で非コミット。テストは `nix develop -c ./test/netlist_test.py`。
 
+### Wokwi 配線見本
+
+`./build.sh`（または `nix develop -c uv run --script circuit/wokwi.py`）で
+`build/wokwi/` に Wokwi 用の配線見本が生成される。
+
+- `diagram.json` + `chips/` — wokwi.com に貼って見る配線見本（全部品・全 net）。
+  手順は `build/wokwi/notes.md` 参照。
+- `sim/` — wokwi-cli 用の簡略版（カスタムチップ抜き）。実行にはファームの
+  ビルドと `WOKWI_CLI_TOKEN`（https://wokwi.com/dashboard/ci で無料取得）が必要。
+
+wokwi-cli でのシミュレーション:
+
+```
+nix develop -c cargo build --locked
+WOKWI_CLI_TOKEN=... nix develop -c wokwi-cli build/wokwi/sim
+```
+
 ## ファームウェア（Rust / Embassy）
 
 リポジトリルートは Cargo workspace。`crates/firmware/` が embassy / CYW43 WiFi / PWM の接合部、
