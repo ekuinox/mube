@@ -19,14 +19,15 @@ servo_screw_pilot = 1.8;   // M2 セルフタッピング下穴径
 servo_boss_d      = 4.5;   // 耳ボス外径（Pico ボスと同径。ポケット/タブ干渉を回避）
 servo_boss_h      = 4.5;   // pedestal_top からの耳ボス高さ。実効ネジ噛み合いは sg90_cutout のタブスロット(Z≈22.6..25.9)がボス(Z≈23..27.5)を削るため上側 ~1.6mm のみ。M2 には浅く、ボス配置ごと要実測・要設計見直し
 
-// --- SG90 cross horn (付属十字ホーン, 実測反映済み) ---
+// --- SG90 ホーン (付属ホーン, 一文字バー実装, 実測反映済み) ---
 horn_arm_l      = 16.65;    // 腕の長さ 中心→先端（実測: 横腕 全長 33.3mm の半分）
-horn_arm_w      = 6.2;      // 腕幅 見下ろし方向・腕の長さに直交（実測。テーパーする場合は代表幅）
-horn_hub_d      = 7.3;      // 中央ハブ外径（実測）
+horn_arm_w_base = 6.8;      // 腕幅 中心側（最も広い, 実測4.8+2.0補正）
+horn_arm_w_tip  = 3.4;      // 腕幅 先端側（最も狭い, 実測）
+horn_hub_d      = 8.0;      // 中央ハブ外径（実測6.0+2.0補正）
 horn_thick      = 1.7;      // ホーン厚 Z方向の押し出し深さ（実測）
 horn_clearance  = 0.3;      // ホーンポケット専用クリアランス (fit_clearance とは独立)
 horn_stub_d     = 4.6;      // 中心突起の径。ホーン socket 側の中心くぼみ(実測≈4.6mm)へ嵌合させ上下左右ズレを止める
-// 抜け止めネジは不要（軸方向はドア↔サーボ間でソケットが挟持されるため）。回り止めは十字ポケットのキー嵌合＋中心突起で担う。
+// 抜け止めネジは不要（軸方向はドア↔サーボ間でソケットが挟持されるため）。回り止めは一文字バーポケットのキー嵌合＋中心突起で担う。
 
 // --- Raspberry Pi Pico W ---
 pico_l        = 51.0;
@@ -107,5 +108,9 @@ assert(servo_screw_pilot < servo_boss_d, "pilot hole smaller than boss");
 assert(rosette_d/2 + pedestal_wall_t <= ext_left, "pedestal within interior (-X)");
 assert(rosette_d/2 + pedestal_wall_t <= ext_down, "pedestal within interior (-Y)");
 
-// Horn cross-slot must fit inside the knob-driven socket footprint with >=0.4mm tip wall
-assert(horn_arm_l + horn_clearance + 0.4 <= (knob_w_base + knob_t)/2 + socket_wall, "horn cross-slot exceeds socket footprint (tip wall < 0.4mm)");
+// --- ホーンパラメータ整合チェック ---
+assert(horn_arm_w_base > horn_arm_w_tip, "ホーン腕幅: 中心側 > 先端側（テーパー方向）");
+assert(horn_thick + horn_clearance <= horn_h, "ホーン厚+クリアランスが割当高さ以内");
+assert(horn_hub_d >= horn_arm_w_base, "ハブ径 >= 腕幅中心側（中央ポケットはハブ circle が支配）");
+assert(horn_stub_d < horn_hub_d, "中心突起径 < ハブ径（突起がハブくぼみに収まる）");
+assert(horn_arm_l + horn_clearance + 0.4 <= (knob_w_base + knob_t)/2 + socket_wall, "ホーンバーがソケット外形内に収まる（先端壁 >= 0.4mm）");

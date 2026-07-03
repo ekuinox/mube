@@ -15,6 +15,13 @@ exp = exploded ? 1 : 0;
 if (part == "body") body();
 else if (part == "lid") lid();
 else if (part == "socket") thumbturn_socket();
+// ポケット周辺のみ切り出した薄型クーポン（ホーンフィット確認用）
+else if (part == "socket_coupon")
+  intersection() {
+    thumbturn_socket();
+    linear_extrude(height = horn_thick + horn_clearance + socket_wall + 0.5) // +0.5 = ポケット底面上のマージン
+      square([200, 200], center = true);
+  }
 else if (part == "asm_body") color("SteelBlue") body();
 else if (part == "asm_lid")
   color("MediumSeaGreen")
