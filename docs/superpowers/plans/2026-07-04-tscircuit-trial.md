@@ -167,7 +167,7 @@ export default () => (
     <pushbutton name="SW1" footprint="pushbutton" />
     <capacitor name="C1" capacitance="470uF" polarized footprint="1206" />
     <capacitor name="C2" capacitance="100nF" footprint="0603" />
-    {/* D2: ショットキー 1N5819（+5V → SERVO_RTN の還流） */}
+    {/* D2: ショットキー 1N5819（SERVO_RTN → +5V の還流。サーボ電源カット時の逆起電力を逃がす） */}
     <diode name="D2" footprint="sod123" />
 
     {/* +5V (= netlist.py の +5V) */}

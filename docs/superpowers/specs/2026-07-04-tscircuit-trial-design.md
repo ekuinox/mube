@@ -28,7 +28,7 @@
   - D1: 2 色 LED（R/YG、カソードコモン）
   - SW1: タクトスイッチ
   - C1 470uF 電解 / C2 100nF セラミック
-  - D2: ショットキー 1N5819（+5V → SERVO_RTN の還流）
+  - D2: ショットキー 1N5819（SERVO_RTN → +5V の還流。サーボ電源カット時の逆起電力を逃がす）
   - ネット名は netlist.py と揃える: +5V / GND / SERVO_RTN / SERVO_SIG / GATE_DRV / GATE /
     LED_DRV_R / LED_A_R / LED_DRV_G / LED_A_G / BTN
   - GPIO 割当も netlist.py と同じ: servo=GP15, gate=GP14, led_r=GP16, led_g=GP18, btn=GP17
