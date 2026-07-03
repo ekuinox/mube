@@ -28,21 +28,17 @@ module mount_plate() {
           circle(r = pedestal_r - pedestal_wall_t);
         }
 
-      // pedestal top platform — disc with shaft hole
-      translate([0, 0, pedestal_top_z - wall])
-        linear_extrude(height = wall)
+      // pedestal top platform — thick disc the servo tabs screw straight into.
+      // M2 self-tapping engages the full servo_plate_t (pilot holes are through;
+      // the socket top rotating below keeps horn_h - servo_plate_t of clearance).
+      translate([0, 0, pedestal_top_z - servo_plate_t])
+        linear_extrude(height = servo_plate_t)
           difference() {
             circle(r = pedestal_r);
             circle(d = servo_shaft_d + 2*c);
-          }
-
-      // servo screw bosses on pedestal top
-      for (sx = [-1, 1])
-        translate([sx * servo_screw_span/2, 0, pedestal_top_z])
-          difference() {
-            cylinder(d = servo_boss_d, h = servo_boss_h);
-            translate([0, 0, -0.1])
-              cylinder(d = servo_screw_pilot, h = servo_boss_h + 0.2);
+            for (sx = [-1, 1])
+              translate([sx * servo_screw_span/2, 0])
+                circle(d = servo_screw_pilot);
           }
 
     }

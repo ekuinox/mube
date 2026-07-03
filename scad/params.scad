@@ -16,8 +16,7 @@ servo_tab_h   = 2.5;
 servo_shaft_d = 4.8;    // output boss / horn clearance
 servo_screw_span  = 27.6;  // 耳のネジ穴 中心間（データシート公称・要実測補正）
 servo_screw_pilot = 1.8;   // M2 セルフタッピング下穴径
-servo_boss_d      = 4.5;   // 耳ボス外径（Pico ボスと同径。ポケット/タブ干渉を回避）
-servo_boss_h      = 4.5;   // pedestal_top からの耳ボス高さ。実効ネジ噛み合いは sg90_cutout のタブスロット(Z≈22.6..25.9)がボス(Z≈23..27.5)を削るため上側 ~1.6mm のみ。M2 には浅く、ボス配置ごと要実測・要設計見直し
+servo_plate_t     = 3.5;   // 耳ネジが効くペデスタル天板の厚み。下穴は貫通で M2 実効噛み合い = 3.5mm。天板下面とソケット上面(Z=pedestal_top_z-horn_h)のすき間 = horn_h - servo_plate_t = 0.5mm。M2x6 はタブ厚2.5+3.5=6.0で面一
 
 // --- SG90 ホーン (付属ホーン, 一文字バー実装, 実測反映済み) ---
 horn_arm_l      = 16.65;    // 腕の長さ 中心→先端（実測: 横腕 全長 33.3mm の半分）
@@ -104,7 +103,9 @@ assert(knob_w_top <= knob_w_base, "knob tapers base->top");
 assert(knob_engage < knob_h, "engagement shallower than protrusion");
 
 // --- Servo mount checks ---
-assert(servo_screw_pilot < servo_boss_d, "pilot hole smaller than boss");
+assert(servo_plate_t >= 3, "耳ネジの実効噛み合い（天板厚）>= 3mm");
+assert(horn_h - servo_plate_t >= 0.5, "天板下面とソケット上面のクリアランス >= 0.5mm");
+assert(servo_screw_pilot < servo_plate_t + 2, "下穴径が天板に対して常識的な範囲");
 assert(rosette_d/2 + pedestal_wall_t <= ext_left, "pedestal within interior (-X)");
 assert(rosette_d/2 + pedestal_wall_t <= ext_down, "pedestal within interior (-Y)");
 
