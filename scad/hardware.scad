@@ -13,6 +13,10 @@ module sg90_cutout() {
     // real SG90 where the tabs sit on the output-shaft side.
     translate([servo_shaft_offset, 0, -(servo_body_h/2 - servo_tab_h/2)])
       cube([servo_tab_l + 2*c, servo_body_w + 2*c, servo_tab_h + 2*c], center = true);
+    // case + gear head protruding BELOW the tab plane (実測: ケース面まで 4mm、
+    // ギアヘッドの出っ張りまで計 8mm)。footprint はケースと同じで下へ抜ける
+    translate([servo_shaft_offset, 0, -(servo_body_h/2 + servo_head_h/2)])
+      cube([servo_body_l + 2*c, servo_body_w + 2*c, servo_head_h + 2*c], center = true);
     // output shaft / horn clearance through the bottom face
     translate([0, 0, -servo_body_h])
       cylinder(d = servo_shaft_d + 2*c, h = servo_body_h, center = false);
