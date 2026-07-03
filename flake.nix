@@ -19,7 +19,7 @@
             suffix = "arm64";
             sha256 = "1rxi05ci5jj0q1kdh0nx9lr0633vy7lpzcglydmsqkxrdk7w0p90";
           };
-        }.${pkgs.system};
+        }.${pkgs.stdenv.hostPlatform.system};
         wokwi-cli = pkgs.runCommand "wokwi-cli-0.26.1" {
           src = pkgs.fetchurl {
             url = "https://github.com/wokwi/wokwi-cli/releases/download/v0.26.1/wokwi-cli-linuxstatic-${wokwiCliBin.suffix}";

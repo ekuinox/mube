@@ -85,8 +85,10 @@ wokwi-cli でのシミュレーション:
 
 ```
 nix develop -c cargo build --locked
-WOKWI_CLI_TOKEN=... nix develop -c wokwi-cli build/wokwi/sim
+WOKWI_CLI_TOKEN=... nix develop -c wokwi-cli --timeout 10000 build/wokwi/sim
 ```
+
+`--timeout` はミリ秒指定で、指定した時間が経過するとシミュレーションを自動的に打ち切る。省略すると wokwi-cli はシミュレーションを無限に実行し続けるため、CI や確認目的では必ず指定すること。
 
 ## ファームウェア（Rust / Embassy）
 

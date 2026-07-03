@@ -119,7 +119,7 @@ def gen_diagram(nets, sim=False):
     connections = []
     palette = iter(PALETTE * 4)
     for name, eps in nets.items():
-        color = NET_COLORS.get(name) or next(palette)
+        color = NET_COLORS[name] if name in NET_COLORS else next(palette)
         flat = []
         for ref, pin in eps:
             mapped = wokwi_endpoints(ref, pin)

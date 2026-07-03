@@ -73,8 +73,7 @@ def test_sim_diagram_keeps_servo_powered():
     diagram, _ = w.gen_diagram(n.NETS, sim=True)
     got = pairs_of(diagram)
     assert frozenset(("servo:GND", "pico:GND.1")) in got
-    assert frozenset(("servo:V+", "pico:VBUS")) in got or any(
-        "servo:V+" in p for p in got), "servo V+ unconnected"
+    assert frozenset(("servo:V+", "pico:VBUS")) in got
 
 
 def test_unmapped_ref_warns_in_gen():
