@@ -22,6 +22,16 @@ else if (part == "socket_coupon")
     linear_extrude(height = horn_thick + horn_clearance + socket_wall + 0.5) // +0.5 = ポケット底面上のマージン
       square([200, 200], center = true);
   }
+// ペデスタル天板のみ切り出した薄型クーポン（サーボ耳の位置・ネジ効き確認用）
+else if (part == "mount_coupon")
+  translate([0, 0, -(pedestal_top_z - servo_plate_t)]) // 天板下面をベッドに接地
+    intersection() {
+      body();
+      translate([0, 0, pedestal_top_z - servo_plate_t])
+        // 半径をペデスタル外周までに絞り、body の外壁を巻き込まない
+        cylinder(r = rosette_d/2 + pedestal_wall_t + fit_clearance + 0.1,
+                 h = servo_plate_t + 0.5); // +0.5 = 天板上面のマージン
+    }
 else if (part == "asm_body") color("SteelBlue") body();
 else if (part == "asm_lid")
   color("MediumSeaGreen")
