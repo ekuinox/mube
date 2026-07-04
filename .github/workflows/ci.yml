@@ -25,6 +25,7 @@ jobs:
           mkdir -p crates/firmware/cyw43-firmware
           touch crates/firmware/cyw43-firmware/43439A0.bin
           touch crates/firmware/cyw43-firmware/43439A0_clm.bin
+          touch crates/firmware/cyw43-firmware/nvram_rp2040.bin
 
       - name: cargo check (smtlk-core)
         run: cargo check -p smtlk-core --locked --target x86_64-unknown-linux-gnu
