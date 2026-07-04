@@ -11,7 +11,7 @@
 //   VP_GATE  ≈ 3.2V（3.3×10k/(220+10k)）→ Q1 ON
 //   VP_RTN   ≈ 0.9V（Q1 の Vds）。※既定エンジンでは Q1 が非導通で 5V に張り付くため
 //              analogsimulation で ngspice を明示している
-//   VP_LED_R = 赤LEDアノード電圧
+//   VP_LED_R ≈ 2.1V（赤LEDアノード = LED の順方向電圧 Vf）
 //   A_servo  ≈ 160mA（(5-0.9)/25）／ A_led_r ≈ 数 mA
 // 注: 静的動作点なので D2 の還流(保護)動作は出ない（静的 ON では D2 逆バイアスで電流≈0）。
 export default () => (
