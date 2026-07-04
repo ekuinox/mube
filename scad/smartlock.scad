@@ -17,7 +17,7 @@ if (part == "body") body();
 else if (part == "lid") lid();
 else if (part == "socket") thumbturn_socket();
 else if (part == "tray") tray();
-// トレイ +X/+Y 隅の薄型クーポン（ポスト高・ネジ効き・穴位置確認用）
+// トレイの +X/+Y 側の 1/4 象限を切り出したクーポン（ポスト高・ネジ効き・穴位置確認用）
 else if (part == "tray_coupon")
   intersection() {
     tray();

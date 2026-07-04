@@ -25,7 +25,7 @@ module tray() {
             cylinder(d = tray_screw_pilot, h = 6 + 0.1);
         }
 
-    // tray -> body screw bosses (M2 shank clears the floor, self-taps body boss)
+    // tray floor pass-through for M2 shank; the body boss self-taps
     for (sx = [-1, 1], sy = [-1, 1])
       translate([sx * tray_screw_span_w/2, sy * tray_screw_span_l/2, 0])
         difference() {
