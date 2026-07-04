@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - 独立ファイル `tscircuit/sim-full.tsx` に書く。`index.tsx` / `circuit/netlist.py` は変更しない。
-- ネット名は index.tsx と揃える: V5(=+5V), GND, SERVO_RTN, SERVO_SIG, GATE_DRV, GATE, LED_DRV_R, LED_A_R, LED_DRV_G, LED_A_G, BTN。
+- ネット名は index.tsx と揃える: V5(=+5V), GND, SERVO_RTN, SERVO_SIG, GATE_DRV, GATE, LED_DRV_R, LED_A_R, LED_DRV_G, LED_A_G, BTN。ただし LED・サーボSIG の脚は名前付きネットではなくピン間（電流計経由）で直接配線するため、実際に名前が付くネットは V5 / GND / SERVO_RTN / GATE_DRV / GATE のみ。
 - 解析は過渡解析のみ（`spice_transient_analysis`）。DC 動作点解析は無いので、DC 一定入力を短時間流して落ち着き値を読む。
 - MOSFET/ダイオード/LED は tscircuit の汎用デフォルト SPICE モデル（実物ではない）。数値はざっくり値。検証レンジは緩めに取る。
 - `<analogsimulation>` に `spiceEngine="ngspice"` を必ず指定する。既定エンジン（"spicey"）は MOSFET を正しく解けず Q1 が導通せず VP_RTN が 5V に張り付く（実測確認済み）。ngspice なら Vgs=3.2V/Vth=1V で導通し VP_RTN≈0.9V・サーボ電流≈160mA になる。

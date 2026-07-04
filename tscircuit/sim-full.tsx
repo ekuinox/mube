@@ -14,6 +14,7 @@
 //   VP_LED_R ≈ 2.1V（赤LEDアノード = LED の順方向電圧 Vf）
 //   A_servo  ≈ 160mA（(5-0.9)/25）／ A_led_r ≈ 数 mA
 // 注: 静的動作点なので D2 の還流(保護)動作は出ない（静的 ON では D2 逆バイアスで電流≈0）。
+// 注: simulatable 部品（Q1/Dr/Dg）は footprint を付けないと SPICE が Singular matrix で失敗するため footprint を明示している。
 export default () => (
   <board width="60mm" height="45mm" routingDisabled>
     {/* 既定エンジンは MOSFET を解けないため ngspice を明示（Q1 を導通させるのに必須） */}

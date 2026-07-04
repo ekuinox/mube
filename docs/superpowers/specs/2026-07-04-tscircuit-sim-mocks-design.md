@@ -1,7 +1,7 @@
 # tscircuit 全体シミュレーション（Pico/サーボ モック）設計
 
 日付: 2026-07-04
-ステータス: 承認待ち
+ステータス: 実装済み
 
 ## 目的
 
@@ -21,6 +21,7 @@ Pico W と SG90 サーボは SPICE モデルを持たないため、電気的に
 - 独立ファイル `tscircuit/sim-full.tsx` に全部を書く。`index.tsx` と `circuit/netlist.py` は変更しない。
 - ネット名は index.tsx と揃える（V5=+5V, GND, SERVO_RTN, SERVO_SIG, GATE_DRV, GATE,
   LED_DRV_R, LED_A_R, LED_DRV_G, LED_A_G, BTN）。見比べやすさのため。
+  ただし LED・サーボSIG の脚は名前付きネットではなくピン間（電流計経由）で直接配線するため、実際に名前が付くネットは V5 / GND / SERVO_RTN / GATE_DRV / GATE のみ。
 
 ## モック
 
