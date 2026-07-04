@@ -11,7 +11,8 @@
 // 注: 静的動作点なので D2 の還流(保護)動作は出ない（静的 ON では D2 逆バイアスで電流≈0）。
 export default () => (
   <board width="60mm" height="45mm" routingDisabled>
-    <analogsimulation duration="50ms" timePerStep="50us" />
+    {/* 既定エンジンは MOSFET を解けないため ngspice を明示（Q1 を導通させるのに必須） */}
+    <analogsimulation duration="50ms" timePerStep="50us" spiceEngine="ngspice" />
 
     {/* ── Pico W モック: 電源 ── */}
     <voltagesource name="VBUS" voltage="5V" />
