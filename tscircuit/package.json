@@ -1,0 +1,12 @@
+{
+  "name": "smtlk-tscircuit",
+  "private": true,
+  "scripts": {
+    "build": "tsci build",
+    "dev": "tsci dev"
+  },
+  "devDependencies": {
+    "@tscircuit/cli": "latest",
+    "tscircuit": "latest"
+  }
+}

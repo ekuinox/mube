@@ -7,6 +7,7 @@
 
 - `scad/` — 筐体（OpenSCAD）
 - `circuit/` — 回路ネットリスト（Python: ERC ライト + from-to/bom 生成）
+- `tscircuit/` — 回路 as code の tscircuit お試し（bun 管理。`circuit/` の netlist.py と同構成）
 - `viewer/` — STL ブラウザビューア（Three.js + cloudflared quick tunnel）
 - `crates/firmware/` — Pico W ファーム（Embassy/CYW43/PWM 接合部、thumbv6m-none-eabi）
 - `crates/smtlk-core/` — ハード非依存ロジック（LockState/コマンド解釈/serve ループ/サーボ角度。host テスト可）

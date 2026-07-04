@@ -15,6 +15,7 @@
             pkgs.uv           # runs viewer/serve.py (PEP 723), provisions its own Python
             pkgs.cloudflared  # quick tunnel binary (pip's pycloudflared lacks aarch64)
             pkgs.rustup       # Pico W firmware toolchain; rust-toolchain.toml が stable + thumbv6m を自動導入
+            pkgs.bun          # tscircuit/ の TS 回路記述を実行（tsci は bun 管理の npm パッケージ）
             pkgs.librsvg      # SVG -> PNG 変換
             pkgs.mesa         # swrast ソフトウェアレンダラ（headless 3D レンダリング用）
             pkgs.libglvnd     # EGL ディスパッチャー
