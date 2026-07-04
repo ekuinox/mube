@@ -98,8 +98,14 @@ tray_fl           = uboard_mount_span_l + tray_post_d;     // 72: footprint alon
 tray_fw           = uboard_mount_span_w + tray_post_d;     // 47: footprint along X
 tray_screw_span_l = 60;     // tray<->body screw pitch, Y (clear band, avoids posts/Pico)
 tray_screw_span_w = 26;     // tray<->body screw pitch, X
-tray_screw_pilot  = servo_screw_pilot;   // 2.2: M2 self-tap (posts & body bosses)
-tray_screw_clear  = 2.4;    // M2 shank clearance through the tray floor
+tray_screw_pilot  = servo_screw_pilot;   // 2.2: M2 self-tap into the tray bosses
+tray_screw_clear  = 2.4;    // M2 shank clearance through the body floor
+// Tray is screwed from BELOW: the screw enters the body floor underside, passes
+// up through it, and self-taps into a boss on the tray. The board rests above
+// and never blocks access.
+tray_mount_boss_h = 5;      // tray self-tap boss height above the tray floor (thread grip)
+tray_head_d       = 4.2;    // M2 pan-head counterbore dia on the body floor underside
+tray_head_h       = 1.6;    // counterbore depth
 
 // --- Pico / tray placement in the +Y free space (single source; body/lid use these) ---
 pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;

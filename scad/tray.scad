@@ -23,13 +23,14 @@ module tray() {
       translate([sx * uboard_mount_span_w/2, sy * uboard_mount_span_l/2, tray_t])
         cylinder(d = tray_post_d, h = tray_post_h);
 
-    // tray floor pass-through for M2 shank; the body boss self-taps
+    // tray -> body fastening: bosses fed from BELOW. The screw comes up through
+    // the body floor and self-taps into these; board rests above, access clear.
     for (sx = [-1, 1], sy = [-1, 1])
       translate([sx * tray_screw_span_w/2, sy * tray_screw_span_l/2, 0])
         difference() {
-          cylinder(d = tray_post_d, h = tray_t);
+          cylinder(d = tray_post_d, h = tray_t + tray_mount_boss_h);
           translate([0, 0, -0.1])
-            cylinder(d = tray_screw_clear, h = tray_t + 0.2);
+            cylinder(d = tray_screw_pilot, h = tray_t + tray_mount_boss_h - 1 + 0.1);
         }
     }
 

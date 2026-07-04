@@ -26,9 +26,6 @@ module body() {
       }
       // bottom mount face with pedestal
       mount_plate();
-      // tray connector bosses on the floor (tray carries Pico + board)
-      translate([pico_x, pico_y, wall])
-        tray_mounts();
     }
 
     // servo pocket at pedestal top; tabs rest on pedestal surface
@@ -38,6 +35,11 @@ module body() {
     // floor opening for thumb-turn knob (through mount plate center)
     translate([0, 0, -0.1])
       cylinder(d = rosette_d + fit_clearance, h = wall + 0.2);
+
+    // tray fastening: clearance holes + head counterbores through the floor
+    // (tray is screwed from the body underside)
+    translate([pico_x, pico_y, 0])
+      tray_mount_cuts();
 
     // USB on the +Y top wall
     translate([pico_x, wall_y_top, usb_z])
