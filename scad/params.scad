@@ -43,7 +43,7 @@ pico_boss_d   = 4.5;
 pico_boss_h   = 3.0;
 
 // --- USB micro-B connector (Pico W) ---
-usb_w           = 9.0;
+usb_w           = 12.0;  // 開口幅はケーブルプラグ基準。コネクタ幅9では実機でプラグが通らず拡大(2026-07-04)。クリアランス込み設計開口 12.8
 usb_h           = 6.0;
 usb_connector_h = 2.6;   // connector body height above PCB (measured)
 
