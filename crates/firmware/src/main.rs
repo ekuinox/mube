@@ -212,6 +212,12 @@ async fn main(spawner: Spawner) {
     );
     spawner.spawn(net_task(net_runner).unwrap());
 
+    // 認証が未設定（プレースホルダのまま）なら join は永久に失敗する。
+    // ビルド時 env の渡し忘れを、パスワード誤り等と区別できるよう defmt に明示する。
+    if !config::WIFI_CONFIGURED {
+        warn!("WiFi 認証が未設定（プレースホルダ使用）。ビルド時に WIFI_SSID / WIFI_PASSWORD を渡すこと。このまま join は失敗し続けます。");
+    }
+
     // WPA2 で接続。失敗したら少し待って再試行。
     loop {
         match control

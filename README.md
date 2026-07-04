@@ -90,7 +90,8 @@ serve ループは host テスト済み、実機での実 TCP 確認は次サイ
   未設定でもビルドは通るが、プレースホルダのままなので実機では WiFi に接続できない（`crates/firmware/src/config.rs`）。
   direnv を使う場合はリポジトリ直下に `.env.local`（dotenv 形式、`WIFI_SSID=値`）か
   `.envrc.local`（bash、`export WIFI_SSID=値`）を作れば `.envrc` が自動で環境変数に載せる
-  （どちらも gitignore 済み。`direnv allow` を忘れずに）。
+  （どちらも gitignore 済み。`direnv allow` を忘れずに）。`.envrc` は `use flake` を使うので
+  direnv に加えて **nix-direnv** が必要（未導入なら環境変数の読込だけ手動で行う）。
 
 ### ビルド
     nix develop -c cargo build --locked

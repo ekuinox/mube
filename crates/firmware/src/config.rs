@@ -16,3 +16,8 @@ pub const WIFI_PASSWORD: &str = match option_env!("WIFI_PASSWORD") {
     Some(v) => v,
     None => "YOUR_WIFI_PASSWORD",
 };
+
+/// SSID / パスワードの両方がビルド時 env から与えられたか。
+/// false（プレースホルダのまま）だと join は永久に失敗するので、起動時に警告する。
+pub const WIFI_CONFIGURED: bool =
+    option_env!("WIFI_SSID").is_some() && option_env!("WIFI_PASSWORD").is_some();
