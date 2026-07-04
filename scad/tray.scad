@@ -16,38 +16,36 @@ module tray() {
     translate([0, 0, tray_t])
       rotate([0, 0, 90]) pico_w_mounts();
 
-    // universal-board support posts at the datasheet corner pitch.
-    // The board corners rest on these flat tops and are held by solder to the
-    // Pico pins — no board screw (corner holes did not register in the fit test).
+    // universal-board support posts at the datasheet corner pitch. The board
+    // corners rest on these flat tops (held by solder to the Pico pins). Each
+    // post doubles as the tray->body anchor: the screw comes up from the body
+    // underside and self-taps into the post (pilot cut below), so the same 4
+    // posts fix both the board and the body — no separate bosses.
     for (sx = [-1, 1], sy = [-1, 1])
       translate([sx * uboard_mount_span_w/2, sy * uboard_mount_span_l/2, tray_t])
         cylinder(d = tray_post_d, h = tray_post_h);
-
-    // tray -> body fastening: bosses fed from BELOW. The screw comes up through
-    // the body floor and self-taps into these; board rests above, access clear.
-    for (sx = [-1, 1], sy = [-1, 1])
-      translate([sx * tray_screw_span_w/2, sy * tray_screw_span_l/2, 0])
-        difference() {
-          cylinder(d = tray_post_d, h = tray_t + tray_mount_boss_h);
-          translate([0, 0, -0.1])
-            cylinder(d = tray_screw_pilot, h = tray_t + tray_mount_boss_h - 1 + 0.1);
-        }
     }
 
-    // orientation marker: recess "USB" + an arrow into the +Y (USB) end of the
-    // floor. Seat the Pico with its USB connector on this side — the body's USB
-    // opening is on the +Y wall.
+    // orientation marker: recessed arrow into the +Y (USB) end of the floor.
+    // Seat the Pico with its USB connector on this side — the body's USB opening
+    // is on the +Y wall.
     tray_usb_marker();
+
+    // tray->body screw pilots, fed from BELOW up into the support posts (leave a
+    // 1mm cap so the board still rests on a solid post top).
+    for (sx = [-1, 1], sy = [-1, 1])
+      translate([sx * uboard_mount_span_w/2, sy * uboard_mount_span_l/2, -0.1])
+        cylinder(d = tray_screw_pilot, h = tray_t + tray_post_h - 1 + 0.1);
   }
 }
 
-// Recessed arrow on the floor top pointing +Y (the USB side). Sits in the clear
-// band beyond the Pico, clear of screw bosses (±tray_screw_span_w/2) and posts.
+// Recessed arrow on the floor top pointing +Y (the USB side), roughly Pico-boss
+// sized. Sits in the clear band beyond the Pico.
 module tray_usb_marker() {
   depth = 0.6;
-  translate([0, 28, tray_t - depth])
+  translate([0, 30, tray_t - depth])
     linear_extrude(height = depth + 0.1)
-      polygon(points = [[-4, 0], [4, 0], [0, 7]]);
+      polygon(points = [[-2.5, 0], [2.5, 0], [0, 4.5]]);
 }
 
 // standalone render target (ignored by `use <tray.scad>`)

@@ -38,11 +38,11 @@ module pico_w_mounts() {
 
 // Negative geometry cut through the body floor so the tray can be screwed from
 // BELOW: a shank clearance hole plus a pan-head counterbore on the underside.
-// Positions match the tray's tray_screw_span_* pattern; centered at origin.
-// Cut with the floor's z origin at 0 (floor spans z=0..wall).
+// Positions match the tray's support posts (uboard corner pitch); centered at
+// origin. Cut with the floor's z origin at 0 (floor spans z=0..wall).
 module tray_mount_cuts() {
   for (sx = [-1, 1], sy = [-1, 1])
-    translate([sx * tray_screw_span_w/2, sy * tray_screw_span_l/2, 0]) {
+    translate([sx * uboard_mount_span_w/2, sy * uboard_mount_span_l/2, 0]) {
       // shank clearance all the way through the floor
       translate([0, 0, -0.1])
         cylinder(d = tray_screw_clear, h = wall + 0.2);

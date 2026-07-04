@@ -96,14 +96,11 @@ tray_post_d       = 6.0;    // universal-board support post outer dia
 tray_post_h       = pico_boss_h + pico_h + pin_header_h;   // 10: post top = board underside
 tray_fl           = uboard_mount_span_l + tray_post_d;     // 72: footprint along Y
 tray_fw           = uboard_mount_span_w + tray_post_d;     // 47: footprint along X
-tray_screw_span_l = 60;     // tray<->body screw pitch, Y (clear band, avoids posts/Pico)
-tray_screw_span_w = 26;     // tray<->body screw pitch, X
-tray_screw_pilot  = servo_screw_pilot;   // 2.2: M2 self-tap into the tray bosses
+tray_screw_pilot  = servo_screw_pilot;   // 2.2: M2 self-tap into the support posts
 tray_screw_clear  = 2.4;    // M2 shank clearance through the body floor
 // Tray is screwed from BELOW: the screw enters the body floor underside, passes
-// up through it, and self-taps into a boss on the tray. The board rests above
-// and never blocks access.
-tray_mount_boss_h = 5;      // tray self-tap boss height above the tray floor (thread grip)
+// up through it, and self-taps into a support post. The board rests above and
+// never blocks access.
 tray_head_d       = 4.2;    // M2 pan-head counterbore dia on the body floor underside
 tray_head_h       = 1.6;    // counterbore depth
 
