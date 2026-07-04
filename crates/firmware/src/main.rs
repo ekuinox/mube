@@ -164,9 +164,12 @@ async fn main(spawner: Spawner) {
     spawner.spawn(button_task(button).unwrap());
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
-    // cyw43 v0.7.0 では aligned_bytes! マクロで A4 アライメントが要る。
+    // cyw43 v0.7.0 は 3 つ要る: firmware / nvram（基板設定, new へ）/ clm（国別規制, control.init へ）。
+    // nvram を渡さない/取り違えると "waiting for HT clock" で起動が止まる。
+    // aligned_bytes! マクロで A4 アライメントを付ける。
     let fw = cyw43::aligned_bytes!("../cyw43-firmware/43439A0.bin");
     let clm = cyw43::aligned_bytes!("../cyw43-firmware/43439A0_clm.bin");
+    let nvram = cyw43::aligned_bytes!("../cyw43-firmware/nvram_rp2040.bin");
 
     // CYW43 との PIO-SPI 配線（Pico W 固定ピン）。
     let pwr = Output::new(p.PIN_23, Level::Low);
@@ -186,9 +189,12 @@ async fn main(spawner: Spawner) {
 
     static STATE: StaticCell<cyw43::State> = StaticCell::new();
     let state = STATE.init(cyw43::State::new());
-    // cyw43 v0.7.0: new() takes fw and clm (nvram) as Aligned<A4, [u8]>; control.init() は廃止。
-    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw, clm).await;
+    // cyw43 v0.7.0: new(state, pwr, spi, firmware, nvram)。CLM は起動後に control.init で読む。
+    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw, nvram).await;
     spawner.spawn(cyw43_task(runner).unwrap());
+
+    // CLM（国別規制データ）をロード。ランナーを spawn した後に行う必要がある。
+    control.init(clm).await;
 
     control
         .set_power_management(cyw43::PowerManagementMode::PowerSave)
