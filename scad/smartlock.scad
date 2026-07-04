@@ -2,6 +2,7 @@ include <params.scad>
 use <body.scad>
 use <lid.scad>
 use <socket.scad>
+use <tray.scad>
 
 // Select with: openscad -D part="lid" ...
 part = "assembly";
@@ -15,6 +16,14 @@ exp = exploded ? 1 : 0;
 if (part == "body") body();
 else if (part == "lid") lid();
 else if (part == "socket") thumbturn_socket();
+else if (part == "tray") tray();
+// トレイ +X/+Y 隅の薄型クーポン（ポスト高・ネジ効き・穴位置確認用）
+else if (part == "tray_coupon")
+  intersection() {
+    tray();
+    translate([0, 0, -1])
+      cube([tray_fw/2 + 3, tray_fl/2 + 3, tray_post_h + tray_t + 3]);
+  }
 // ポケット周辺のみ切り出した薄型クーポン（ホーンフィット確認用）
 else if (part == "socket_coupon")
   intersection() {
@@ -42,6 +51,9 @@ else if (part == "asm_socket")
       rotate([180, 0, 0])
         translate([0, 0, -socket_oh/2])
           thumbturn_socket();
+else if (part == "asm_tray")
+  color("Plum")
+    translate([pico_x, pico_y, wall + exp * 10]) tray();
 else {
   // full assembly
   color("SteelBlue") body();
@@ -54,4 +66,7 @@ else {
       rotate([180, 0, 0])
         translate([0, 0, -socket_oh/2])
           thumbturn_socket();
+
+  color("Plum")
+    translate([pico_x, pico_y, wall + exp * 10]) tray();
 }
