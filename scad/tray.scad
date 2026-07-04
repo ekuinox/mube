@@ -16,15 +16,12 @@ module tray() {
     translate([0, 0, tray_t])
       rotate([0, 0, 90]) pico_w_mounts();
 
-    // universal-board support posts at the datasheet corner pitch;
-    // M2 self-taps into the top of each post through the board's φ3.2 hole
+    // universal-board support posts at the datasheet corner pitch.
+    // The board corners rest on these flat tops and are held by solder to the
+    // Pico pins — no board screw (corner holes did not register in the fit test).
     for (sx = [-1, 1], sy = [-1, 1])
       translate([sx * uboard_mount_span_w/2, sy * uboard_mount_span_l/2, tray_t])
-        difference() {
-          cylinder(d = tray_post_d, h = tray_post_h);
-          translate([0, 0, tray_post_h - 6])
-            cylinder(d = tray_screw_pilot, h = 6 + 0.1);
-        }
+        cylinder(d = tray_post_d, h = tray_post_h);
 
     // tray floor pass-through for M2 shank; the body boss self-taps
     for (sx = [-1, 1], sy = [-1, 1])
@@ -43,18 +40,13 @@ module tray() {
   }
 }
 
-// Recessed "USB" text and a +Y arrow on the floor top, clear of the Pico
-// footprint, screw bosses (±tray_screw_span_w/2) and posts (±uboard_mount_span_w/2).
+// Recessed arrow on the floor top pointing +Y (the USB side). Sits in the clear
+// band beyond the Pico, clear of screw bosses (±tray_screw_span_w/2) and posts.
 module tray_usb_marker() {
   depth = 0.6;
-  translate([0, 0, tray_t - depth]) {
-    translate([0, 29, 0])
-      linear_extrude(height = depth + 0.1)
-        text("USB", size = 5, halign = "center", valign = "center");
-    translate([0, 31.5, 0])
-      linear_extrude(height = depth + 0.1)
-        polygon(points = [[-3, 0], [3, 0], [0, 4]]);
-  }
+  translate([0, 28, tray_t - depth])
+    linear_extrude(height = depth + 0.1)
+      polygon(points = [[-4, 0], [4, 0], [0, 7]]);
 }
 
 // standalone render target (ignored by `use <tray.scad>`)
