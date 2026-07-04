@@ -81,8 +81,9 @@ uboard_l = 72;    // long side (along Pico pin direction = Y)
 uboard_w = 47;    // short side (across Pico width = X)
 uboard_t = 1.6;   // board thickness (P-03229 Cタイプ)
 
-// Pin header stack height: Pico top face -> universal board underside.
-pin_header_h = 8.5;
+// Pico top face -> universal board underside gap (as-built). ヘッダ自由高さは
+// 約 8mm だが、背高ポスト＋ネジで基板をここまで着座させる（ピンは約2mm深く挿さる）。
+pin_header_h = 6;
 
 // Universal board corner mounting holes (秋月 P-03229 datasheet).
 uboard_mount_span_l = 66;   // corner-hole center pitch, long side (along Y)
@@ -92,7 +93,7 @@ uboard_mount_d      = 3.2;  // corner hole dia (M2/M3 clearance)
 // --- Electronics carrier tray ---
 tray_t            = 2.4;    // tray floor thickness
 tray_post_d       = 6.0;    // universal-board support post outer dia
-tray_post_h       = pico_boss_h + pico_h + pin_header_h;   // 12.5: post top = board underside
+tray_post_h       = pico_boss_h + pico_h + pin_header_h;   // 10: post top = board underside
 tray_fl           = uboard_mount_span_l + tray_post_d;     // 72: footprint along Y
 tray_fw           = uboard_mount_span_w + tray_post_d;     // 47: footprint along X
 tray_screw_span_l = 60;     // tray<->body screw pitch, Y (clear band, avoids posts/Pico)

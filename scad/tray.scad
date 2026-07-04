@@ -6,7 +6,8 @@ use <hardware.scad>
 // Footprint centered at origin, long axis (Pico length / uboard long side)
 // along Y — matching how the body orients the Pico.
 module tray() {
-  union() {
+  difference() {
+    union() {
     // floor plate
     translate([0, 0, tray_t/2])
       cube([tray_fw, tray_fl, tray_t], center = true);
@@ -33,6 +34,26 @@ module tray() {
           translate([0, 0, -0.1])
             cylinder(d = tray_screw_clear, h = tray_t + 0.2);
         }
+    }
+
+    // orientation marker: recess "USB" + an arrow into the +Y (USB) end of the
+    // floor. Seat the Pico with its USB connector on this side — the body's USB
+    // opening is on the +Y wall.
+    tray_usb_marker();
+  }
+}
+
+// Recessed "USB" text and a +Y arrow on the floor top, clear of the Pico
+// footprint, screw bosses (±tray_screw_span_w/2) and posts (±uboard_mount_span_w/2).
+module tray_usb_marker() {
+  depth = 0.6;
+  translate([0, 0, tray_t - depth]) {
+    translate([0, 29, 0])
+      linear_extrude(height = depth + 0.1)
+        text("USB", size = 5, halign = "center", valign = "center");
+    translate([0, 31.5, 0])
+      linear_extrude(height = depth + 0.1)
+        polygon(points = [[-3, 0], [3, 0], [0, 4]]);
   }
 }
 
