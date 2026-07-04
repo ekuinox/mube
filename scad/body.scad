@@ -11,12 +11,7 @@ module body() {
   servo_y = 0;
 
   // Pico stacked above the servo in free +Y space; long axis along Y
-  pico_x = 0;
   pico_z = wall * 0.5;
-  pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;
-  pico_gap = max(6, pedestal_outer - servo_body_w/2 + 2,
-                pedestal_outer + uboard_l/2 - pico_l/2 - servo_body_w/2 + 2);
-  pico_y = servo_body_w/2 + pico_gap + pico_l/2;
 
   // USB on the +Y top wall, aligned to the Pico's top end.
   wall_y_top = center_y + inner_w/2;
