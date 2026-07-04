@@ -1,10 +1,18 @@
-//! 接続設定。実機投入前に実値へ書き換える。
+//! 接続設定。ビルド時に環境変数 `WIFI_SSID` / `WIFI_PASSWORD` から埋め込む。
 //!
-//! 注意: 実際の SSID / パスワードをそのままコミットしないこと。運用では
-//!   - 本ファイルを `.gitignore` に追加して各自で管理する、または
-//!   - `option_env!("WIFI_SSID")` などビルド時環境変数に切り替える
+//!     WIFI_SSID=... WIFI_PASSWORD=... nix develop -c cargo build --release --locked
 //!
-//! のどちらかにする。ここでは雛形なのでプレースホルダを置いている。
+//! 未設定のときはプレースホルダにフォールバックする（ビルドは通るが実機では
+//! WiFi に接続できない）。実値をソースやコミットに書かないこと。
+//! rustc は `option_env!` の参照を dep-info に記録するため、環境変数の値を
+//! 変えれば再ビルドされる。
 
-pub const WIFI_SSID: &str = "YOUR_WIFI_SSID";
-pub const WIFI_PASSWORD: &str = "YOUR_WIFI_PASSWORD";
+pub const WIFI_SSID: &str = match option_env!("WIFI_SSID") {
+    Some(v) => v,
+    None => "YOUR_WIFI_SSID",
+};
+
+pub const WIFI_PASSWORD: &str = match option_env!("WIFI_PASSWORD") {
+    Some(v) => v,
+    None => "YOUR_WIFI_PASSWORD",
+};
