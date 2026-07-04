@@ -32,6 +32,15 @@ else if (part == "mount_coupon")
         cylinder(r = rosette_d/2 + pedestal_wall_t + fit_clearance + 0.1,
                  h = servo_plate_t + 0.5); // +0.5 = 天板上面のマージン
     }
+// 床フットプリントのみ切り出した薄型クーポン（ロゼット嵌合＋ドア左/下クリアランス確認用）。
+// 床(wall)に加えて台座リングを 8mm 残し、ロゼットの出っ張りがボア(Ø45.8)へ逃げるかと
+// +Y 壁の USB 開口（上端 z≈9.9）のプラグ通りも確認できるようにする
+else if (part == "floor_coupon")
+  intersection() {
+    body();
+    linear_extrude(height = wall + 8)
+      square([300, 300], center = true);
+  }
 else if (part == "asm_body") color("SteelBlue") body();
 else if (part == "asm_lid")
   color("MediumSeaGreen")
