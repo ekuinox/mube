@@ -86,7 +86,12 @@ serve ループは host テスト済み、実機での実 TCP 確認は次サイ
 `nix develop` が rustup を用意する（rust-toolchain.toml が stable + thumbv6m を自動導入）。ほかに手動の準備が 2 つ:
 
 - CYW43 ファームウェアブロブを取得する。ライセンス物のため未コミット。詳細は `crates/firmware/cyw43-firmware/README.md`。
-- `crates/firmware/src/config.rs` の `WIFI_SSID` / `WIFI_PASSWORD` を実値に書き換える。
+- WiFi 認証をビルド時環境変数で渡す: `WIFI_SSID=... WIFI_PASSWORD=... nix develop -c cargo build --release --locked`。
+  未設定でもビルドは通るが、プレースホルダのままなので実機では WiFi に接続できない（`crates/firmware/src/config.rs`）。
+  direnv を使う場合はリポジトリ直下に `.env.local`（dotenv 形式、`WIFI_SSID=値`）か
+  `.envrc.local`（bash、`export WIFI_SSID=値`）を作れば `.envrc` が自動で環境変数に載せる
+  （どちらも gitignore 済み。`direnv allow` を忘れずに）。`.envrc` は `use flake` を使うので
+  direnv に加えて **nix-direnv** が必要（未導入なら環境変数の読込だけ手動で行う）。
 
 ### ビルド
     nix develop -c cargo build --locked
