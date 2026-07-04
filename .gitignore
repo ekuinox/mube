@@ -4,6 +4,12 @@ result
 .worktrees/
 __pycache__/
 
+# WiFi 認証などの実値（.envrc が読み込む。詳細は .envrc のコメント参照）
+.env.local
+.envrc.local
+# direnv のキャッシュ（nix-direnv 等）
+.direnv/
+
 # Rust / Pico W firmware
 /target
 # CYW43 ファームウェアブロブはライセンス物。各自で取得（crates/firmware/cyw43-firmware/README.md 参照）。

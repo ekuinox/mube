@@ -20,7 +20,7 @@
             pkgs.libglvnd     # EGL ディスパッチャー
             # デバッグプローブで書き込み/ログするなら probe-rs を追加（nixpkgs の版で attr 名が
             # probe-rs-tools / probe-rs と揺れるので、お使いの nixpkgs に合う方を有効化する）:
-            # pkgs.probe-rs-tools
+            pkgs.probe-rs-tools  # デバッグプローブ（CMSIS-DAP 等）での書き込み/defmt ログ
             # cargo の外部サブコマンド。`cargo host-test` で起動され、uname -m でホストトリプルを
             # 動的に解決するため x86_64 / aarch64 どちらの環境でも同じコマンドで動く。
             (pkgs.writeShellScriptBin "cargo-host-test" ''
