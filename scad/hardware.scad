@@ -36,6 +36,18 @@ module pico_w_mounts() {
       }
 }
 
+// Four M2 self-tap bosses on the body floor that the tray screws into.
+// Positions match the tray's tray_screw_span_* pattern; centered at origin.
+module tray_mounts() {
+  for (sx = [-1, 1], sy = [-1, 1])
+    translate([sx * tray_screw_span_w/2, sy * tray_screw_span_l/2, 0])
+      difference() {
+        cylinder(d = tray_post_d, h = pico_boss_h);
+        translate([0, 0, -0.1])
+          cylinder(d = tray_screw_pilot, h = pico_boss_h + 0.2);
+      }
+}
+
 // USB plug opening, centered at origin, cut along Y.
 module usb_cutout() {
   c = fit_clearance;

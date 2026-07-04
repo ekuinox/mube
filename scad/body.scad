@@ -10,12 +10,9 @@ module body() {
   servo_x = 0;
   servo_y = 0;
 
-  // Pico stacked above the servo in free +Y space; long axis along Y
-  pico_z = wall * 0.5;
-
   // USB on the +Y top wall, aligned to the Pico's top end.
   wall_y_top = center_y + inner_w/2;
-  usb_z = pico_z + pico_boss_h + pico_h + usb_connector_h/2;
+  usb_z = wall + tray_t + pico_boss_h + pico_h + usb_connector_h/2;
 
   difference() {
     union() {
@@ -29,9 +26,9 @@ module body() {
       }
       // bottom mount face with pedestal
       mount_plate();
-      // Pico standoffs, long axis along Y
-      translate([pico_x, pico_y, pico_z])
-        rotate([0, 0, 90]) pico_w_mounts();
+      // tray connector bosses on the floor (tray carries Pico + board)
+      translate([pico_x, pico_y, wall])
+        tray_mounts();
     }
 
     // servo pocket at pedestal top; tabs rest on pedestal surface
