@@ -1,11 +1,15 @@
-// smtlk 回路の tscircuit 版。circuit/netlist.py と同じ部品・ネット・GPIO 割当。
-// ネット V5 は netlist.py の +5V に対応（tscircuit のネット名に "+" が使えないため）。
+// smtlk 回路の tscircuit 版（本番配線・唯一の正）。部品・ネット・GPIO 割当を定義する。
+// ネット V5 は電源 +5V に対応（tscircuit のネット名に "+" が使えないため V5 表記）。
 export default () => (
   <board width="60mm" height="45mm" routingDisabled>
+    {/* schX/schY で schematic レイアウトを明示し、自動配置の密集・ネットラベル重なりを回避する。
+        結線（trace）は不変。左半分＝電源/サーボ/ゲート、右半分＝LED/ボタン、U1 を中央ハブに配置。 */}
     {/* U1: Raspberry Pi Pico W — 使用ピンのみのヘッダ代用 */}
     <chip
       name="U1"
       footprint="pinrow7"
+      schX={0}
+      schY={0}
       pinLabels={{
         pin1: "VBUS",
         pin2: "GND",
@@ -21,30 +25,36 @@ export default () => (
     <chip
       name="M1"
       footprint="pinrow3"
+      schX={-6}
+      schY={3}
       pinLabels={{ pin1: "SIG", pin2: "VPLUS", pin3: "GND" }}
     />
     {/* Q1: N-ch MOSFET IRLB3813PBF（ローサイドで SERVO_RTN をゲート） */}
     <chip
       name="Q1"
       footprint="pinrow3"
+      schX={-8}
+      schY={-5}
       pinLabels={{ pin1: "G", pin2: "D", pin3: "S" }}
     />
-    <resistor name="Rg" resistance="220" footprint="0603" />
-    <resistor name="Rgs" resistance="10k" footprint="0603" />
-    <resistor name="Rled" resistance="330" footprint="0603" />
-    <resistor name="Rled2" resistance="330" footprint="0603" />
+    <resistor name="Rg" resistance="220" footprint="0603" schX={-4} schY={-5} />
+    <resistor name="Rgs" resistance="10k" footprint="0603" schX={-6} schY={-6} schRotation={90} />
+    <resistor name="Rled" resistance="330" footprint="0603" schX={4} schY={2} />
+    <resistor name="Rled2" resistance="330" footprint="0603" schX={4} schY={-2} />
     {/* D1: 2 色 LED OSRGHC5B32A（R/YG カソードコモン） */}
     <chip
       name="D1"
       footprint="pinrow3"
+      schX={8}
+      schY={0}
       pinLabels={{ pin1: "R", pin2: "G", pin3: "K" }}
     />
-    <pushbutton name="SW1" footprint="pushbutton" />
+    <pushbutton name="SW1" footprint="pushbutton" schX={5} schY={-6} />
     {/* C1: pin1=+（V5 側）, pin2=-（GND 側）— netlist.py の C1.+ / C1.- に対応 */}
-    <capacitor name="C1" capacitance="470uF" polarized footprint="1206" />
-    <capacitor name="C2" capacitance="100nF" footprint="0603" />
+    <capacitor name="C1" capacitance="470uF" polarized footprint="1206" schX={-4} schY={5} schRotation={90} />
+    <capacitor name="C2" capacitance="100nF" footprint="0603" schX={-7} schY={5} schRotation={90} />
     {/* D2: ショットキー 1N5819（SERVO_RTN → +5V の還流。サーボ電源カット時の逆起電力を逃がす） */}
-    <diode name="D2" footprint="sod123" />
+    <diode name="D2" footprint="sod123" schX={-1} schY={5} schRotation={90} />
 
     {/* +5V (= netlist.py の +5V) */}
     <trace from=".U1 .VBUS" to="net.V5" />
