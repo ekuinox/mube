@@ -13,7 +13,7 @@ export const PLACEMENT: Record<
   Rg: { pcbX: -12, pcbY: -8, footprint: "axial_p7.62mm" },  // 1/4W カーボン抵抗
   Rgs: { pcbX: -12, pcbY: -14, pcbRotation: 90, footprint: "axial_p7.62mm" },
   C1: { pcbX: -8, pcbY: 14, footprint: "radial_p2.5_d6.3" }, // 470uF16V 電解
-  C2: { pcbX: -16, pcbY: 14, footprint: "radial_p5.08" },    // 100nF 5mmピッチ
+  C2: { pcbX: -19, pcbY: 4, footprint: "radial_p5.08" },    // 100nF 5mmピッチ（M1/C1との courtyard 重なり回避のため移動）
   D2: { pcbX: -2, pcbY: 14, pcbRotation: 90, footprint: "axial_p7.62mm" }, // 1N5819 DO-41
   // 右側：LED・ボタン
   Rled: { pcbX: 14, pcbY: 6, footprint: "axial_p7.62mm" },

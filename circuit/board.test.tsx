@@ -34,10 +34,19 @@ test("board.tsx が ERC を通る", async () => {
 test("board.tsx に無効フットプリント等のエラーが無い", async () => {
   // source_invalid_component_property_error: フットプリント文字列が footprinter に
   // 受け入れられないと発生し、部品が PCB から無言で消える。これをガードする。
-  // pcb_courtyard_overlap_error 等の配置系エラーは別途対処するためここでは対象外。
   const cj = await buildBoardCircuitJson()
   const errs = cj.filter(
     (e) => typeof e.type === "string" && e.type === "source_invalid_component_property_error",
   )
   expect(errs.map((e: any) => e.type + ": " + (e.message ?? ""))).toEqual([])
+}, 60_000)
+
+test("board.tsx に courtyard 重なりが無い", async () => {
+  // pcb_courtyard_overlap_error: 部品の courtyard が重なると発生する。
+  // 物理実装ガイドとして重なりは許容できないため、ゼロを保証する。
+  const cj = await buildBoardCircuitJson()
+  const errs = cj.filter(
+    (e) => typeof e.type === "string" && e.type === "pcb_courtyard_overlap_error",
+  )
+  expect(errs.map((e: any) => e.message ?? e.pcb_error_id)).toEqual([])
 }, 60_000)
