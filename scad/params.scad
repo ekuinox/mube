@@ -171,6 +171,7 @@ assert(tray_post_h > pico_boss_h + pico_h, "背高ポストは Pico 上面より
 assert(uboard_mount_span_w/2 > pico_w/2, "uボード短辺マウント穴が Pico 幅の外");
 assert(uboard_mount_span_l/2 > pico_l/2, "uボード長辺マウント穴が Pico 長さの外");
 assert(uboard_mount_span_w <= uboard_w && uboard_mount_span_l <= uboard_l, "マウントピッチが基板外形内");
-assert(tray_fw/2 <= inner_l/2, "トレイ footprint が内寸 X 内");
-assert(pico_y + tray_fl/2 <= ext_up, "トレイ +Y 端が内寸を超える");
-assert(pico_y - tray_fl/2 >= pedestal_outer, "トレイ -Y 端がペデスタルに干渉");
+// floor is shifted by the board offset to stay under the posts
+assert(abs(uboard_mount_off_x) + tray_fw/2 <= inner_l/2, "トレイ footprint が内寸 X 内");
+assert(pico_y + uboard_mount_off_y + tray_fl/2 <= ext_up, "トレイ +Y 端が内寸を超える");
+assert(pico_y + uboard_mount_off_y - tray_fl/2 >= pedestal_outer, "トレイ -Y 端がペデスタルに干渉");

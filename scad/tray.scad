@@ -8,8 +8,9 @@ use <hardware.scad>
 module tray() {
   difference() {
     union() {
-    // floor plate
-    translate([0, 0, tray_t/2])
+    // floor plate — shifted by the board offset so it stays under the posts,
+    // while the Pico bosses and everything else keep their absolute positions.
+    translate([uboard_mount_off_x, uboard_mount_off_y, tray_t/2])
       cube([tray_fw, tray_fl, tray_t], center = true);
 
     // Pico short bosses (reuse hardware module), long axis along Y
