@@ -7,13 +7,23 @@ if ! command -v openscad >/dev/null 2>&1; then
 fi
 cd "$(dirname "$0")"
 mkdir -p build
-for p in body lid socket asm_body asm_lid asm_socket; do
+for p in body lid socket tray asm_body asm_lid asm_socket asm_tray; do
   echo "== building $p =="
   log="$(openscad -D "part=\"$p\"" -o "build/$p.stl" scad/smartlock.scad 2>&1)"
   status=$?
   echo "$log"
   if [ "$status" -ne 0 ] || echo "$log" | grep -Eiq '^WARNING:|^ERROR:'; then
     echo "FAIL: $p"; exit 1
+  fi
+done
+# Standalone scad files (top-level geometry, not smartlock parts).
+for g in tray_pilot_gauge pilot_gauge; do
+  echo "== building $g =="
+  log="$(openscad -o "build/$g.stl" "scad/$g.scad" 2>&1)"
+  status=$?
+  echo "$log"
+  if [ "$status" -ne 0 ] || echo "$log" | grep -Eiq '^WARNING:|^ERROR:'; then
+    echo "FAIL: $g"; exit 1
   fi
 done
 echo "All parts built to build/"

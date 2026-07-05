@@ -35,7 +35,7 @@ BUILD = ROOT / "build"
 SCAD = ROOT / "scad" / "smartlock.scad"
 VIEWER_HTML = ROOT / "viewer" / "index.html"
 PORT = int(os.environ.get("PORT", "8765"))
-PARTS = ["body", "lid", "socket", "assembly"]
+PARTS = ["body", "lid", "socket", "tray", "assembly", "asm_body", "asm_lid", "asm_socket", "asm_tray"]
 URL_RE = re.compile(r"https://[a-z0-9-]+\.trycloudflare\.com")
 
 

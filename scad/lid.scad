@@ -3,11 +3,6 @@ include <params.scad>
 // Lid with an inner lip that slips into the body opening.
 // LED and button holes are on the lid (above the Pico, between pin header rows).
 module lid() {
-  pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;
-  pico_gap = max(6, pedestal_outer - servo_body_w/2 + 2,
-                pedestal_outer + uboard_l/2 - pico_l/2 - servo_body_w/2 + 2);
-  pico_y = servo_body_w/2 + pico_gap + pico_l/2;
-
   led_x = 0;
   btn_x = 0;
   led_y = pico_y - led_btn_spacing/2;

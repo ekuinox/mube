@@ -14,18 +14,9 @@ socket_z = knob_h - knob_engage;
 socket_top_z = socket_z + socket_oh;
 servo_z  = pedestal_top_z;
 servo_top_z = servo_z + servo_body_h;
-pico_floor_z = wall;
-pico_z = wall * 0.5;
-usb_z = pico_z + pico_boss_h + pico_h + usb_connector_h/2;
+pico_floor_z = wall + tray_t;   // Pico はトレイ床(厚み tray_t)の上に載る
+usb_z = pico_floor_z + pico_boss_h + pico_h + usb_connector_h/2;
 
-pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;
-pico_gap = max(6, pedestal_outer - servo_body_w/2 + 2,
-              pedestal_outer + uboard_l/2 - pico_l/2 - servo_body_w/2 + 2);
-pico_x = 0;
-pico_y = servo_body_w/2 + pico_gap + pico_l/2;
-
-pin_header_h = 8.5;
-uboard_t = 1.6;
 uboard_z = pico_floor_z + pico_boss_h + pico_h + pin_header_h;
 
 pedestal_r = rosette_d/2 + pedestal_wall_t + fit_clearance;
