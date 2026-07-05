@@ -105,11 +105,12 @@ tray_post_d       = 6.0;    // universal-board support post outer dia
 tray_post_h       = pico_boss_h + pico_h + pin_header_h;   // 10: post top = board underside
 tray_fl           = uboard_mount_span_l + tray_post_d;     // 72: footprint along Y
 tray_fw           = uboard_mount_span_w + tray_post_d;     // 47: footprint along X
-tray_screw_clear  = 2.2;    // M2 shank clearance through the posts and body floor (close fit; nut clamps)
-// One M2 screw per corner clamps body + tray + board: it enters the body floor
-// underside (head in a counterbore), passes up through the floor and the hollow
-// support post, through the board's φ3.2 corner hole, and is capped by an M2 nut
-// on top of the board (no plastic there). Needs ~M2x20 screws + 4 M2 nuts.
+tray_screw_clear  = 2.4;    // M2 shank clearance through the body floor
+tray_screw_pilot  = servo_screw_pilot;   // 2.2: M2 self-tap into the posts (proven A1 mini value)
+// One M2 screw per corner fixes the tray to the body: it enters the body floor
+// underside (head in a counterbore), passes up through the floor, and self-taps
+// into the hollow support post — no nut. The board rests on the post tops and is
+// held by solder to the Pico. Needs ~M2x8 screws (no nuts).
 tray_head_d       = 4.2;    // M2 pan-head counterbore dia on the body floor underside
 tray_head_h       = 1.6;    // counterbore depth
 
