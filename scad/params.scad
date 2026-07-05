@@ -106,7 +106,7 @@ tray_post_h       = pico_boss_h + pico_h + pin_header_h;   // 10: post top = boa
 tray_fl           = uboard_mount_span_l + tray_post_d;     // 72: footprint along Y
 tray_fw           = uboard_mount_span_w + tray_post_d;     // 47: footprint along X
 tray_screw_clear  = 2.4;    // M2 shank clearance through the body floor
-tray_screw_pilot  = servo_screw_pilot;   // 2.2: M2 self-tap into the posts (proven A1 mini value)
+tray_screw_pilot  = 2.1;    // M2 self-tap into the posts. tray_pilot_gauge.scad の実測で確定（深穴は平板より緩く出るためサーボ天板の 2.2 より 0.1 小さい）
 tray_screw_grip   = 5;      // self-tap engagement depth per pilot
 // Each post takes two M2 self-tap screws (no nuts), separated by a solid divider
 // so they never meet:
