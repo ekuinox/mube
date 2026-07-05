@@ -5,10 +5,12 @@
     "check": "bun check.ts",
     "test": "bun test",
     "dev": "tsci dev",
-    "build": "tsci build"
+    "build": "tsci build",
+    "wiring:pcb": "bun wiring-pcb.ts"
   },
   "devDependencies": {
     "@tscircuit/cli": "latest",
+    "circuit-to-svg": "latest",
     "tscircuit": "latest"
   }
 }
