@@ -64,6 +64,8 @@ test("ショート（1 グループに 2 ネット）を検出", () => {
 })
 
 test("必須ネット欠落を検出", () => {
+  // SERVO_RTN ネットだけ削除。ポート p4/p5 は接続キー k2 を持ったまま残るが、
+  // 孤立ネット判定は nets を対象にするため追加エラーは出ず、エラーは必須ネット欠落の 1 件のみ。
   const cj = good().filter((e) => !(e.type === "source_net" && e.name === "SERVO_RTN"))
   const errs = runErc(cj)
   expect(errs).toHaveLength(1)

@@ -21,7 +21,7 @@ export default () => (
       }}
     />
     {/* M1: SG90 サーボ（3 線コネクタとして表現） */}
-    {/* pin2 VPLUS は netlist.py の M1.V+ に対応（tscircuit のピン名に "+" が使えないため） */}
+    {/* pin2 VPLUS は電源 +（サーボの V+）。tscircuit のピン名に "+" が使えないため VPLUS 表記 */}
     <chip
       name="M1"
       footprint="pinrow3"
@@ -50,13 +50,13 @@ export default () => (
       pinLabels={{ pin1: "R", pin2: "G", pin3: "K" }}
     />
     <pushbutton name="SW1" footprint="pushbutton" schX={5} schY={-6} />
-    {/* C1: pin1=+（V5 側）, pin2=-（GND 側）— netlist.py の C1.+ / C1.- に対応 */}
+    {/* C1: pin1=+（V5 側）, pin2=-（GND 側）。極性あり電解コンデンサ（バルク） */}
     <capacitor name="C1" capacitance="470uF" polarized footprint="1206" schX={-4} schY={5} schRotation={90} />
     <capacitor name="C2" capacitance="100nF" footprint="0603" schX={-7} schY={5} schRotation={90} />
     {/* D2: ショットキー 1N5819（SERVO_RTN → +5V の還流。サーボ電源カット時の逆起電力を逃がす） */}
     <diode name="D2" footprint="sod123" schX={-1} schY={5} schRotation={90} />
 
-    {/* +5V (= netlist.py の +5V) */}
+    {/* +5V レール（ネット名は V5） */}
     <trace from=".U1 .VBUS" to="net.V5" />
     <trace from=".C1 .pin1" to="net.V5" />
     <trace from=".M1 .VPLUS" to="net.V5" />

@@ -3,6 +3,7 @@
 // 描画・ロジックは netlist.tsx / erc.ts 側にあり、ここは実行と終了コードだけを担う。
 // （bun 直接実行の判定を含む実行部を netlist.tsx から分離し、tsci dev のブラウザ eval が
 //  netlist.tsx を評価しても落ちないようにするための切り出し。）
+// このファイルは実行専用。他から import しないこと（import すると副作用で ERC が走る）。
 import { ercRealBoard } from "./netlist"
 
 const errors = await ercRealBoard()
