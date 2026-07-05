@@ -16,6 +16,16 @@ for p in body lid socket tray asm_body asm_lid asm_socket asm_tray; do
     echo "FAIL: $p"; exit 1
   fi
 done
+# Standalone scad files (top-level geometry, not smartlock parts).
+for g in tray_pilot_gauge; do
+  echo "== building $g =="
+  log="$(openscad -o "build/$g.stl" "scad/$g.scad" 2>&1)"
+  status=$?
+  echo "$log"
+  if [ "$status" -ne 0 ] || echo "$log" | grep -Eiq '^WARNING:|^ERROR:'; then
+    echo "FAIL: $g"; exit 1
+  fi
+done
 echo "== generating netlist (from-to / bom) =="
 uv run --script circuit/netlist.py || { echo "FAIL: netlist"; exit 1; }
 echo "All parts + netlist built to build/"
