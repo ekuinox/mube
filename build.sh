@@ -16,6 +16,4 @@ for p in body lid socket asm_body asm_lid asm_socket; do
     echo "FAIL: $p"; exit 1
   fi
 done
-echo "== generating netlist (from-to / bom) =="
-uv run --script circuit/netlist.py || { echo "FAIL: netlist"; exit 1; }
-echo "All parts + netlist built to build/"
+echo "All parts built to build/"
