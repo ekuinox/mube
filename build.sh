@@ -26,6 +26,4 @@ for g in tray_pilot_gauge pilot_gauge; do
     echo "FAIL: $g"; exit 1
   fi
 done
-echo "== generating netlist (from-to / bom) =="
-uv run --script circuit/netlist.py || { echo "FAIL: netlist"; exit 1; }
-echo "All parts + netlist built to build/"
+echo "All parts built to build/"
