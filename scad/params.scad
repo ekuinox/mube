@@ -107,10 +107,13 @@ tray_fl           = uboard_mount_span_l + tray_post_d;     // 72: footprint alon
 tray_fw           = uboard_mount_span_w + tray_post_d;     // 47: footprint along X
 tray_screw_clear  = 2.4;    // M2 shank clearance through the body floor
 tray_screw_pilot  = servo_screw_pilot;   // 2.2: M2 self-tap into the posts (proven A1 mini value)
-// One M2 screw per corner fixes the tray to the body: it enters the body floor
-// underside (head in a counterbore), passes up through the floor, and self-taps
-// into the hollow support post — no nut. The board rests on the post tops and is
-// held by solder to the Pico. Needs ~M2x8 screws (no nuts).
+tray_screw_grip   = 5;      // self-tap engagement depth per pilot
+// Each post takes two M2 self-tap screws (no nuts), separated by a solid divider
+// so they never meet:
+//  - from below: fixes the tray to the body (head in a body-floor counterbore)
+//  - from above: holds the board down onto the post (head on the board corner,
+//    through the board's φ3.2 hole)
+// Needs 8 M2 screws (~M2x6 to M2x8).
 tray_head_d       = 4.2;    // M2 pan-head counterbore dia on the body floor underside
 tray_head_h       = 1.6;    // counterbore depth
 

@@ -32,12 +32,17 @@ module tray() {
     // is on the +Y wall.
     tray_usb_marker();
 
-    // self-tap pilot fed from BELOW into each post (leave a ~1mm cap so the board
-    // rests on a solid post top). The screw fixes the tray to the body; no nut.
+    // two self-tap pilots per post, separated by a solid divider:
+    //  - bottom (from the tray underside): the tray->body screw
+    //  - top (from the post top): the board hold-down screw
     for (sx = [-1, 1], sy = [-1, 1])
       translate([sx * uboard_mount_span_w/2 + uboard_mount_off_x,
-                 sy * uboard_mount_span_l/2 + uboard_mount_off_y, -0.1])
-        cylinder(d = tray_screw_pilot, h = tray_t + tray_post_h - 1 + 0.1);
+                 sy * uboard_mount_span_l/2 + uboard_mount_off_y, 0]) {
+        translate([0, 0, -0.1])
+          cylinder(d = tray_screw_pilot, h = tray_screw_grip + 0.1);
+        translate([0, 0, tray_t + tray_post_h - tray_screw_grip])
+          cylinder(d = tray_screw_pilot, h = tray_screw_grip + 0.1);
+      }
   }
 }
 
