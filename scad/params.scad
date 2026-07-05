@@ -105,7 +105,7 @@ tray_post_d       = 6.0;    // universal-board support post outer dia
 tray_post_h       = pico_boss_h + pico_h + pin_header_h;   // 10: post top = board underside
 tray_fl           = uboard_mount_span_l + tray_post_d;     // 72: footprint along Y
 tray_fw           = uboard_mount_span_w + tray_post_d;     // 47: footprint along X
-tray_screw_clear  = 2.4;    // M2 shank clearance through the posts and body floor
+tray_screw_clear  = 2.2;    // M2 shank clearance through the posts and body floor (close fit; nut clamps)
 // One M2 screw per corner clamps body + tray + board: it enters the body floor
 // underside (head in a counterbore), passes up through the floor and the hollow
 // support post, through the board's φ3.2 corner hole, and is capped by an M2 nut
