@@ -9,6 +9,10 @@ const port = (id: string, comp: string, name: string, key: string) => ({
   type: "source_port", source_port_id: id, source_component_id: comp, name,
   subcircuit_connectivity_map_key: key,
 })
+// 接続キーを持たない（未接続）ポート
+const unconnectedPort = (id: string, comp: string, name: string) => ({
+  type: "source_port", source_port_id: id, source_component_id: comp, name,
+})
 const net = (id: string, name: string, key: string) => ({
   type: "source_net", source_net_id: id, name, subcircuit_connectivity_map_key: key,
 })
@@ -25,9 +29,14 @@ test("健全な回路はエラー 0", () => {
   expect(runErc(good())).toEqual([])
 })
 
-test("浮きピン（単独ポート）を検出", () => {
-  const cj = [...good(), port("p6", "c2", "G", "k_float")]
+test("浮きピン（未接続ポート）を検出", () => {
+  const cj = [...good(), unconnectedPort("p6", "c2", "G")]
   expect(runErc(cj).some((e) => e.includes("Q1.G is not connected"))).toBe(true)
+})
+
+test("allowUnconnected の未接続ピンは許容", () => {
+  const cj = [...good(), unconnectedPort("p6", "c2", "G")]
+  expect(runErc(cj, { allowUnconnected: ["Q1.G"] })).toEqual([])
 })
 
 test("孤立ネット（端点 1 つ）を検出", () => {

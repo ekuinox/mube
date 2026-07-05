@@ -1,8 +1,6 @@
 import { expect, test } from "bun:test"
-import { buildCircuitJson } from "./netlist"
-import { runErc } from "./erc"
+import { ercRealBoard } from "./netlist"
 
 test("本番回路 (index.tsx) が ERC を通る", async () => {
-  const cj = await buildCircuitJson()
-  expect(runErc(cj)).toEqual([])
+  expect(await ercRealBoard()).toEqual([])
 }, 30_000)
