@@ -1,13 +1,12 @@
 # CLAUDE.md
 
-既存ドアのサムターンに後付けする SG90 サーボ式スマートロック。筐体(OpenSCAD) + 回路(Python netlist) + Pico W ファーム(Rust/Embassy) の monorepo。
+既存ドアのサムターンに後付けする SG90 サーボ式スマートロック。筐体(OpenSCAD) + 回路(tscircuit / TS) + Pico W ファーム(Rust/Embassy) の monorepo。
 詳細・背景は README.md に集約。ここは概要と Claude がハマりやすい所だけ。
 
 ## リポジトリ地図
 
 - `scad/` — 筐体（OpenSCAD）
-- `circuit/` — 回路ネットリスト（Python: ERC ライト + from-to/bom 生成）
-- `tscircuit/` — 回路 as code の tscircuit お試し（bun 管理。`circuit/` の netlist.py と同構成）
+- `circuit/` — 回路（tscircuit / TS: 導通・ショート ERC。bun 管理）
 - `viewer/` — STL ブラウザビューア（Three.js + cloudflared quick tunnel）
 - `crates/firmware/` — Pico W ファーム（Embassy/CYW43/PWM 接合部、thumbv6m-none-eabi）
 - `crates/smtlk-core/` — ハード非依存ロジック（LockState/コマンド解釈/serve ループ/サーボ角度。host テスト可）
@@ -19,7 +18,7 @@
 `openscad` / `cargo` / `uv` は nix dev シェルの中にしか無い。
 
 - `.sh` 系（`./build.sh`, `./test/render.sh`）は自分で nix dev シェルに再突入するのでそのまま実行可。
-- 素の `cargo` / `uv` / `openscad` / `./test/netlist_test.py` は **`nix develop -c <cmd>`** 経由で実行する。
+- 素の `cargo` / `uv` / `openscad` は **`nix develop -c <cmd>`** 経由で実行する。
 
 | やりたいこと | コマンド |
 | --- | --- |
@@ -27,7 +26,7 @@
 | ファームビルド（既定ターゲット thumbv6m） | `nix develop -c cargo build --locked` |
 | ロジックの host テスト（実機不要） | `nix develop -c cargo host-test` |
 | SCAD レンダリングテスト | `./test/render.sh <scad>` |
-| 回路ネットリストテスト | `nix develop -c ./test/netlist_test.py` |
+| 回路 ERC（導通・ショート） | `./test/erc.sh` |
 
 ## 触る時の注意（規約・地雷）
 
