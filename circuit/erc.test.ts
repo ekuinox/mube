@@ -31,7 +31,10 @@ test("健全な回路はエラー 0", () => {
 
 test("浮きピン（未接続ポート）を検出", () => {
   const cj = [...good(), unconnectedPort("p6", "c2", "G")]
-  expect(runErc(cj).some((e) => e.includes("Q1.G is not connected"))).toBe(true)
+  const errs = runErc(cj)
+  // 意図したルールだけが発火する（他の誤検出が混ざらない）ことも保証する
+  expect(errs).toHaveLength(1)
+  expect(errs[0]).toContain("Q1.G is not connected")
 })
 
 test("allowUnconnected の未接続ピンは許容", () => {
@@ -41,7 +44,9 @@ test("allowUnconnected の未接続ピンは許容", () => {
 
 test("孤立ネット（端点 1 つ）を検出", () => {
   const cj = [...good(), net("n3", "BTN", "k3"), port("p6", "c0", "GP17", "k3")]
-  expect(runErc(cj).some((e) => e.includes("net BTN has fewer than 2 endpoints"))).toBe(true)
+  const errs = runErc(cj)
+  expect(errs).toHaveLength(1)
+  expect(errs[0]).toContain("net BTN has fewer than 2 endpoints")
 })
 
 test("ショート（1 グループに 2 ネット）を検出", () => {
@@ -52,10 +57,15 @@ test("ショート（1 グループに 2 ネット）を検出", () => {
       : e,
   )
   const errs = runErc(cj)
-  expect(errs.some((e) => e.includes("short") && e.includes("V5") && e.includes("GND"))).toBe(true)
+  expect(errs).toHaveLength(1)
+  expect(errs[0]).toContain("short")
+  expect(errs[0]).toContain("V5")
+  expect(errs[0]).toContain("GND")
 })
 
 test("必須ネット欠落を検出", () => {
   const cj = good().filter((e) => !(e.type === "source_net" && e.name === "SERVO_RTN"))
-  expect(runErc(cj).some((e) => e.includes("required net SERVO_RTN is missing"))).toBe(true)
+  const errs = runErc(cj)
+  expect(errs).toHaveLength(1)
+  expect(errs[0]).toContain("required net SERVO_RTN is missing")
 })

@@ -26,6 +26,8 @@ export function runErc(circuitJson: Element[], options: ErcOptions = {}): string
 
   // 浮きピン: 接続キーを持たない（＝どこにも繋がっていない）ポート。
   // ただし allowUnconnected に挙げたピンは意図的な未接続として除外。
+  // 注: trace セレクタの書き間違い等で結線が解決されない場合も対象ピンがキー無しになるため、
+  //     未解決結線の検出はこの浮きピン判定に集約している（tscircuit の *_error/*_warning は個別に見ない）。
   for (const p of ports) {
     if (p.subcircuit_connectivity_map_key == null && !allowUnconnected.has(label(p))) {
       errors.push(`${label(p)} is not connected to any net`)
@@ -59,7 +61,9 @@ export function runErc(circuitJson: Element[], options: ErcOptions = {}): string
     }
   }
 
-  // 孤立ネット: 名前付きネットのグループにポートが 2 未満（キー無しネットは 0 端点扱い）
+  // 孤立ネット: 名前付きネットのグループにポートが 2 未満（キー無しネットは 0 端点扱い）。
+  // 端点数はネットの属する接続グループ単位で数える。本番配線は 1 グループ 1 ネットなので
+  // ネット単位の端点数と一致する（複数ネットが 1 グループに同居する状態はショート側で検出）。
   for (const n of nets) {
     const key = n.subcircuit_connectivity_map_key
     const count = key == null ? 0 : group(key).ports.length
