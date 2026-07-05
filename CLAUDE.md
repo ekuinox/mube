@@ -10,7 +10,7 @@
 - `viewer/` — STL ブラウザビューア（Three.js + cloudflared quick tunnel）
 - `crates/firmware/` — Pico W ファーム（Embassy/CYW43/PWM 接合部、thumbv6m-none-eabi）
 - `crates/smtlk-core/` — ハード非依存ロジック（LockState/コマンド解釈/serve ループ/サーボ角度。host テスト可）
-- `build/` — 派生物（STL/netlist 出力。非コミット）
+- `build/` — 派生物（STL 出力。非コミット）
 - `test/`, `docs/` — テスト / 設計ドキュメント
 
 ## コマンドの打ち方（落とし穴）
@@ -22,7 +22,7 @@
 
 | やりたいこと | コマンド |
 | --- | --- |
-| 筐体ビルド（STL + netlist を build/ へ） | `./build.sh` |
+| 筐体ビルド（STL を build/ へ） | `./build.sh` |
 | ファームビルド（既定ターゲット thumbv6m） | `nix develop -c cargo build --locked` |
 | ロジックの host テスト（実機不要） | `nix develop -c cargo host-test` |
 | SCAD レンダリングテスト | `./test/render.sh <scad>` |

@@ -55,14 +55,19 @@ ngspice 依存で壊れやすく、汎用モデルの数値も当てにならず
 ## ERC の実装方針
 
 `@tscircuit/core` の `RootCircuit` で `index.tsx` の Board を circuit JSON に描画し、
-`@tscircuit/circuit-json-util` の接続マップ（全ポートを電気的に繋がったグループへ分類）を使って解析する。
-以下は circuit JSON を入力に取り、エラー文字列の配列を返す純関数 `runErc(circuitJson)` として実装する
+各 `source_port` / `source_net` が持つ `subcircuit_connectivity_map_key`（電気的に繋がった
+ポート・ネットが共有する接続グループのキー）でグループ化して解析する。以下は circuit JSON を
+入力に取り、エラー文字列の配列を返す純関数 `runErc(circuitJson, options?)` として実装する
 （空配列＝合格。netlist.py の `check()` と同じ設計でテストしやすくする）。
 
 ルール（netlist.py の ERC を移植し、ショート検査を明確化）:
 
-1. **導通（未接続ピン）** — 全コンポーネントの全ポートがいずれかの結線グループに属する。孤立ポート＝未接続。
-   （旧「pin is not connected to any net」）
+1. **導通（未接続ピン）** — `subcircuit_connectivity_map_key` を持たない `source_port` は
+   「どこにも繋がっていない」ピン。これを未接続として検出する。ただしフットプリント上の未使用パッド等、
+   意図的に未接続でよいピンは `runErc` の `options.allowUnconnected`（"Comp.pin" 形式）で除外する
+   （本番配線では tactile switch の `SW1.pin3` / `SW1.pin4`。盤固有なので `netlist.tsx` から渡す）。
+   （旧「pin is not connected to any net」。当初は「1 ポートかつネット無しのグループ」で判定する想定
+   だったが、実測で未接続ピンは接続キー自体を持たないと判明したためキー無しで判定する。）
 2. **導通（解決）** — circuit JSON にエラー要素（未解決の trace セレクタ等、`*_error` / `source_trace` の未接続）が無い。
 3. **ショート** — ひとつの結線グループに、異なる名前付きネット `net.X` のラベルが 2 つ以上入らない。
    `net.V5` と `net.GND` が同一グループに落ちたらショートとして検出。

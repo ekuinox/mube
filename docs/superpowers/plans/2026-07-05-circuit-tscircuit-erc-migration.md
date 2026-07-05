@@ -13,7 +13,7 @@
 - ネット名は `index.tsx` 現行ラベルに従う。`+5V` は tscircuit で `+` が使えないため `V5`。
 - 必須ネットは `V5` / `GND` / `SERVO_RTN`（旧 netlist.py の REQUIRED と一致）。
 - `_warning` 型の circuit JSON 要素（`source_unnamed_trace_warning`, `source_pin_missing_trace_warning`, `source_no_power_pin_defined_warning` 等）は ERC の失敗条件にしない。良性ノイズであり、特に pushbutton の余りパッド `SW1.pin3` / `SW1.pin4` が `source_pin_missing_trace_warning` を出すため。
-- 浮きピンは「1 ポートかつ名前付きネット無しのグループ」に限定して検出する（`SW1.pin3`/`pin4` は 2 ポートで互いに繋がるので除外される）。
+- 浮きピンは「接続キー（`subcircuit_connectivity_map_key`）を持たない `source_port`＝未接続」として検出する。意図的に未接続でよいピンは `runErc` の `allowUnconnected` で除外し、本番の `SW1.pin3`/`pin4` は盤を知る `netlist.tsx` から渡す。（実装中に確定した挙動。当初 Task 2/3 に記した「1 ポートかつネット無しのグループ」判定・「pin3/pin4 は 2 ポートで繋がる」前提は実測で誤りと判明したため、本項が優先。実際のコミット済みコードは commit 7c21a0c を参照。）
 - `.sh` ラッパーは既存 `build.sh` / `test/render.sh` と同じく自分で Nix dev シェルへ再突入する。
 - `uv` は `viewer/serve.py` が使うため flake からは外さない。
 - `circuit/node_modules/` は非コミット（`bun.lock` のみコミット）。
