@@ -25,15 +25,15 @@ module sg90_cutout() {
   }
 }
 
-// Four Pico W standoff bosses with pilot holes. Footprint centered at origin.
+// Four Pico W rest bosses, each with a locating pin that enters the Pico's φ2.1
+// mounting hole (no screw — a fastener here would hit the pin-header plastic).
+// Footprint centered at origin.
 module pico_w_mounts() {
   for (sx = [-1, 1], sy = [-1, 1])
-    translate([sx * pico_hole_dx/2, sy * pico_hole_dy/2, 0])
-      difference() {
-        cylinder(d = pico_boss_d, h = pico_boss_h);
-        translate([0, 0, -0.1])
-          cylinder(d = pico_hole_d, h = pico_boss_h + 0.2);
-      }
+    translate([sx * pico_hole_dx/2, sy * pico_hole_dy/2, 0]) {
+      cylinder(d = pico_boss_d, h = pico_boss_h);              // rest shoulder
+      cylinder(d = pico_pin_d, h = pico_boss_h + pico_pin_h);  // locating pin
+    }
 }
 
 // Negative geometry cut through the body floor so the tray can be screwed from
@@ -42,7 +42,8 @@ module pico_w_mounts() {
 // origin. Cut with the floor's z origin at 0 (floor spans z=0..wall).
 module tray_mount_cuts() {
   for (sx = [-1, 1], sy = [-1, 1])
-    translate([sx * uboard_mount_span_w/2, sy * uboard_mount_span_l/2, 0]) {
+    translate([sx * uboard_mount_span_w/2 + uboard_mount_off_x,
+               sy * uboard_mount_span_l/2 + uboard_mount_off_y, 0]) {
       // shank clearance all the way through the floor
       translate([0, 0, -0.1])
         cylinder(d = tray_screw_clear, h = wall + 0.2);

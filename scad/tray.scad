@@ -16,13 +16,13 @@ module tray() {
     translate([0, 0, tray_t])
       rotate([0, 0, 90]) pico_w_mounts();
 
-    // universal-board support posts at the datasheet corner pitch. The board
-    // corners rest on these flat tops (held by solder to the Pico pins). Each
-    // post doubles as the tray->body anchor: the screw comes up from the body
-    // underside and self-taps into the post (pilot cut below), so the same 4
-    // posts fix both the board and the body — no separate bosses.
+    // universal-board support posts at the (measured-offset) corner pitch. The
+    // board corners rest on the flat tops. Each post is hollow and acts as the
+    // M2 spacer for a single screw that clamps body + tray + board together (see
+    // the through-hole cut below); an M2 nut on top of the board caps it.
     for (sx = [-1, 1], sy = [-1, 1])
-      translate([sx * uboard_mount_span_w/2, sy * uboard_mount_span_l/2, tray_t])
+      translate([sx * uboard_mount_span_w/2 + uboard_mount_off_x,
+                 sy * uboard_mount_span_l/2 + uboard_mount_off_y, tray_t])
         cylinder(d = tray_post_d, h = tray_post_h);
     }
 
@@ -31,11 +31,12 @@ module tray() {
     // is on the +Y wall.
     tray_usb_marker();
 
-    // tray->body screw pilots, fed from BELOW up into the support posts (leave a
-    // 1mm cap so the board still rests on a solid post top).
+    // through clearance for the clamp screw: it passes from the body underside
+    // up the hollow post and through the board hole to the nut on top.
     for (sx = [-1, 1], sy = [-1, 1])
-      translate([sx * uboard_mount_span_w/2, sy * uboard_mount_span_l/2, -0.1])
-        cylinder(d = tray_screw_pilot, h = tray_t + tray_post_h - 1 + 0.1);
+      translate([sx * uboard_mount_span_w/2 + uboard_mount_off_x,
+                 sy * uboard_mount_span_l/2 + uboard_mount_off_y, -0.1])
+        cylinder(d = tray_screw_clear, h = tray_t + tray_post_h + 0.2);
   }
 }
 

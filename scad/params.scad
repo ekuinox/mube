@@ -41,6 +41,11 @@ pico_hole_dx  = 47.0;   // mounting hole spacing along length
 pico_hole_dy  = 11.4;   // mounting hole spacing across width
 pico_boss_d   = 4.5;
 pico_boss_h   = 3.0;
+// Pico is not screwed (a nut/head at the hole would hit the pin-header plastic).
+// It rests on the bosses and is located by a pin entering each φ2.1 mounting hole;
+// the soldered board (clamped to the posts) holds the Pico+board unit down.
+pico_pin_d    = 1.9;    // locating pin dia (into the Pico φ2.1 hole)
+pico_pin_h    = 2.0;    // pin height above the boss shoulder
 
 // --- USB micro-B connector (Pico W) ---
 usb_w           = 9.0;
@@ -89,6 +94,10 @@ pin_header_h = 6;
 uboard_mount_span_l = 66;   // corner-hole center pitch, long side (along Y)
 uboard_mount_span_w = 41;   // corner-hole center pitch, short side (along X)
 uboard_mount_d      = 3.2;  // corner hole dia (M2/M3 clearance)
+// Measured board offset from the Pico center (USB-up top view: holes sit 1mm to
+// the right and 1mm down from nominal). Applied to the posts and the body cuts.
+uboard_mount_off_x  = 1;    // +X
+uboard_mount_off_y  = -1;   // -Y
 
 // --- Electronics carrier tray ---
 tray_t            = 2.4;    // tray floor thickness
@@ -96,11 +105,11 @@ tray_post_d       = 6.0;    // universal-board support post outer dia
 tray_post_h       = pico_boss_h + pico_h + pin_header_h;   // 10: post top = board underside
 tray_fl           = uboard_mount_span_l + tray_post_d;     // 72: footprint along Y
 tray_fw           = uboard_mount_span_w + tray_post_d;     // 47: footprint along X
-tray_screw_pilot  = servo_screw_pilot;   // 2.2: M2 self-tap into the support posts
-tray_screw_clear  = 2.4;    // M2 shank clearance through the body floor
-// Tray is screwed from BELOW: the screw enters the body floor underside, passes
-// up through it, and self-taps into a support post. The board rests above and
-// never blocks access.
+tray_screw_clear  = 2.4;    // M2 shank clearance through the posts and body floor
+// One M2 screw per corner clamps body + tray + board: it enters the body floor
+// underside (head in a counterbore), passes up through the floor and the hollow
+// support post, through the board's φ3.2 corner hole, and is capped by an M2 nut
+// on top of the board (no plastic there). Needs ~M2x20 screws + 4 M2 nuts.
 tray_head_d       = 4.2;    // M2 pan-head counterbore dia on the body floor underside
 tray_head_h       = 1.6;    // counterbore depth
 
