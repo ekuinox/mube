@@ -2,7 +2,7 @@
   "name": "smtlk-circuit",
   "private": true,
   "scripts": {
-    "check": "bun netlist.tsx",
+    "check": "bun check.ts",
     "test": "bun test",
     "dev": "tsci dev",
     "build": "tsci build"

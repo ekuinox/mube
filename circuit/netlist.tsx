@@ -14,16 +14,9 @@ export async function buildCircuitJson(): Promise<any[]> {
 }
 
 // 本番配線を描画して ERC を回す（盤固有の未接続許容ピンを渡す）。
+// CLI 実行部（bun 直接実行の判定）は check.ts に分離してある。そのモジュール判定構文を
+// ここに置くと tscircuit のブラウザビューア（tsci dev）の eval が
+// "Cannot use ... outside a module" で落ちるため、本ファイルは副作用の無い純モジュールに保つ。
 export async function ercRealBoard(): Promise<string[]> {
   return runErc(await buildCircuitJson(), { allowUnconnected: ALLOW_UNCONNECTED })
-}
-
-// 直接実行時は ERC を回し、違反があれば exit 1。
-if (import.meta.main) {
-  const errors = await ercRealBoard()
-  if (errors.length) {
-    for (const e of errors) console.error(`ERC: ${e}`)
-    process.exit(1)
-  }
-  console.log("ERC passed: 導通 OK / ショート無し")
 }
