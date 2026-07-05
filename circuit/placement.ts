@@ -9,7 +9,7 @@ export const PLACEMENT: Record<
   U1: { pcbX: 0, pcbY: 0, footprint: "pinrow7" },
   // 左側：電源・サーボ・ゲート
   M1: { pcbX: -25, pcbY: 12, footprint: "pinrow3" },        // サーボ3線ヘッダ
-  Q1: { pcbX: -25, pcbY: -8, footprint: "to220-3" },        // TO-220（要文法確認, 代替 pinrow3）
+  Q1: { pcbX: -25, pcbY: -8, footprint: "to220_3" },        // TO-220 3ピン。footprinter は _ 区切り（ハイフンは "to" として解釈されエラー）
   Rg: { pcbX: -12, pcbY: -8, footprint: "axial_p7.62mm" },  // 1/4W カーボン抵抗
   Rgs: { pcbX: -12, pcbY: -14, pcbRotation: 90, footprint: "axial_p7.62mm" },
   C1: { pcbX: -8, pcbY: 14, footprint: "radial_p2.5_d6.3" }, // 470uF16V 電解
