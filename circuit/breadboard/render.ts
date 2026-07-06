@@ -10,7 +10,7 @@ import type { BreadboardLayout } from "./layout-types"
 const PITCH = 14         // px between adjacent holes
 const MARGIN_LEFT = 52   // room for row labels
 const MARGIN_TOP  = 60   // room for column numbers + staggered component labels
-const MARGIN_RIGHT  = 20
+const MARGIN_RIGHT  = 56  // 右端のレールラベル "TP (+5V)" 等がはみ出さない幅
 const MARGIN_BOTTOM = 70 // room for legend + notes
 
 // Row layout (y indices from top to bottom):
