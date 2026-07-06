@@ -32,3 +32,16 @@ test("placeParts は接続部品を隣接させ低コスト順序を選ぶ（決
   expect(a.order).toEqual(b.order)        // 決定的
   expect(a.cols).toBeLessThanOrEqual(6)
 })
+
+test("placeParts は最適性を持つ: 繋がる2部品を隣接させ、非接続部品を端へ", () => {
+  // Rg と Q1 だけを繋ぐネット。Rgs は非接続。
+  // 入力順そのまま [Rg, Rgs, Q1] だと Rg-Q1 の span が広い。
+  // 最適解は Rg と Q1 を隣接させる（span 最小）。n=3 は総当りで大域最適。
+  // ソルバが入力順をそのまま返す退化バグならこのテストは落ちる。
+  const refs = ["Rg", "Rgs", "Q1"]
+  const nets = { LINK: ["Rg.pin1", "Q1.G"] }
+  const pl = placeParts(refs, nets, 1)
+  const iRg = pl.order.indexOf("Rg")
+  const iQ1 = pl.order.indexOf("Q1")
+  expect(Math.abs(iRg - iQ1)).toBe(1) // Rg と Q1 が隣接
+})
