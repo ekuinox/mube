@@ -6,18 +6,19 @@ import { NETS } from "./parts"
 export function renderParts(parts: PartSpec[], placementFor: (ref: string) => Record<string, any>) {
   return parts.map((p) => {
     const extra = placementFor(p.ref)
-    const common = { key: p.ref, name: p.ref, ...extra }
+    // key は spread せず直接渡す（React 19 は spread 経由の key を警告する）
+    const common = { name: p.ref, ...extra }
     switch (p.kind) {
       case "chip":
-        return <chip {...common} pinLabels={p.pinLabels} />
+        return <chip key={p.ref} {...common} pinLabels={p.pinLabels} />
       case "resistor":
-        return <resistor {...common} resistance={p.props!.resistance} />
+        return <resistor key={p.ref} {...common} resistance={p.props!.resistance} />
       case "capacitor":
-        return <capacitor {...common} capacitance={p.props!.capacitance} polarized={!!p.props?.polarized} />
+        return <capacitor key={p.ref} {...common} capacitance={p.props!.capacitance} polarized={!!p.props?.polarized} />
       case "diode":
-        return <diode {...common} />
+        return <diode key={p.ref} {...common} />
       case "pushbutton":
-        return <pushbutton {...common} />
+        return <pushbutton key={p.ref} {...common} />
     }
   })
 }

@@ -1,5 +1,5 @@
 // circuit/parts.ts
-// 部品と結線（ネット）の唯一の定義。回路図(index.tsx)と物理(board.tsx)が共有する。
+// 部品と結線（ネット）の唯一の定義。回路図(index.tsx)とブレッドボードツール(breadboard/)が共有する。
 export type PartKind = "chip" | "resistor" | "capacitor" | "diode" | "pushbutton"
 
 export interface PartSpec {
