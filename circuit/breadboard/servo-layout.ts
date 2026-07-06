@@ -1,38 +1,54 @@
 // circuit/breadboard/servo-layout.ts
 // Hand-authored breadboard placement for the servo-drive sub-circuit.
 //
-// Layout overview (COLS = 30, columns 1-22 used):
+// Layout overview (COLS = 30, columns 2-29 used):
 //
-// Top rail TP = V5 (+5V), Top rail TN = GND (0V)
+// Top rail TP = V5 (+5V)  — short vertical stubs from row-b up to TP
+// Top rail TN = GND (0V)  — short vertical stubs from row-b down to TN
+// (Lower block f-j and bottom rails BP/BN are unused in this sub-circuit)
+//
+// Signal flow left → right:
+//
+//   U1 (Pico W)  →  Rg (220Ω)  →  Q1 (MOSFET)  →  D2 (Flyback)  →  M1 (Servo)
+//   cols 2-5        cols 15,17      cols 17-20       cols 24-25       cols 27-29
 //
 // Column assignments:
-//   1  : M1.SIG header (upper row a)           — net SERVO_SIG
-//   2  : M1.VPLUS header (upper row a)         — net V5
-//   3  : M1.GND header (upper row a)           — net SERVO_RTN
-//   (col 4: gap/spare)
-//   5  : C1.pin1 (upper row a)                 — net V5
-//   6  : C1.pin2 (upper row a)                 — net GND
-//   7  : C2.pin1 (upper row a)                 — net V5
-//   8  : C2.pin2 (upper row a)                 — net GND
-//   9  : D2.cathode (upper row a)              — net V5
-//   10 : D2.anode (upper row a)                — net SERVO_RTN
-//   11 : Rg.pin2, Q1.G, Rgs.pin1 (rows a,b,c) — net GATE (column-tie)
-//   12 : Rg.pin1 (upper row a)                 — net GATE_DRV
-//   13 : Q1.D (upper row a)                    — net SERVO_RTN
-//   14 : Q1.S (upper row a)                    — net GND
-//   15 : Rgs.pin2 (upper row a)                — net GND
-//   16 : U1.VBUS (upper row a)                 — net V5
-//   17 : U1.GND (upper row a)                  — net GND
-//   18 : U1.GP15 (upper row a)                 — net SERVO_SIG
-//   19 : U1.GP14 (upper row a)                 — net GATE_DRV
+//   2  : U1.VBUS   (upper row a)         — net V5      → stub to TP
+//   3  : U1.GND    (upper row a)         — net GND     → stub to TN
+//   4  : U1.GP15   (upper row a)         — net SERVO_SIG
+//   5  : U1.GP14   (upper row a)         — net GATE_DRV
+//   (cols 6-7: gap)
+//   8  : C1.pin1   (upper row a)         — net V5      → stub to TP
+//   9  : C1.pin2   (upper row a)         — net GND     → stub to TN
+//   (col 10: gap)
+//   11 : C2.pin1   (upper row a)         — net V5      → stub to TP
+//   12 : C2.pin2   (upper row a)         — net GND     → stub to TN
+//   (cols 13-14: gap)
+//   15 : Rg.pin1   (upper row a)         — net GATE_DRV ← jumper from U1.GP14 (col5)
+//   (col 16: gap)
+//   17 : Rg.pin2   (upper row a)         — net GATE  ─┐ (col-tie: all U17)
+//   17 : Q1.G      (upper row b)         — net GATE   │
+//   17 : Rgs.pin1  (upper row c)         — net GATE  ─┘
+//   (col 18: gap)
+//   19 : Q1.D      (upper row a)         — net SERVO_RTN
+//   20 : Q1.S      (upper row a)         — net GND     → stub to TN
+//   (cols 21-22: gap)
+//   22 : Rgs.pin2  (upper row a)         — net GND     → stub to TN
+//   (col 23: gap)
+//   24 : D2.anode  (upper row a)         — net SERVO_RTN ← jumper from Q1.D (col19)
+//   25 : D2.cathode (upper row a)        — net V5      → stub to TP
+//   (col 26: gap)
+//   27 : M1.SIG    (upper row a)         — net SERVO_SIG ← jumper from U1.GP15 (col4)
+//   28 : M1.VPLUS  (upper row a)         — net V5      → stub to TP
+//   29 : M1.GND    (upper row a)         — net SERVO_RTN ← jumper chain Q1.D→D2.anode→M1.GND
 //
 // Jumpers:
-//   V5 rail:      U2→TP, U5→TP, U7→TP, U9→TP, U16→TP
-//   GND rail:     U6→TN, U8→TN, U14→TN, U15→TN, U17→TN
-//   SERVO_RTN:    U3↔U10 (M1.GND ↔ D2.anode), U10↔U13 (D2.anode ↔ Q1.D)
-//   SERVO_SIG:    U1↔U18 (M1.SIG ↔ U1.GP15)
-//   GATE_DRV:     U12↔U19 (Rg.pin1 ↔ U1.GP14)
-//   GATE:         no jumper needed — Rg.pin2, Q1.G, Rgs.pin1 all in col 11 upper
+//   V5  stubs:       col2→TP, col8→TP, col11→TP, col25→TP, col28→TP    (row-b → TP)
+//   GND stubs:       col3→TN, col9→TN, col12→TN, col20→TN, col22→TN    (row-b → TN)
+//   GATE_DRV:        col5(U1.GP14) ↔ col15(Rg.pin1)                     (row-b horizontal)
+//   GATE:            no jumper needed — col17 rows a/b/c all share node U17
+//   SERVO_RTN:       col19(Q1.D) ↔ col24(D2.anode), col24 ↔ col29(M1.GND)  (row-b)
+//   SERVO_SIG:       col4(U1.GP15) ↔ col27(M1.SIG)                       (row-b horizontal)
 
 import type { Hole, Jumper } from "./model"
 
@@ -45,74 +61,74 @@ const r = (rail: "TP"|"TN"|"BP"|"BN", col: number): Hole =>
 // Every servo-drive component pin → the breadboard hole it occupies.
 // Keys match normalised "Ref.pin" endpoints from parts.ts.
 export const PIN_HOLES: Record<string, Hole> = {
-  // M1 (servo motor header) — col 1,2,3 upper row a
-  "M1.SIG":    s(1, "a"),
-  "M1.VPLUS":  s(2, "a"),
-  "M1.GND":    s(3, "a"),
+  // U1 (Pico W) — cols 2-5 upper row a
+  "U1.VBUS":    s(2,  "a"),   // V5
+  "U1.GND":     s(3,  "a"),   // GND
+  "U1.GP15":    s(4,  "a"),   // SERVO_SIG
+  "U1.GP14":    s(5,  "a"),   // GATE_DRV
 
-  // C1 (470uF bulk cap) — col 5,6 upper row a
-  "C1.pin1":   s(5, "a"),
-  "C1.pin2":   s(6, "a"),
+  // C1 (470µF bulk cap) — cols 8-9 upper row a
+  "C1.pin1":    s(8,  "a"),   // V5
+  "C1.pin2":    s(9,  "a"),   // GND
 
-  // C2 (100nF bypass cap) — col 7,8 upper row a
-  "C2.pin1":   s(7, "a"),
-  "C2.pin2":   s(8, "a"),
+  // C2 (100nF bypass cap) — cols 11-12 upper row a
+  "C2.pin1":    s(11, "a"),   // V5
+  "C2.pin2":    s(12, "a"),   // GND
 
-  // D2 (flyback diode) — col 9 cathode, col 10 anode
-  "D2.cathode": s(9, "a"),
-  "D2.anode":   s(10, "a"),
+  // Rg (220Ω gate resistor) — pin1 col15, pin2 col17 (upper row a)
+  "Rg.pin1":    s(15, "a"),   // GATE_DRV
+  "Rg.pin2":    s(17, "a"),   // GATE
 
-  // Rg (220Ω gate resistor) — pin1 at col12, pin2 at col11
-  // pin2 shares col11 upper with Q1.G and Rgs.pin1 → GATE node
-  "Rg.pin1":   s(12, "a"),
-  "Rg.pin2":   s(11, "a"),
+  // Q1 (MOSFET) — G col17 row b, D col19 row a, S col20 row a
+  // Q1.G shares col17 with Rg.pin2 (col17a) and Rgs.pin1 (col17c) → node U17
+  "Q1.G":       s(17, "b"),   // GATE (col-tied to U17)
+  "Q1.D":       s(19, "a"),   // SERVO_RTN
+  "Q1.S":       s(20, "a"),   // GND
 
-  // Q1 (MOSFET) — G=col11 row b, D=col13, S=col14
-  "Q1.G":      s(11, "b"),
-  "Q1.D":      s(13, "a"),
-  "Q1.S":      s(14, "a"),
+  // Rgs (10kΩ gate-source pull-down) — pin1 col17 row c, pin2 col22 row a
+  // pin1 shares col17 upper block with Rg.pin2 (17a) and Q1.G (17b) → node U17
+  "Rgs.pin1":   s(17, "c"),   // GATE (col-tied to U17)
+  "Rgs.pin2":   s(22, "a"),   // GND
 
-  // Rgs (10kΩ gate-source pull-down) — pin1=col11 row c, pin2=col15
-  "Rgs.pin1":  s(11, "c"),
-  "Rgs.pin2":  s(15, "a"),
+  // D2 (flyback diode) — anode col24, cathode col25 upper row a
+  "D2.anode":   s(24, "a"),   // SERVO_RTN
+  "D2.cathode": s(25, "a"),   // V5
 
-  // U1 (Pico W) — only 4 pins used in servo drive
-  "U1.VBUS":   s(16, "a"),
-  "U1.GND":    s(17, "a"),
-  "U1.GP15":   s(18, "a"),
-  "U1.GP14":   s(19, "a"),
+  // M1 (servo motor 3-pin header) — cols 27-29 upper row a
+  "M1.SIG":     s(27, "a"),   // SERVO_SIG
+  "M1.VPLUS":   s(28, "a"),   // V5
+  "M1.GND":     s(29, "a"),   // SERVO_RTN
 }
 
 // Jumper wires — only jumpers create electrical connectivity.
 // Components are LOADS; their two pin holes are NOT automatically bridged.
 export const JUMPERS: Jumper[] = [
-  // --- V5 net: fan out +5V rail (TP) to all V5 pins ---
-  { from: s(2, "b"),  to: r("TP", 2),  net: "V5",  color: "red" },   // M1.VPLUS col2→TP
-  { from: s(5, "b"),  to: r("TP", 5),  net: "V5",  color: "red" },   // C1.pin1 col5→TP
-  { from: s(7, "b"),  to: r("TP", 7),  net: "V5",  color: "red" },   // C2.pin1 col7→TP
-  { from: s(9, "b"),  to: r("TP", 9),  net: "V5",  color: "red" },   // D2.cathode col9→TP
-  { from: s(16, "b"), to: r("TP", 16), net: "V5",  color: "red" },   // U1.VBUS col16→TP
+  // --- V5 net: short stubs from component columns (row-b) up to TP rail ---
+  { from: s(2,  "b"), to: r("TP", 2),  net: "V5", color: "red" },  // U1.VBUS col2→TP
+  { from: s(8,  "b"), to: r("TP", 8),  net: "V5", color: "red" },  // C1.pin1  col8→TP
+  { from: s(11, "b"), to: r("TP", 11), net: "V5", color: "red" },  // C2.pin1  col11→TP
+  { from: s(25, "b"), to: r("TP", 25), net: "V5", color: "red" },  // D2.cathode col25→TP
+  { from: s(28, "b"), to: r("TP", 28), net: "V5", color: "red" },  // M1.VPLUS col28→TP
 
-  // --- GND net: fan out GND rail (TN) to all GND pins ---
-  { from: s(6, "b"),  to: r("TN", 6),  net: "GND", color: "black" }, // C1.pin2 col6→TN
-  { from: s(8, "b"),  to: r("TN", 8),  net: "GND", color: "black" }, // C2.pin2 col8→TN
-  { from: s(14, "b"), to: r("TN", 14), net: "GND", color: "black" }, // Q1.S col14→TN
-  { from: s(15, "b"), to: r("TN", 15), net: "GND", color: "black" }, // Rgs.pin2 col15→TN
-  { from: s(17, "b"), to: r("TN", 17), net: "GND", color: "black" }, // U1.GND col17→TN
+  // --- GND net: short stubs from component columns (row-b) down to TN rail ---
+  { from: s(3,  "b"), to: r("TN", 3),  net: "GND", color: "black" }, // U1.GND   col3→TN
+  { from: s(9,  "b"), to: r("TN", 9),  net: "GND", color: "black" }, // C1.pin2  col9→TN
+  { from: s(12, "b"), to: r("TN", 12), net: "GND", color: "black" }, // C2.pin2  col12→TN
+  { from: s(20, "b"), to: r("TN", 20), net: "GND", color: "black" }, // Q1.S     col20→TN
+  { from: s(22, "b"), to: r("TN", 22), net: "GND", color: "black" }, // Rgs.pin2 col22→TN
 
-  // --- SERVO_RTN net: M1.GND(col3) ↔ D2.anode(col10) ↔ Q1.D(col13) ---
-  { from: s(3, "b"),  to: s(10, "b"), net: "SERVO_RTN", color: "orange" }, // M1.GND ↔ D2.anode
-  { from: s(10, "b"), to: s(13, "b"), net: "SERVO_RTN", color: "orange" }, // D2.anode ↔ Q1.D
+  // --- GATE_DRV net: U1.GP14 (col5) → Rg.pin1 (col15), row-b horizontal ---
+  { from: s(5,  "b"), to: s(15, "b"), net: "GATE_DRV", color: "#d0d0d0" },
 
-  // --- SERVO_SIG net: M1.SIG(col1) ↔ U1.GP15(col18) ---
-  { from: s(1, "b"),  to: s(18, "b"), net: "SERVO_SIG", color: "yellow" },
+  // --- GATE net: Rg.pin2 (17a), Q1.G (17b), Rgs.pin1 (17c) all share col17 node U17 ---
+  // No jumper needed; column tie connects rows a-e within col 17.
 
-  // --- GATE_DRV net: Rg.pin1(col12) ↔ U1.GP14(col19) ---
-  { from: s(12, "b"), to: s(19, "b"), net: "GATE_DRV", color: "white" },
+  // --- SERVO_RTN net: Q1.D (col19) ↔ D2.anode (col24) ↔ M1.GND (col29), row-b ---
+  { from: s(19, "b"), to: s(24, "b"), net: "SERVO_RTN", color: "orange" }, // Q1.D ↔ D2.anode
+  { from: s(24, "b"), to: s(29, "b"), net: "SERVO_RTN", color: "orange" }, // D2.anode ↔ M1.GND
 
-  // --- GATE net: Rg.pin2, Q1.G, Rgs.pin1 all at col11 rows a,b,c → same node U11 ---
-  // No jumper needed: column tie connects a-e within col 11.
-  // (Rg.pin2=11a, Q1.G=11b, Rgs.pin1=11c all share node U11)
+  // --- SERVO_SIG net: U1.GP15 (col4) ↔ M1.SIG (col27), row-b horizontal ---
+  { from: s(4,  "b"), to: s(27, "b"), net: "SERVO_SIG", color: "gold" },
 ]
 
 // Component metadata (for renderer, minimal for now)

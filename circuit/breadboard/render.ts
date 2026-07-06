@@ -9,42 +9,28 @@ import { PIN_HOLES, JUMPERS, COMPONENTS } from "./servo-layout"
 // ──────────────────────────────────────────────────────────────────────────
 const PITCH = 14         // px between adjacent holes
 const MARGIN_LEFT = 52   // room for row labels
-const MARGIN_TOP  = 48   // room for column numbers
+const MARGIN_TOP  = 60   // room for column numbers + staggered component labels
 const MARGIN_RIGHT  = 20
-const MARGIN_BOTTOM = 60 // room for legend
+const MARGIN_BOTTOM = 70 // room for legend + notes
 
 // Row layout (y indices from top to bottom):
 //   0: rail TP
 //   1: rail TN
-//   2: (gap 6px)
-//   3: row a   (upper block row 0)
-//   4: row b
-//   5: row c
-//   6: row d
-//   7: row e
-//   8: (center gap 18px)
-//   9: row f   (lower block row 0)
-//  10: row g
-//  11: row h
-//  12: row i
-//  13: row j
-//  14: (gap 6px)
-//  15: rail BP
-//  16: rail BN
-
-const ROW_GAPS: Record<number, number> = {
-  2:  6,  // gap between TN and strip-a
-  8: 18,  // center gap between e and f
-  14:  6, // gap between strip-j and BP
-}
-
-function yForIndex(idx: number): number {
-  let y = MARGIN_TOP
-  for (let i = 0; i < idx; i++) {
-    y += PITCH + (ROW_GAPS[i + 1] ?? 0)
-  }
-  return y
-}
+//   gap 6px
+//   2: row a   (upper block row 0)
+//   3: row b
+//   4: row c
+//   5: row d
+//   6: row e
+//   center gap 18px
+//   7: row f   (lower block row 0)
+//   8: row g
+//   9: row h
+//  10: row i
+//  11: row j
+//   gap 6px
+//  12: rail BP
+//  13: rail BN
 
 const ROW_ORDER: Array<{ kind: "rail"; rail: string } | { kind: "strip"; row: StripRow }> = [
   { kind: "rail",  rail: "TP" },
@@ -66,7 +52,6 @@ const ROW_ORDER: Array<{ kind: "rail"; rail: string } | { kind: "strip"; row: St
 // Pre-compute y for each row entry
 const ROW_Y: number[] = []
 for (let i = 0; i < ROW_ORDER.length; i++) {
-  // extra gap in specific positions
   let y = MARGIN_TOP
   for (let j = 0; j < i; j++) {
     y += PITCH
@@ -79,12 +64,12 @@ for (let i = 0; i < ROW_ORDER.length; i++) {
       }
       // center gap between e and f
       if (nextEntry.kind === "strip" && nextEntry.row === "f" &&
-          ROW_ORDER[j].kind === "strip" && ROW_ORDER[j].row === "e") {
+          ROW_ORDER[j].kind === "strip" && (ROW_ORDER[j] as { row: StripRow }).row === "e") {
         y += 18
       }
       // gap before lower rail
-      if (nextEntry.kind === "rail" && nextEntry.rail === "BP" &&
-          ROW_ORDER[j].kind === "strip" && ROW_ORDER[j].row === "j") {
+      if (nextEntry.kind === "rail" && (nextEntry as { rail: string }).rail === "BP" &&
+          ROW_ORDER[j].kind === "strip" && (ROW_ORDER[j] as { row: StripRow }).row === "j") {
         y += 6
       }
     }
@@ -94,9 +79,9 @@ for (let i = 0; i < ROW_ORDER.length; i++) {
 
 function rowIndex(hole: Hole): number {
   if (hole.kind === "rail") {
-    return ROW_ORDER.findIndex(r => r.kind === "rail" && r.rail === hole.rail)
+    return ROW_ORDER.findIndex(r => r.kind === "rail" && (r as { rail: string }).rail === hole.rail)
   }
-  return ROW_ORDER.findIndex(r => r.kind === "strip" && r.row === hole.row)
+  return ROW_ORDER.findIndex(r => r.kind === "strip" && (r as { row: StripRow }).row === hole.row)
 }
 
 export function holeXY(hole: Hole): { x: number; y: number } {
@@ -144,7 +129,7 @@ const NET_COLORS: Record<string, string> = {
   GND:       "#222",
   SERVO_RTN: "orange",
   SERVO_SIG: "gold",
-  GATE_DRV:  "#e0e0e0",  // white-ish (visible on light bg)
+  GATE_DRV:  "#c0c0c0",  // silver-ish (visible on light bg)
   GATE:      "purple",
 }
 
@@ -172,21 +157,27 @@ export function renderBreadboardSvg(): string {
     { rail: "BP", fill: "#ffcccc", label: "BP (+5V)" },
     { rail: "BN", fill: "#ccccff", label: "BN (GND)" },
   ]
-  for (const { rail, fill } of railDefs) {
-    const idx = ROW_ORDER.findIndex(r => r.kind === "rail" && r.rail === rail)
+  for (const { rail, fill, label } of railDefs) {
+    const idx = ROW_ORDER.findIndex(r => r.kind === "rail" && (r as { rail: string }).rail === rail)
     const y = ROW_Y[idx]
     parts.push(rect(MARGIN_LEFT - 4, y - 7, COLS * PITCH + 4, 14, {
       fill,
       rx: 3,
       opacity: "0.6",
     }))
+    // Rail label on the right edge
+    parts.push(text(MARGIN_LEFT + COLS * PITCH + 6, y + 4, label, {
+      "font-size": "8",
+      fill: rail === "TP" || rail === "BP" ? "#c00" : "#338",
+      "font-weight": "bold",
+    }))
   }
 
   // ── 3. Column tie groups (upper a-e and lower f-j) ─────────────────────
-  const upperTopIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && r.row === "a")
-  const upperBotIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && r.row === "e")
-  const lowerTopIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && r.row === "f")
-  const lowerBotIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && r.row === "j")
+  const upperTopIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && (r as { row: StripRow }).row === "a")
+  const upperBotIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && (r as { row: StripRow }).row === "e")
+  const lowerTopIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && (r as { row: StripRow }).row === "f")
+  const lowerBotIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && (r as { row: StripRow }).row === "j")
 
   for (let col = 1; col <= COLS; col++) {
     const x = MARGIN_LEFT + (col - 1) * PITCH
@@ -209,7 +200,7 @@ export function renderBreadboardSvg(): string {
   // ── 4. Column numbers ──────────────────────────────────────────────────
   for (let col = 1; col <= COLS; col++) {
     const x = MARGIN_LEFT + (col - 1) * PITCH
-    parts.push(text(x, MARGIN_TOP - 6, String(col), {
+    parts.push(text(x, MARGIN_TOP - 20, String(col), {
       "text-anchor": "middle",
       "font-size": "8",
       fill: "#666",
@@ -220,7 +211,7 @@ export function renderBreadboardSvg(): string {
   for (let i = 0; i < ROW_ORDER.length; i++) {
     const entry = ROW_ORDER[i]
     const y = ROW_Y[i]
-    const label = entry.kind === "rail" ? entry.rail : entry.row
+    const label = entry.kind === "rail" ? (entry as { rail: string }).rail : (entry as { row: StripRow }).row
     parts.push(text(MARGIN_LEFT - 10, y + 4, label, {
       "text-anchor": "end",
       "font-size": "9",
@@ -235,7 +226,6 @@ export function renderBreadboardSvg(): string {
     for (const railEntry of ROW_ORDER.filter(r => r.kind === "rail") as Array<{ kind: "rail"; rail: string }>) {
       const h: Hole = { kind: "rail", rail: railEntry.rail as "TP" | "TN" | "BP" | "BN", col }
       const { x, y } = holeXY(h)
-      const isRail = railEntry.rail === "TP" || railEntry.rail === "BP"
       parts.push(circle(x, y, 3.5, {
         fill: "#c8b88a",
         stroke: "#7a5a20",
@@ -255,31 +245,57 @@ export function renderBreadboardSvg(): string {
   }
 
   // ── 7. Jumper wires ────────────────────────────────────────────────────
+  // Assign stagger offsets per net to avoid overlap on the same "band" of wires
+  const NET_STAGGER: Record<string, number> = {
+    V5:        0,   // short vertical stubs — no stagger needed
+    GND:       0,   // short vertical stubs — no stagger needed
+    GATE_DRV:  -8,  // arc at medium height above row-b
+    SERVO_SIG: -22, // arc high above row-b (long wire)
+    SERVO_RTN:  8,  // arc below row-b (toward row-c)
+    GATE:       0,
+  }
+
   for (const j of JUMPERS) {
     const { x: x1, y: y1 } = holeXY(j.from)
     const { x: x2, y: y2 } = holeXY(j.to)
     const color = j.color ?? netColor(j.net)
-    // Draw wire as a curved path for visual clarity when possible
     const dx = x2 - x1
     const dy = y2 - y1
-    const isStraightH = dy === 0
-    if (isStraightH) {
-      // horizontal — arc above
+
+    if (dy === 0 && dx !== 0) {
+      // Horizontal wire on the same row — arc above or below depending on net
+      const staggerBase = NET_STAGGER[j.net ?? ""] ?? 0
+      const arcAmt = Math.abs(dx) * 0.12 + 6
       const mx = (x1 + x2) / 2
-      const arcY = Math.min(y1, y2) - Math.abs(dx) * 0.18 - 6
-      parts.push(`<path d="M ${x1} ${y1} Q ${mx} ${arcY} ${x2} ${y2}" ` +
-        `fill="none" stroke="${color}" stroke-width="2.2" stroke-opacity="0.85" />`)
-    } else {
+      const arcY = y1 + staggerBase - arcAmt
+      parts.push(
+        `<path d="M ${x1} ${y1} Q ${mx} ${arcY} ${x2} ${y2}" ` +
+        `fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.88" />`
+      )
+    } else if (dx === 0 || Math.abs(dy) > Math.abs(dx)) {
+      // Vertical or steep wire — straight line (rail stubs)
       parts.push(line(x1, y1, x2, y2, {
         stroke: color,
-        "stroke-width": "2.2",
-        "stroke-opacity": "0.85",
+        "stroke-width": "2.5",
+        "stroke-opacity": "0.88",
         "stroke-linecap": "round",
       }))
+    } else {
+      // Diagonal or angled — S-curve
+      const mx = (x1 + x2) / 2
+      const my = (y1 + y2) / 2
+      parts.push(
+        `<path d="M ${x1} ${y1} C ${mx} ${y1} ${mx} ${y2} ${x2} ${y2}" ` +
+        `fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.88" />`
+      )
     }
+
+    // Draw dot at each end of the wire
+    parts.push(circle(x1, y1, 2.5, { fill: color, opacity: "0.8" }))
+    parts.push(circle(x2, y2, 2.5, { fill: color, opacity: "0.8" }))
   }
 
-  // ── 8. Component bodies ────────────────────────────────────────────────
+  // ── 8. Component bodies + staggered labels ─────────────────────────────
   // helper: bounding box for a set of pin keys
   function pinsBBox(pinKeys: string[]): { x1: number; y1: number; x2: number; y2: number } | null {
     const coords = pinKeys.map(k => PIN_HOLES[k]).filter(Boolean).map(holeXY)
@@ -296,26 +312,45 @@ export function renderBreadboardSvg(): string {
 
   const compPad = 7
 
-  // M1: external 3-pin header
+  // Label stagger: alternate components get labels at different heights
+  // to avoid adjacent component labels overlapping each other.
+  // Group components by their x-center and assign stagger level
+  // (0 = just above box, 1 = 12px higher, 2 = 24px higher)
+  const LABEL_STAGGER: Record<string, number> = {
+    U1:  0,   // leftmost, no stagger needed
+    C1:  1,   // 12px above box edge
+    C2:  0,
+    Rg:  1,
+    Q1:  0,
+    Rgs: 2,   // 24px above box (Rgs overlaps with Q1 column-wise)
+    D2:  1,
+    M1:  0,
+  }
+  const STAGGER_STEP = 12
+
+  // U1: Pico W block spanning columns 2-5
   {
-    const bb = pinsBBox(["M1.SIG", "M1.VPLUS", "M1.GND"])!
+    const bb = pinsBBox(["U1.VBUS", "U1.GND", "U1.GP15", "U1.GP14"])!
     parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#b3d9ff",
-      stroke: "#2266aa",
+      fill: "#cce0ff",
+      stroke: "#1144aa",
       "stroke-width": "1.5",
       rx: 4,
-      opacity: "0.7",
+      opacity: "0.75",
     }))
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3, "M1 SG90 (external)", {
+    const lOff = LABEL_STAGGER["U1"] * STAGGER_STEP
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "U1 Pico W", {
       "text-anchor": "middle",
       "font-size": "8",
-      fill: "#2266aa",
+      fill: "#1144aa",
       "font-weight": "bold",
     }))
-    // pin labels
-    for (const [key, label] of [["M1.SIG", "SIG"], ["M1.VPLUS", "VPLUS"], ["M1.GND", "GND"]] as const) {
+    for (const [key, label] of [
+      ["U1.VBUS", "VBUS"], ["U1.GND", "GND"],
+      ["U1.GP15", "GP15"], ["U1.GP14", "GP14"],
+    ] as const) {
       const { x, y } = holeXY(PIN_HOLES[key])
-      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#2266aa" }))
+      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#1144aa" }))
     }
   }
 
@@ -329,7 +364,8 @@ export function renderBreadboardSvg(): string {
       rx: 4,
       opacity: "0.75",
     }))
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3, "C1 470µF", {
+    const lOff = LABEL_STAGGER["C1"] * STAGGER_STEP
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "C1 470µF", {
       "text-anchor": "middle",
       "font-size": "8",
       fill: "#2a8a2a",
@@ -350,10 +386,73 @@ export function renderBreadboardSvg(): string {
       rx: 4,
       opacity: "0.75",
     }))
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3, "C2 100nF", {
+    const lOff = LABEL_STAGGER["C2"] * STAGGER_STEP
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "C2 100nF", {
       "text-anchor": "middle",
       "font-size": "8",
       fill: "#aa7700",
+      "font-weight": "bold",
+    }))
+  }
+
+  // Rg: axial resistor
+  {
+    const bb = pinsBBox(["Rg.pin1", "Rg.pin2"])!
+    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
+      fill: "#ffe0a0",
+      stroke: "#886600",
+      "stroke-width": "1.5",
+      rx: 4,
+      opacity: "0.75",
+    }))
+    const lOff = LABEL_STAGGER["Rg"] * STAGGER_STEP
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "Rg 220Ω", {
+      "text-anchor": "middle",
+      "font-size": "8",
+      fill: "#886600",
+      "font-weight": "bold",
+    }))
+  }
+
+  // Q1: TO-92/220 MOSFET, G/D/S labels
+  // Q1.G is at col17b (shares upper block with Rg.pin2 at 17a and Rgs.pin1 at 17c)
+  {
+    const bb = pinsBBox(["Q1.G", "Q1.D", "Q1.S"])!
+    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
+      fill: "#e0d0ff",
+      stroke: "#6633cc",
+      "stroke-width": "1.5",
+      rx: 4,
+      opacity: "0.75",
+    }))
+    const lOff = LABEL_STAGGER["Q1"] * STAGGER_STEP
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "Q1 MOSFET (low-side)", {
+      "text-anchor": "middle",
+      "font-size": "8",
+      fill: "#6633cc",
+      "font-weight": "bold",
+    }))
+    for (const [key, label] of [["Q1.G", "G"], ["Q1.D", "D"], ["Q1.S", "S"]] as const) {
+      const { x, y } = holeXY(PIN_HOLES[key])
+      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#6633cc" }))
+    }
+  }
+
+  // Rgs: axial resistor (pin1 at col17c, pin2 at col22a — spans rows and columns)
+  {
+    const bb = pinsBBox(["Rgs.pin1", "Rgs.pin2"])!
+    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
+      fill: "#ffe0a0",
+      stroke: "#886600",
+      "stroke-width": "1.5",
+      rx: 4,
+      opacity: "0.75",
+    }))
+    const lOff = LABEL_STAGGER["Rgs"] * STAGGER_STEP
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "Rgs 10kΩ", {
+      "text-anchor": "middle",
+      "font-size": "8",
+      fill: "#886600",
       "font-weight": "bold",
     }))
   }
@@ -368,7 +467,8 @@ export function renderBreadboardSvg(): string {
       rx: 4,
       opacity: "0.75",
     }))
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3, "D2 Flyback", {
+    const lOff = LABEL_STAGGER["D2"] * STAGGER_STEP
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "D2 Flyback", {
       "text-anchor": "middle",
       "font-size": "8",
       fill: "#cc2222",
@@ -380,93 +480,34 @@ export function renderBreadboardSvg(): string {
       stroke: "#aa0000",
       "stroke-width": "2.5",
     }))
-    parts.push(text(cx, cy - compPad - 4, "▐ (cathode)", {
+    parts.push(text(cx, cy - compPad - 4, "stripe=+", {
       "text-anchor": "middle",
       "font-size": "7",
       fill: "#aa0000",
     }))
   }
 
-  // Rg: axial resistor
+  // M1: external 3-pin header
   {
-    const bb = pinsBBox(["Rg.pin1", "Rg.pin2"])!
+    const bb = pinsBBox(["M1.SIG", "M1.VPLUS", "M1.GND"])!
     parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#ffe0a0",
-      stroke: "#886600",
+      fill: "#b3d9ff",
+      stroke: "#2266aa",
       "stroke-width": "1.5",
       rx: 4,
-      opacity: "0.75",
+      opacity: "0.7",
     }))
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3, "Rg 220Ω", {
+    const lOff = LABEL_STAGGER["M1"] * STAGGER_STEP
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "M1 SG90 (external)", {
       "text-anchor": "middle",
       "font-size": "8",
-      fill: "#886600",
+      fill: "#2266aa",
       "font-weight": "bold",
     }))
-  }
-
-  // Q1: TO-92/220 MOSFET, G/D/S labels
-  {
-    const bb = pinsBBox(["Q1.G", "Q1.D", "Q1.S"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#e0d0ff",
-      stroke: "#6633cc",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3, "Q1 MOSFET (low-side)", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#6633cc",
-      "font-weight": "bold",
-    }))
-    for (const [key, label] of [["Q1.G", "G"], ["Q1.D", "D"], ["Q1.S", "S"]] as const) {
+    // pin labels
+    for (const [key, label] of [["M1.SIG", "SIG"], ["M1.VPLUS", "VCC"], ["M1.GND", "GND"]] as const) {
       const { x, y } = holeXY(PIN_HOLES[key])
-      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#6633cc" }))
-    }
-  }
-
-  // Rgs: axial resistor (pin1 at col11c, pin2 at col15a — spans rows)
-  {
-    const bb = pinsBBox(["Rgs.pin1", "Rgs.pin2"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#ffe0a0",
-      stroke: "#886600",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3, "Rgs 10kΩ", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#886600",
-      "font-weight": "bold",
-    }))
-  }
-
-  // U1: Pico W block spanning columns 16-19, single row a
-  {
-    const bb = pinsBBox(["U1.VBUS", "U1.GND", "U1.GP15", "U1.GP14"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#cce0ff",
-      stroke: "#1144aa",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3, "U1 Pico W", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#1144aa",
-      "font-weight": "bold",
-    }))
-    for (const [key, label] of [
-      ["U1.VBUS", "VBUS"], ["U1.GND", "GND"],
-      ["U1.GP15", "GP15"], ["U1.GP14", "GP14"],
-    ] as const) {
-      const { x, y } = holeXY(PIN_HOLES[key])
-      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#1144aa" }))
+      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#2266aa" }))
     }
   }
 
@@ -483,7 +524,8 @@ export function renderBreadboardSvg(): string {
   // ── 10. Legend ─────────────────────────────────────────────────────────
   const legendX = MARGIN_LEFT
   const legendY = ROW_Y[ROW_Y.length - 1] + PITCH + 8
-  parts.push(rect(legendX - 4, legendY - 4, totalWidth - legendX - MARGIN_RIGHT + 4, MARGIN_BOTTOM - 10, {
+  const legendH = MARGIN_BOTTOM - 10
+  parts.push(rect(legendX - 4, legendY - 4, totalWidth - legendX - MARGIN_RIGHT + 4, legendH, {
     fill: "#fffff8",
     stroke: "#aaa",
     "stroke-width": "1",
@@ -506,9 +548,9 @@ export function renderBreadboardSvg(): string {
   // Notes box
   const notesY = legendY + 33
   const notes = [
-    "D2 cathode(stripe)=+5V側",
+    "D2 stripe(cathode)=+5V側",
     "C1 +極性 (pin1=+)",
-    "Q1 ローサイド(GND側)",
+    "Q1 ローサイド(GND側スイッチ)",
     "サーボ失速~1A→太め短めジャンパ推奨",
   ]
   notes.forEach((note, idx) => {
