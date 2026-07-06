@@ -42,6 +42,22 @@ jobs:
       - name: cargo test (smtlk-core)
         run: cargo test -p smtlk-core --locked --target x86_64-unknown-linux-gnu
 
+  circuit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # circuit/ の bun/tscircuit ツールチェーンは flake の devShell から得る（ローカルと同一）。
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: bun test (circuit — 回路図ERC + ブレッドボード自動place&route)
+        run: |
+          nix develop --command bash -euo pipefail -c '
+            cd circuit
+            bun install --frozen-lockfile
+            bun test
+          '
+
   render:
     runs-on: ubuntu-latest
     steps:
