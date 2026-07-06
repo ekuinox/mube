@@ -332,8 +332,11 @@ export function renderBreadboardSvg(layout: BreadboardLayout): string {
   const STAGGER_STEP = 12
   let staggerIdx = 0
 
-  for (const [ref, meta] of Object.entries(COMPONENTS)) {
-    const bb = pinsBBox(meta.pins)
+  // 空間的に隣り合うラベルが交互の高さになるよう、部品を x 中心でソートしてからスタガーする
+  const sortedComps = Object.entries(COMPONENTS)
+    .map(([ref, meta]) => ({ ref, meta, bb: pinsBBox(meta.pins) }))
+    .sort((a, b) => (a.bb ? a.bb.x1 + a.bb.x2 : 0) - (b.bb ? b.bb.x1 + b.bb.x2 : 0))
+  for (const { ref, meta, bb } of sortedComps) {
     if (!bb) continue
     const { fill, stroke } = compColor(ref)
     parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
