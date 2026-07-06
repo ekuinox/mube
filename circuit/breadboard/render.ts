@@ -1,8 +1,8 @@
 // circuit/breadboard/render.ts
-// SVG renderer for the smtlk servo-drive breadboard wiring guide.
+// SVG renderer for breadboard wiring guides.
 
-import { COLS, type Hole, type StripRow } from "./model"
-import { PIN_HOLES, JUMPERS, COMPONENTS } from "./servo-layout"
+import { type Hole, type StripRow } from "./model"
+import type { BreadboardLayout } from "./layout-types"
 
 // ──────────────────────────────────────────────────────────────────────────
 // Coordinate system
@@ -141,8 +141,17 @@ function netColor(net: string | undefined): string {
 // ──────────────────────────────────────────────────────────────────────────
 // Main renderer
 // ──────────────────────────────────────────────────────────────────────────
-export function renderBreadboardSvg(): string {
-  const totalWidth  = MARGIN_LEFT + COLS * PITCH + MARGIN_RIGHT
+export function renderBreadboardSvg(layout: BreadboardLayout): string {
+  const { pinHoles: PIN_HOLES, jumpers: JUMPERS, components: COMPONENTS, notes } = layout
+
+  // Dynamic column count: at least 30, but expand to fit all placed holes
+  const maxCol = Math.max(
+    30,
+    ...Object.values(PIN_HOLES).map((h) => h.col),
+    ...JUMPERS.flatMap((j) => [j.from, j.to].map((h) => h.col)),
+  )
+
+  const totalWidth  = MARGIN_LEFT + maxCol * PITCH + MARGIN_RIGHT
   const totalHeight = ROW_Y[ROW_Y.length - 1] + PITCH + MARGIN_BOTTOM
 
   const parts: string[] = []
@@ -160,13 +169,13 @@ export function renderBreadboardSvg(): string {
   for (const { rail, fill, label } of railDefs) {
     const idx = ROW_ORDER.findIndex(r => r.kind === "rail" && (r as { rail: string }).rail === rail)
     const y = ROW_Y[idx]
-    parts.push(rect(MARGIN_LEFT - 4, y - 7, COLS * PITCH + 4, 14, {
+    parts.push(rect(MARGIN_LEFT - 4, y - 7, maxCol * PITCH + 4, 14, {
       fill,
       rx: 3,
       opacity: "0.6",
     }))
     // Rail label on the right edge
-    parts.push(text(MARGIN_LEFT + COLS * PITCH + 6, y + 4, label, {
+    parts.push(text(MARGIN_LEFT + maxCol * PITCH + 6, y + 4, label, {
       "font-size": "8",
       fill: rail === "TP" || rail === "BP" ? "#c00" : "#338",
       "font-weight": "bold",
@@ -179,7 +188,7 @@ export function renderBreadboardSvg(): string {
   const lowerTopIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && (r as { row: StripRow }).row === "f")
   const lowerBotIdx = ROW_ORDER.findIndex(r => r.kind === "strip" && (r as { row: StripRow }).row === "j")
 
-  for (let col = 1; col <= COLS; col++) {
+  for (let col = 1; col <= maxCol; col++) {
     const x = MARGIN_LEFT + (col - 1) * PITCH
     const uy1 = ROW_Y[upperTopIdx] - 6
     const uy2 = ROW_Y[upperBotIdx] + 6
@@ -198,7 +207,7 @@ export function renderBreadboardSvg(): string {
   }
 
   // ── 4. Column numbers ──────────────────────────────────────────────────
-  for (let col = 1; col <= COLS; col++) {
+  for (let col = 1; col <= maxCol; col++) {
     const x = MARGIN_LEFT + (col - 1) * PITCH
     parts.push(text(x, MARGIN_TOP - 20, String(col), {
       "text-anchor": "middle",
@@ -221,7 +230,7 @@ export function renderBreadboardSvg(): string {
   }
 
   // ── 6. All holes ───────────────────────────────────────────────────────
-  for (let col = 1; col <= COLS; col++) {
+  for (let col = 1; col <= maxCol; col++) {
     // Rail holes
     for (const railEntry of ROW_ORDER.filter(r => r.kind === "rail") as Array<{ kind: "rail"; rail: string }>) {
       const h: Hole = { kind: "rail", rail: railEntry.rail as "TP" | "TN" | "BP" | "BN", col }
@@ -303,206 +312,74 @@ export function renderBreadboardSvg(): string {
 
   const compPad = 7
 
+  // Component color table by type hint in label
+  const COMP_COLORS: Array<{ test: (label: string) => boolean; fill: string; stroke: string }> = [
+    { test: (l) => l.startsWith("U"),  fill: "#cce0ff", stroke: "#1144aa" },
+    { test: (l) => l.startsWith("C"),  fill: "#d4f0d4", stroke: "#2a8a2a" },
+    { test: (l) => l.startsWith("R"),  fill: "#ffe0a0", stroke: "#886600" },
+    { test: (l) => l.startsWith("Q"),  fill: "#e0d0ff", stroke: "#6633cc" },
+    { test: (l) => l.startsWith("D"),  fill: "#ffd0d0", stroke: "#cc2222" },
+    { test: (l) => l.startsWith("M") || l.startsWith("SW"), fill: "#b3d9ff", stroke: "#2266aa" },
+  ]
+  function compColor(ref: string): { fill: string; stroke: string } {
+    for (const c of COMP_COLORS) {
+      if (c.test(ref)) return c
+    }
+    return { fill: "#e8e8e8", stroke: "#555" }
+  }
+
   // Label stagger: alternate components get labels at different heights
-  // to avoid adjacent component labels overlapping each other.
-  // Group components by their x-center and assign stagger level
-  // (0 = just above box, 1 = 12px higher, 2 = 24px higher)
-  const LABEL_STAGGER: Record<string, number> = {
-    U1:  0,   // leftmost, no stagger needed
-    C1:  1,   // 12px above box edge
-    C2:  0,
-    Rg:  1,
-    Q1:  0,
-    Rgs: 1,   // 12px above box (Rgs is now in its own columns 22-23, no Q1 overlap)
-    D2:  0,
-    M1:  1,
-  }
   const STAGGER_STEP = 12
+  let staggerIdx = 0
 
-  // U1: Pico W block spanning columns 2-5
-  {
-    const bb = pinsBBox(["U1.VBUS", "U1.GND", "U1.GP15", "U1.GP14"])!
+  for (const [ref, meta] of Object.entries(COMPONENTS)) {
+    const bb = pinsBBox(meta.pins)
+    if (!bb) continue
+    const { fill, stroke } = compColor(ref)
     parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#cce0ff",
-      stroke: "#1144aa",
+      fill,
+      stroke,
       "stroke-width": "1.5",
       rx: 4,
       opacity: "0.75",
     }))
-    const lOff = LABEL_STAGGER["U1"] * STAGGER_STEP
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "U1 Pico W", {
+    const lOff = (staggerIdx % 2) * STAGGER_STEP
+    staggerIdx++
+    const labelStr = meta.value ? `${ref} ${meta.value}` : (meta.label ?? ref)
+    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, labelStr, {
       "text-anchor": "middle",
       "font-size": "8",
-      fill: "#1144aa",
+      fill: stroke,
       "font-weight": "bold",
     }))
-    for (const [key, label] of [
-      ["U1.VBUS", "VBUS"], ["U1.GND", "GND"],
-      ["U1.GP15", "GP15"], ["U1.GP14", "GP14"],
-    ] as const) {
-      const { x, y } = holeXY(PIN_HOLES[key])
-      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#1144aa" }))
+
+    // Pin sub-labels (show all pins with their last segment as label)
+    for (const pinKey of meta.pins) {
+      const h = PIN_HOLES[pinKey]
+      if (!h) continue
+      const { x, y } = holeXY(h)
+      const pinLabel = pinKey.split(".").slice(1).join(".")
+      parts.push(text(x, y + 14, pinLabel, { "text-anchor": "middle", "font-size": "7", fill: stroke }))
     }
   }
 
-  // C1: electrolytic, show + on pin1
-  {
-    const bb = pinsBBox(["C1.pin1", "C1.pin2"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#d4f0d4",
-      stroke: "#2a8a2a",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    const lOff = LABEL_STAGGER["C1"] * STAGGER_STEP
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "C1 470µF", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#2a8a2a",
-      "font-weight": "bold",
-    }))
-    // + mark on pin1
-    const { x: px1, y: py1 } = holeXY(PIN_HOLES["C1.pin1"])
-    parts.push(text(px1, py1 - 6, "+", { "text-anchor": "middle", "font-size": "10", fill: "#c00", "font-weight": "bold" }))
+  // ── 9. Polarity (+) markers — data-driven from COMPONENTS.polarityPin ──
+  for (const c of Object.values(COMPONENTS)) {
+    if (!c.polarityPin) continue
+    const h = PIN_HOLES[c.polarityPin]; if (!h) continue
+    const { x, y } = holeXY(h)
+    parts.push(text(x, y - 6, "+", { "font-size": 9, "text-anchor": "middle", fill: "#c00" }))
   }
 
-  // C2: ceramic
-  {
-    const bb = pinsBBox(["C2.pin1", "C2.pin2"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#fff0c0",
-      stroke: "#aa7700",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    const lOff = LABEL_STAGGER["C2"] * STAGGER_STEP
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "C2 100nF", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#aa7700",
-      "font-weight": "bold",
-    }))
+  // ── 10. Cathode stripe — data-driven from COMPONENTS.stripePin ─────────
+  for (const c of Object.values(COMPONENTS)) {
+    if (!c.stripePin) continue
+    const h = PIN_HOLES[c.stripePin]; if (!h) continue
+    const { x, y } = holeXY(h)
+    parts.push(`<rect x="${x - 5}" y="${y - 5}" width="2" height="10" fill="#333"/>`)
   }
 
-  // Rg: axial resistor
-  {
-    const bb = pinsBBox(["Rg.pin1", "Rg.pin2"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#ffe0a0",
-      stroke: "#886600",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    const lOff = LABEL_STAGGER["Rg"] * STAGGER_STEP
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "Rg 220Ω", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#886600",
-      "font-weight": "bold",
-    }))
-  }
-
-  // Q1: TO-92/220 MOSFET, G/D/S labels
-  // Q1.G is at col18a (separate column from Rg.pin2 at col16a and Rgs.pin1 at col22a)
-  {
-    const bb = pinsBBox(["Q1.G", "Q1.D", "Q1.S"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#e0d0ff",
-      stroke: "#6633cc",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    const lOff = LABEL_STAGGER["Q1"] * STAGGER_STEP
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "Q1 MOSFET (low-side)", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#6633cc",
-      "font-weight": "bold",
-    }))
-    for (const [key, label] of [["Q1.G", "G"], ["Q1.D", "D"], ["Q1.S", "S"]] as const) {
-      const { x, y } = holeXY(PIN_HOLES[key])
-      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#6633cc" }))
-    }
-  }
-
-  // Rgs: axial resistor (pin1 at col22a, pin2 at col23a — separate columns from Q1 and Rg)
-  {
-    const bb = pinsBBox(["Rgs.pin1", "Rgs.pin2"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#ffe0a0",
-      stroke: "#886600",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    const lOff = LABEL_STAGGER["Rgs"] * STAGGER_STEP
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "Rgs 10kΩ", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#886600",
-      "font-weight": "bold",
-    }))
-  }
-
-  // D2: diode, stripe on cathode end
-  {
-    const bb = pinsBBox(["D2.cathode", "D2.anode"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#ffd0d0",
-      stroke: "#cc2222",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.75",
-    }))
-    const lOff = LABEL_STAGGER["D2"] * STAGGER_STEP
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "D2 Flyback", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#cc2222",
-      "font-weight": "bold",
-    }))
-    // Stripe on cathode
-    const { x: cx, y: cy } = holeXY(PIN_HOLES["D2.cathode"])
-    parts.push(line(cx, cy - compPad + 1, cx, cy + compPad - 1, {
-      stroke: "#aa0000",
-      "stroke-width": "2.5",
-    }))
-    parts.push(text(cx, cy - compPad - 4, "stripe=+", {
-      "text-anchor": "middle",
-      "font-size": "7",
-      fill: "#aa0000",
-    }))
-  }
-
-  // M1: external 3-pin header
-  {
-    const bb = pinsBBox(["M1.SIG", "M1.VPLUS", "M1.GND"])!
-    parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
-      fill: "#b3d9ff",
-      stroke: "#2266aa",
-      "stroke-width": "1.5",
-      rx: 4,
-      opacity: "0.7",
-    }))
-    const lOff = LABEL_STAGGER["M1"] * STAGGER_STEP
-    parts.push(text((bb.x1 + bb.x2) / 2, bb.y1 - compPad - 3 - lOff, "M1 SG90 (external)", {
-      "text-anchor": "middle",
-      "font-size": "8",
-      fill: "#2266aa",
-      "font-weight": "bold",
-    }))
-    // pin labels
-    for (const [key, label] of [["M1.SIG", "SIG"], ["M1.VPLUS", "VCC"], ["M1.GND", "GND"]] as const) {
-      const { x, y } = holeXY(PIN_HOLES[key])
-      parts.push(text(x, y + 14, label, { "text-anchor": "middle", "font-size": "7", fill: "#2266aa" }))
-    }
-  }
-
-  // ── 9. Pin marker circles (on top of holes) ────────────────────────────
+  // ── 11. Pin marker circles (on top of holes) ───────────────────────────
   for (const [_key, hole] of Object.entries(PIN_HOLES)) {
     const { x, y } = holeXY(hole)
     parts.push(circle(x, y, 3, {
@@ -512,7 +389,7 @@ export function renderBreadboardSvg(): string {
     }))
   }
 
-  // ── 10. Legend ─────────────────────────────────────────────────────────
+  // ── 12. Legend ─────────────────────────────────────────────────────────
   const legendX = MARGIN_LEFT
   const legendY = ROW_Y[ROW_Y.length - 1] + PITCH + 8
   const legendH = MARGIN_BOTTOM - 10
@@ -538,12 +415,6 @@ export function renderBreadboardSvg(): string {
 
   // Notes box
   const notesY = legendY + 33
-  const notes = [
-    "D2 stripe(cathode)=+5V側",
-    "C1 +極性 (pin1=+)",
-    "Q1 ローサイド(GND側スイッチ)",
-    "サーボ失速~1A→太め短めジャンパ推奨",
-  ]
   notes.forEach((note, idx) => {
     parts.push(text(legendX + 2 + idx * 148, notesY, "■ " + note, {
       "font-size": "7.5",
