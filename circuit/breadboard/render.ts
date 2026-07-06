@@ -313,9 +313,9 @@ export function renderBreadboardSvg(): string {
     C2:  0,
     Rg:  1,
     Q1:  0,
-    Rgs: 2,   // 24px above box (Rgs overlaps with Q1 column-wise)
-    D2:  1,
-    M1:  0,
+    Rgs: 1,   // 12px above box (Rgs is now in its own columns 22-23, no Q1 overlap)
+    D2:  0,
+    M1:  1,
   }
   const STAGGER_STEP = 12
 
@@ -406,7 +406,7 @@ export function renderBreadboardSvg(): string {
   }
 
   // Q1: TO-92/220 MOSFET, G/D/S labels
-  // Q1.G is at col17b (shares upper block with Rg.pin2 at 17a and Rgs.pin1 at 17c)
+  // Q1.G is at col18a (separate column from Rg.pin2 at col16a and Rgs.pin1 at col22a)
   {
     const bb = pinsBBox(["Q1.G", "Q1.D", "Q1.S"])!
     parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {
@@ -429,7 +429,7 @@ export function renderBreadboardSvg(): string {
     }
   }
 
-  // Rgs: axial resistor (pin1 at col17c, pin2 at col22a — spans rows and columns)
+  // Rgs: axial resistor (pin1 at col22a, pin2 at col23a — separate columns from Q1 and Rg)
   {
     const bb = pinsBBox(["Rgs.pin1", "Rgs.pin2"])!
     parts.push(rect(bb.x1 - compPad, bb.y1 - compPad, bb.x2 - bb.x1 + compPad * 2, bb.y2 - bb.y1 + compPad * 2, {

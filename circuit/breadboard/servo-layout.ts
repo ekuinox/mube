@@ -9,8 +9,8 @@
 //
 // Signal flow left → right:
 //
-//   U1 (Pico W)  →  Rg (220Ω)  →  Q1 (MOSFET)  →  D2 (Flyback)  →  M1 (Servo)
-//   cols 2-5        cols 15,17      cols 17-20       cols 24-25       cols 27-29
+//   U1 (Pico W)  →  Rg (220Ω)  →  Q1 (MOSFET)  →  Rgs (10kΩ)  →  D2 (Flyback)  →  M1 (Servo)
+//   cols 2-5        cols 14-16      cols 18-20       cols 22-23       cols 24-25       cols 27-29
 //
 // Column assignments:
 //   2  : U1.VBUS   (upper row a)         — net V5      → stub to TP
@@ -23,18 +23,17 @@
 //   (col 10: gap)
 //   11 : C2.pin1   (upper row a)         — net V5      → stub to TP
 //   12 : C2.pin2   (upper row a)         — net GND     → stub to TN
-//   (cols 13-14: gap)
-//   15 : Rg.pin1   (upper row a)         — net GATE_DRV ← jumper from U1.GP14 (col5)
-//   (col 16: gap)
-//   17 : Rg.pin2   (upper row a)         — net GATE  ─┐ (col-tie: all U17)
-//   17 : Q1.G      (upper row b)         — net GATE   │
-//   17 : Rgs.pin1  (upper row c)         — net GATE  ─┘
-//   (col 18: gap)
+//   (col 13: gap)
+//   14 : Rg.pin1   (upper row a)         — net GATE_DRV ← jumper from U1.GP14 (col5)
+//   15 : (gap)
+//   16 : Rg.pin2   (upper row a)         — net GATE ─ jumper lane row-b
+//   (col 17: gap)
+//   18 : Q1.G      (upper row a)         — net GATE ─ jumper lane row-b
 //   19 : Q1.D      (upper row a)         — net SERVO_RTN
 //   20 : Q1.S      (upper row a)         — net GND     → stub to TN
-//   (cols 21-22: gap)
-//   22 : Rgs.pin2  (upper row a)         — net GND     → stub to TN
-//   (col 23: gap)
+//   (col 21: gap)
+//   22 : Rgs.pin1  (upper row a)         — net GATE ─ jumper lane row-b
+//   23 : Rgs.pin2  (upper row a)         — net GND     → stub to TN
 //   24 : D2.anode  (upper row a)         — net SERVO_RTN ← jumper from Q1.D (col19)
 //   25 : D2.cathode (upper row a)        — net V5      → stub to TP
 //   (col 26: gap)
@@ -44,17 +43,19 @@
 //
 // Jumpers — each long horizontal jumper uses its own row "lane" to avoid overlap:
 //   V5  stubs:       col2→TP, col8→TP, col11→TP, col25→TP, col28→TP    (row-b → TP)
-//   GND stubs:       col3→TN, col9→TN, col12→TN, col20→TN, col22→TN    (row-b → TN)
-//   GATE_DRV:        col5(U1.GP14) ↔ col15(Rg.pin1)                     (row-c horizontal lane)
-//   GATE:            no jumper needed — col17 rows a/b/c all share node U17
+//   GND stubs:       col3→TN, col9→TN, col12→TN, col20→TN, col23→TN    (row-b → TN)
+//   GATE_DRV:        col5(U1.GP14) ↔ col14(Rg.pin1)                     (row-c horizontal lane)
+//   GATE:            col16(Rg.pin2) ↔ col18(Q1.G) ↔ col22(Rgs.pin1)    (row-b short segments)
 //   SERVO_RTN:       col19(Q1.D) ↔ col24(D2.anode), col24 ↔ col29(M1.GND)  (row-d lane)
 //   SERVO_SIG:       col4(U1.GP15) ↔ col27(M1.SIG)                       (row-e horizontal lane, longest)
 //
 // Lane assignment (rows b-e used as horizontal wiring lanes):
-//   row b — V5/GND short stubs only (nearly vertical, no horizontal run)
-//   row c — GATE_DRV lane  (col5 → col15, medium length)
+//   row b — V5/GND short stubs + GATE short jumpers (cols 16→18→22, local to that area)
+//   row c — GATE_DRV lane  (col5 → col14, medium length)
 //   row d — SERVO_RTN lane (col19 → col24 → col29, medium)
 //   row e — SERVO_SIG lane (col4 → col27, longest — gets deepest lane)
+//
+// No body overlaps: Rg(14-16), Q1(18-20), Rgs(22-23) are each in separate column spans.
 
 import type { Hole, Jumper } from "./model"
 
@@ -81,20 +82,19 @@ export const PIN_HOLES: Record<string, Hole> = {
   "C2.pin1":    s(11, "a"),   // V5
   "C2.pin2":    s(12, "a"),   // GND
 
-  // Rg (220Ω gate resistor) — pin1 col15, pin2 col17 (upper row a)
-  "Rg.pin1":    s(15, "a"),   // GATE_DRV
-  "Rg.pin2":    s(17, "a"),   // GATE
+  // Rg (220Ω gate resistor) — pin1 col14, pin2 col16 (upper row a)
+  "Rg.pin1":    s(14, "a"),   // GATE_DRV
+  "Rg.pin2":    s(16, "a"),   // GATE — connected via row-b jumper to Q1.G (col18) and Rgs.pin1 (col22)
 
-  // Q1 (MOSFET) — G col17 row b, D col19 row a, S col20 row a
-  // Q1.G shares col17 with Rg.pin2 (col17a) and Rgs.pin1 (col17c) → node U17
-  "Q1.G":       s(17, "b"),   // GATE (col-tied to U17)
+  // Q1 (MOSFET) — G/D/S in row a, cols 18/19/20 (no overlap with Rg or Rgs)
+  "Q1.G":       s(18, "a"),   // GATE — connected via row-b jumper to Rg.pin2 (col16) and Rgs.pin1 (col22)
   "Q1.D":       s(19, "a"),   // SERVO_RTN
   "Q1.S":       s(20, "a"),   // GND
 
-  // Rgs (10kΩ gate-source pull-down) — pin1 col17 row c, pin2 col22 row a
-  // pin1 shares col17 upper block with Rg.pin2 (17a) and Q1.G (17b) → node U17
-  "Rgs.pin1":   s(17, "c"),   // GATE (col-tied to U17)
-  "Rgs.pin2":   s(22, "a"),   // GND
+  // Rgs (10kΩ gate-source pull-down) — pin1 col22, pin2 col23 (upper row a)
+  // pin1 connected to GATE net via row-b jumpers; pin2 tied to GND
+  "Rgs.pin1":   s(22, "a"),   // GATE — connected via row-b jumper to Q1.G (col18)
+  "Rgs.pin2":   s(23, "a"),   // GND
 
   // D2 (flyback diode) — anode col24, cathode col25 upper row a
   "D2.anode":   s(24, "a"),   // SERVO_RTN
@@ -121,14 +121,16 @@ export const JUMPERS: Jumper[] = [
   { from: s(9,  "b"), to: r("TN", 9),  net: "GND", color: "black" }, // C1.pin2  col9→TN
   { from: s(12, "b"), to: r("TN", 12), net: "GND", color: "black" }, // C2.pin2  col12→TN
   { from: s(20, "b"), to: r("TN", 20), net: "GND", color: "black" }, // Q1.S     col20→TN
-  { from: s(22, "b"), to: r("TN", 22), net: "GND", color: "black" }, // Rgs.pin2 col22→TN
+  { from: s(23, "b"), to: r("TN", 23), net: "GND", color: "black" }, // Rgs.pin2 col23→TN
 
-  // --- GATE_DRV net: U1.GP14 (col5) → Rg.pin1 (col15), row-c lane ---
-  // row-c is electrically same node as row-a in each column (U5, U15)
-  { from: s(5,  "c"), to: s(15, "c"), net: "GATE_DRV", color: "#d0d0d0" },
+  // --- GATE_DRV net: U1.GP14 (col5) → Rg.pin1 (col14), row-c lane ---
+  // row-c is electrically same node as row-a in each column (U5, U14)
+  { from: s(5,  "c"), to: s(14, "c"), net: "GATE_DRV", color: "#d0d0d0" },
 
-  // --- GATE net: Rg.pin2 (17a), Q1.G (17b), Rgs.pin1 (17c) all share col17 node U17 ---
-  // No jumper needed; column tie connects rows a-e within col 17.
+  // --- GATE net: Rg.pin2 (col16), Q1.G (col18), Rgs.pin1 (col22) connected via row-b jumpers ---
+  // Each pin is in its OWN column (no col-tie overlap); row-b short horizontal segments bridge them.
+  { from: s(16, "b"), to: s(18, "b"), net: "GATE", color: "purple" }, // Rg.pin2 ↔ Q1.G
+  { from: s(18, "b"), to: s(22, "b"), net: "GATE", color: "purple" }, // Q1.G ↔ Rgs.pin1
 
   // --- SERVO_RTN net: Q1.D (col19) ↔ D2.anode (col24) ↔ M1.GND (col29), row-d lane ---
   { from: s(19, "d"), to: s(24, "d"), net: "SERVO_RTN", color: "orange" }, // Q1.D ↔ D2.anode
