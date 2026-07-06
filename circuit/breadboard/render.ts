@@ -245,15 +245,9 @@ export function renderBreadboardSvg(): string {
   }
 
   // ── 7. Jumper wires ────────────────────────────────────────────────────
-  // Assign stagger offsets per net to avoid overlap on the same "band" of wires
-  const NET_STAGGER: Record<string, number> = {
-    V5:        0,   // short vertical stubs — no stagger needed
-    GND:       0,   // short vertical stubs — no stagger needed
-    GATE_DRV:  -8,  // arc at medium height above row-b
-    SERVO_SIG: -22, // arc high above row-b (long wire)
-    SERVO_RTN:  8,  // arc below row-b (toward row-c)
-    GATE:       0,
-  }
+  // Each long horizontal jumper now lives in its own row lane (c/d/e) so
+  // wires sit at distinct y-coordinates and no arcing or staggering is needed.
+  // Short V5/GND stubs (row-b → rail) remain nearly vertical and use straight lines.
 
   for (const j of JUMPERS) {
     const { x: x1, y: y1 } = holeXY(j.from)
@@ -263,15 +257,13 @@ export function renderBreadboardSvg(): string {
     const dy = y2 - y1
 
     if (dy === 0 && dx !== 0) {
-      // Horizontal wire on the same row — arc above or below depending on net
-      const staggerBase = NET_STAGGER[j.net ?? ""] ?? 0
-      const arcAmt = Math.abs(dx) * 0.12 + 6
-      const mx = (x1 + x2) / 2
-      const arcY = y1 + staggerBase - arcAmt
-      parts.push(
-        `<path d="M ${x1} ${y1} Q ${mx} ${arcY} ${x2} ${y2}" ` +
-        `fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.88" />`
-      )
+      // Horizontal wire on the same row — straight line along the lane row
+      parts.push(line(x1, y1, x2, y2, {
+        stroke: color,
+        "stroke-width": "2.5",
+        "stroke-opacity": "0.88",
+        "stroke-linecap": "round",
+      }))
     } else if (dx === 0 || Math.abs(dy) > Math.abs(dx)) {
       // Vertical or steep wire — straight line (rail stubs)
       parts.push(line(x1, y1, x2, y2, {
@@ -283,7 +275,6 @@ export function renderBreadboardSvg(): string {
     } else {
       // Diagonal or angled — S-curve
       const mx = (x1 + x2) / 2
-      const my = (y1 + y2) / 2
       parts.push(
         `<path d="M ${x1} ${y1} C ${mx} ${y1} ${mx} ${y2} ${x2} ${y2}" ` +
         `fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.88" />`

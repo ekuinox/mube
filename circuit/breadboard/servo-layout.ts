@@ -42,13 +42,19 @@
 //   28 : M1.VPLUS  (upper row a)         — net V5      → stub to TP
 //   29 : M1.GND    (upper row a)         — net SERVO_RTN ← jumper chain Q1.D→D2.anode→M1.GND
 //
-// Jumpers:
+// Jumpers — each long horizontal jumper uses its own row "lane" to avoid overlap:
 //   V5  stubs:       col2→TP, col8→TP, col11→TP, col25→TP, col28→TP    (row-b → TP)
 //   GND stubs:       col3→TN, col9→TN, col12→TN, col20→TN, col22→TN    (row-b → TN)
-//   GATE_DRV:        col5(U1.GP14) ↔ col15(Rg.pin1)                     (row-b horizontal)
+//   GATE_DRV:        col5(U1.GP14) ↔ col15(Rg.pin1)                     (row-c horizontal lane)
 //   GATE:            no jumper needed — col17 rows a/b/c all share node U17
-//   SERVO_RTN:       col19(Q1.D) ↔ col24(D2.anode), col24 ↔ col29(M1.GND)  (row-b)
-//   SERVO_SIG:       col4(U1.GP15) ↔ col27(M1.SIG)                       (row-b horizontal)
+//   SERVO_RTN:       col19(Q1.D) ↔ col24(D2.anode), col24 ↔ col29(M1.GND)  (row-d lane)
+//   SERVO_SIG:       col4(U1.GP15) ↔ col27(M1.SIG)                       (row-e horizontal lane, longest)
+//
+// Lane assignment (rows b-e used as horizontal wiring lanes):
+//   row b — V5/GND short stubs only (nearly vertical, no horizontal run)
+//   row c — GATE_DRV lane  (col5 → col15, medium length)
+//   row d — SERVO_RTN lane (col19 → col24 → col29, medium)
+//   row e — SERVO_SIG lane (col4 → col27, longest — gets deepest lane)
 
 import type { Hole, Jumper } from "./model"
 
@@ -117,18 +123,19 @@ export const JUMPERS: Jumper[] = [
   { from: s(20, "b"), to: r("TN", 20), net: "GND", color: "black" }, // Q1.S     col20→TN
   { from: s(22, "b"), to: r("TN", 22), net: "GND", color: "black" }, // Rgs.pin2 col22→TN
 
-  // --- GATE_DRV net: U1.GP14 (col5) → Rg.pin1 (col15), row-b horizontal ---
-  { from: s(5,  "b"), to: s(15, "b"), net: "GATE_DRV", color: "#d0d0d0" },
+  // --- GATE_DRV net: U1.GP14 (col5) → Rg.pin1 (col15), row-c lane ---
+  // row-c is electrically same node as row-a in each column (U5, U15)
+  { from: s(5,  "c"), to: s(15, "c"), net: "GATE_DRV", color: "#d0d0d0" },
 
   // --- GATE net: Rg.pin2 (17a), Q1.G (17b), Rgs.pin1 (17c) all share col17 node U17 ---
   // No jumper needed; column tie connects rows a-e within col 17.
 
-  // --- SERVO_RTN net: Q1.D (col19) ↔ D2.anode (col24) ↔ M1.GND (col29), row-b ---
-  { from: s(19, "b"), to: s(24, "b"), net: "SERVO_RTN", color: "orange" }, // Q1.D ↔ D2.anode
-  { from: s(24, "b"), to: s(29, "b"), net: "SERVO_RTN", color: "orange" }, // D2.anode ↔ M1.GND
+  // --- SERVO_RTN net: Q1.D (col19) ↔ D2.anode (col24) ↔ M1.GND (col29), row-d lane ---
+  { from: s(19, "d"), to: s(24, "d"), net: "SERVO_RTN", color: "orange" }, // Q1.D ↔ D2.anode
+  { from: s(24, "d"), to: s(29, "d"), net: "SERVO_RTN", color: "orange" }, // D2.anode ↔ M1.GND
 
-  // --- SERVO_SIG net: U1.GP15 (col4) ↔ M1.SIG (col27), row-b horizontal ---
-  { from: s(4,  "b"), to: s(27, "b"), net: "SERVO_SIG", color: "gold" },
+  // --- SERVO_SIG net: U1.GP15 (col4) ↔ M1.SIG (col27), row-e lane (longest wire) ---
+  { from: s(4,  "e"), to: s(27, "e"), net: "SERVO_SIG", color: "gold" },
 ]
 
 // Component metadata (for renderer, minimal for now)
