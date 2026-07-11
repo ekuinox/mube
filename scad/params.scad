@@ -90,8 +90,8 @@ uboard_t = 1.6;   // board thickness (UP-203GSR / P-03229 とも 1.6)
 // 約 8mm だが、背高ポスト＋ネジで基板をここまで着座させる（ピンは約2mm深く挿さる）。
 pin_header_h = 6;
 
-// Universal board corner mounting holes. UP-203GSR (72×47, 両面ガラコン) に
-// 自分で四隅穴を開ける前提: 各外辺から 4mm 内側 → ピッチ = 72-2*4 / 47-2*4。
+// Universal board corner mounting holes. UP-203GSR (72×47, 両面ガラコン) の
+// 既製の四隅穴に合わせる: 穴は各外辺から 4mm 内側 → ピッチ = 72-2*4 / 47-2*4。
 uboard_mount_span_l = 64;   // corner-hole center pitch, long side (along Y): 72 - 2*4
 uboard_mount_span_w = 39;   // corner-hole center pitch, short side (along X): 47 - 2*4
 uboard_mount_d      = 3.2;  // corner hole dia (M2/M3 clearance, P-03229 と同径)
