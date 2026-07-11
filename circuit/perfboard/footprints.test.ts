@@ -24,7 +24,9 @@ test("極性/カソード帯メタは実在ピンを指す", () => {
   expect(FOOTPRINTS.D2.pins.map((p) => p.name)).toContain("cathode")
 })
 
-test("parts.ts のピン名と一致（M1/D2）", () => {
+test("parts.ts のピン名と一致（M1/Q1/D1/D2）", () => {
   expect(FOOTPRINTS.M1.pins.map((p) => p.name)).toEqual(["SIG", "VPLUS", "GND"])
+  expect(FOOTPRINTS.Q1.pins.map((p) => p.name)).toEqual(["G", "D", "S"])
+  expect(FOOTPRINTS.D1.pins.map((p) => p.name)).toEqual(["R", "G", "K"])
   expect(FOOTPRINTS.D2.pins.map((p) => p.name)).toEqual(["cathode", "anode"])
 })
