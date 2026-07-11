@@ -34,7 +34,7 @@ export function resolvePlacement(placement: Record<string, Place> = PLACEMENT): 
       const [rx, ry] = rotate(pin.off, pl.rot)
       const xy: XY = [pl.at[0] + rx, pl.at[1] + ry]
       const k = key(xy)
-      if (!inBounds(xy)) errors.push(`盤外: ${ref}.${pin.name} @ [${xy}]`)
+      if (!inBounds(xy)) { errors.push(`盤外: ${ref}.${pin.name} @ [${xy}]`); continue }
       if (occupied.has(k)) errors.push(`重複: ${ref}.${pin.name} が使用済み穴 [${xy}] と衝突`)
       occupied.add(k)
       pinXY[`${ref}.${pin.name}`] = xy
