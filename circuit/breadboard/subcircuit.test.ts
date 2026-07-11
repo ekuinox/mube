@@ -23,7 +23,7 @@ test("SERVO_DRIVE サブ回路が期待の6ネットを抽出", () => {
 test("FULL は全12部品を含む", () => {
   expect(new Set(PRESETS.FULL)).toEqual(
     new Set(["U1","M1","Q1","Rg","Rgs","Rled","Rled2","D1","SW1","C1","C2","D2"]))
-  // LED/ボタン系ネットも現れる（例: BTN は SW1+U1.GP3）
+  // LED/ボタン系ネットも現れる（例: BTN は SW1+U1.GP5）
   const nets = subcircuitNets(new Set(PRESETS.FULL))
-  expect(nets.BTN.sort()).toEqual(["SW1.pin1", "U1.GP3"])
+  expect(nets.BTN.sort()).toEqual(["SW1.pin1", "U1.GP5"])
 })

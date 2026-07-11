@@ -10,7 +10,7 @@ export interface PartSpec {
 }
 
 export const PARTS: PartSpec[] = [
-  { ref: "U1", kind: "chip", pinLabels: { pin1: "VBUS", pin2: "GND", pin3: "GP16", pin4: "GP17", pin5: "GP2", pin6: "GP5", pin7: "GP3" } },
+  { ref: "U1", kind: "chip", pinLabels: { pin1: "VBUS", pin2: "GND", pin3: "GP16", pin4: "GP17", pin5: "GP2", pin6: "GP3", pin7: "GP5" } },
   { ref: "M1", kind: "chip", pinLabels: { pin1: "SIG", pin2: "VPLUS", pin3: "GND" } },
   { ref: "Q1", kind: "chip", pinLabels: { pin1: "G", pin2: "D", pin3: "S" } },
   { ref: "Rg", kind: "resistor", props: { resistance: "220" } },
@@ -34,7 +34,7 @@ export const NETS: { name: string; endpoints: string[] }[] = [
   { name: "GATE", endpoints: [".Rg .pin2", ".Q1 .G", ".Rgs .pin1"] },
   { name: "LED_DRV_R", endpoints: [".U1 .GP2", ".Rled .pin1"] },
   { name: "LED_A_R", endpoints: [".Rled .pin2", ".D1 .R"] },
-  { name: "LED_DRV_G", endpoints: [".U1 .GP5", ".Rled2 .pin1"] },
+  { name: "LED_DRV_G", endpoints: [".U1 .GP3", ".Rled2 .pin1"] },
   { name: "LED_A_G", endpoints: [".Rled2 .pin2", ".D1 .G"] },
-  { name: "BTN", endpoints: [".U1 .GP3", ".SW1 .pin1"] },
+  { name: "BTN", endpoints: [".U1 .GP5", ".SW1 .pin1"] },
 ]

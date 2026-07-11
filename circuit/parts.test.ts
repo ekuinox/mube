@@ -13,9 +13,9 @@ export const EXPECTED_NETS: Record<string, string[]> = {
   GATE: ["Q1.G", "Rg.pin2", "Rgs.pin1"],
   LED_DRV_R: ["Rled.pin1", "U1.GP2"],
   LED_A_R: ["D1.R", "Rled.pin2"],
-  LED_DRV_G: ["Rled2.pin1", "U1.GP5"],
+  LED_DRV_G: ["Rled2.pin1", "U1.GP3"],
   LED_A_G: ["D1.G", "Rled2.pin2"],
-  BTN: ["SW1.pin1", "U1.GP3"],
+  BTN: ["SW1.pin1", "U1.GP5"],
 }
 
 // circuit JSON から「ネット名 → 接続ポート集合」を接続キー経由で復元するヘルパ。

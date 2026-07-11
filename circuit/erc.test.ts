@@ -43,7 +43,7 @@ test("allowUnconnected の未接続ピンは許容", () => {
 })
 
 test("孤立ネット（端点 1 つ）を検出", () => {
-  const cj = [...good(), net("n3", "BTN", "k3"), port("p6", "c0", "GP3", "k3")]
+  const cj = [...good(), net("n3", "BTN", "k3"), port("p6", "c0", "GP5", "k3")]
   const errs = runErc(cj)
   expect(errs).toHaveLength(1)
   expect(errs[0]).toContain("net BTN has fewer than 2 endpoints")

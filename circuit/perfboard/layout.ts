@@ -4,7 +4,7 @@
 // 実基板は O25（x=0..14=A..O / y=0..24=1..25）で四隅は使用不可。Pico GP0=D3、x=3,10 の列(y=2..21)を占有。
 //
 // GPIO 再配置後のゾーン分け:
-//  - LED/ボタン = 左（GP2=D6 / GP3=D7 / GP5=D9）。抵抗 Rled/Rled2 は Pico の外＝左マージン。
+//  - LED/ボタン = 左（LED 赤=GP2=D6 / LED 黄緑=GP3=D7 / ボタン=GP5=D9）。抵抗 Rled/Rled2 は Pico の外＝左マージン。
 //  - サーボ = 右（SERVO_SIG=GP16=K22 / GATE_DRV=GP17=K21、コネクタ M1 は右端 O 列）。駆動部 Q1/Rg/Rgs/D2 は右へ。
 //  - インターフェース3点 D1/SW1/M1 は筐体都合で固定（D1=G6/H6/I6, SW1=G9/I12, M1=O21/O22/O23）。
 import type { XY } from "./board"
@@ -18,7 +18,7 @@ export const PLACEMENT: Record<string, Place> = {
 
   // LED 抵抗（Pico の外＝左マージン x=1,2 に縦置き。GP2/GP5 と LED をつなぐ）
   Rled:  { at: [2, 4], rot: 90 },  // LED_DRV_R=C5(→GP2) ↔ LED_A_R=C8(→D1.R)
-  Rled2: { at: [1, 4], rot: 90 },  // LED_DRV_G=B5(→GP5) ↔ LED_A_G=B8(→D1.G)
+  Rled2: { at: [1, 4], rot: 90 },  // LED_DRV_G=B5(→GP3) ↔ LED_A_G=B8(→D1.G)
 
   // サーボ駆動（右ゾーン）。抵抗は右マージン縦置きで M1/Q1/D2 の密集を回避。
   Rg:  { at: [11, 13], rot: 90 }, // GATE_DRV=L14(→GP17) ↔ GATE=L17

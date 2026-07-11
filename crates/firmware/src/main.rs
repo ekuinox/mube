@@ -155,12 +155,12 @@ async fn main(spawner: Spawner) {
     let gate = Output::new(p.PIN_17, Level::Low);
     let servo_pwm = Pwm::new_output_a(p.PWM_SLICE0, p.PIN_16, PwmConfig::default());
     let servo = Servo::new(servo_pwm, gate);
-    // 二色ステータス LED: 赤=GP2（施錠）, 黄緑=GP5（解錠）。コモンカソード、active-high。
+    // 二色ステータス LED: 赤=GP2（施錠）, 黄緑=GP3（解錠）。コモンカソード、active-high。
     let led_r = Output::new(p.PIN_2, Level::Low);
-    let led_g = Output::new(p.PIN_5, Level::Low);
+    let led_g = Output::new(p.PIN_3, Level::Low);
     spawner.spawn(servo_task(servo, led_r, led_g).unwrap());
-    // ボタン: GP3 内部プルアップ（アクティブ Low）。押下でロックをトグル。
-    let button = Input::new(p.PIN_3, Pull::Up);
+    // ボタン: GP5 内部プルアップ（アクティブ Low）。押下でロックをトグル。
+    let button = Input::new(p.PIN_5, Pull::Up);
     spawner.spawn(button_task(button).unwrap());
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
