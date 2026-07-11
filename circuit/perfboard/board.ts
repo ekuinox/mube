@@ -15,11 +15,13 @@ export function key([x, y]: XY): string {
 }
 
 // 部品ローカルオフセットを時計回りに回す（y 下向き画面座標）
+// z(): -0 を 0 に正規化（toEqual([0,x]) などのテスト等値比較で -0 !== 0 になるのを防ぐ）
+const z = (n: number) => (n === 0 ? 0 : n)
 export function rotate([dx, dy]: XY, rot: 0 | 90 | 180 | 270): XY {
   switch (rot) {
     case 0: return [dx, dy]
-    case 90: return [(-dy) || 0, dx]
-    case 180: return [(-dx) || 0, (-dy) || 0]
-    case 270: return [dy, (-dx) || 0]
+    case 90: return [z(-dy), dx]
+    case 180: return [z(-dx), z(-dy)]
+    case 270: return [dy, z(-dx)]
   }
 }
