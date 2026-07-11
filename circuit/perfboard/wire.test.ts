@@ -1,7 +1,7 @@
 // circuit/perfboard/wire.test.ts
 import { expect, test } from "bun:test"
 import { buildWires } from "./wire"
-import { resolvePlacement } from "./place"
+import { resolvePlacement, normEndpoint } from "./place"
 import { NETS } from "../parts"
 
 test("k 端点のネットは k-1 本の配線になる（全ネット合計）", () => {
@@ -22,7 +22,7 @@ test("各ネットの配線は全端点を連結する（1 連結成分）", () 
   const p = resolvePlacement()
   const segs = buildWires(p.pinXY)
   for (const net of NETS) {
-    const nodes = new Set(net.endpoints.map((e) => e.replace(/\./g, " ").trim().split(/\s+/).join(".")))
+    const nodes = new Set(net.endpoints.map(normEndpoint))
     if (nodes.size < 2) continue
     const netSegs = segs.filter((s) => s.net === net.name)
     // union-find で連結数を数える
@@ -35,4 +35,8 @@ test("各ネットの配線は全端点を連結する（1 連結成分）", () 
     }))
     expect(roots.size, `${net.name} not fully connected`).toBe(1)
   }
+})
+
+test("解決済みピンが無ければ配線ゼロ（filter 経路）", () => {
+  expect(buildWires({})).toEqual([])
 })
