@@ -15,8 +15,8 @@ test("既定 PLACEMENT は検証エラー無し（盤内・重複無し・全ネ
 
 test("U1 の 7 信号が pico 由来の穴で入る", () => {
   const p = resolvePlacement()
-  expect(p.pinXY["U1.GP16"]).toEqual([11, 22])  // SERVO_SIG
-  expect(p.pinXY["U1.VBUS"]).toEqual([11, 3])
+  expect(p.pinXY["U1.GP16"]).toEqual([10, 21])  // SERVO_SIG
+  expect(p.pinXY["U1.VBUS"]).toEqual([10, 2])
 })
 
 test("全 NET endpoint が穴に解決する", () => {
@@ -30,8 +30,8 @@ test("全 NET endpoint が穴に解決する", () => {
 
 test("Pico の 40 穴＋部品ピンが occupied に載る（重複検出が効く）", () => {
   const p = resolvePlacement()
-  expect(p.occupied.has("4,3")).toBe(true)    // Pico GP0=E4
-  expect(p.occupied.has("11,3")).toBe(true)   // Pico VBUS
+  expect(p.occupied.has("3,2")).toBe(true)    // Pico GP0=D3
+  expect(p.occupied.has("10,2")).toBe(true)   // Pico VBUS
 })
 
 test("盤外配置はエラーになる", () => {
@@ -47,7 +47,7 @@ test("四隅への配置は使用不可エラーになる", () => {
 })
 
 test("Pico 穴と重なる配置はエラーになる", () => {
-  const bad = { C2: { at: [4, 3] as [number, number], rot: 0 as const } }  // Pico GP0=E4 と衝突
+  const bad = { C2: { at: [3, 2] as [number, number], rot: 0 as const } }  // Pico GP0=D3 と衝突
   const p = resolvePlacement(bad)
   expect(p.errors.some((e) => e.includes("重複"))).toBe(true)
 })

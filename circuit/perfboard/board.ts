@@ -3,7 +3,7 @@
 export type XY = [number, number]
 
 export const BOARD = { width: 15, height: 25 }   // x: 0..14(A..O), y: 0..24(1..25)。実基板 O25
-export const PICO_ANCHOR: XY = [4, 3]            // Pico GP0(物理ピン1)=E4。利用者実測
+export const PICO_ANCHOR: XY = [3, 2]            // Pico GP0(物理ピン1)=D3。利用者実測
 export const PICO_ROW_SPAN_HOLES = 7             // Pico 2ピン列の x 間隔（実測一致）
 
 // 四隅の穴は使用不可（別基板への固定に使うため実際には穴が塞がっている）

@@ -4,7 +4,7 @@ import { BOARD, PICO_ANCHOR, PICO_ROW_SPAN_HOLES, inBounds, isUnusable, key, rot
 
 test("盤面既定は 15 x 25(O25)、Pico 定数は実測値", () => {
   expect(BOARD).toEqual({ width: 15, height: 25 })
-  expect(PICO_ANCHOR).toEqual([4, 3])
+  expect(PICO_ANCHOR).toEqual([3, 2])
   expect(PICO_ROW_SPAN_HOLES).toBe(7)
 })
 
@@ -22,7 +22,7 @@ test("四隅は使用不可、それ以外は使用可", () => {
   expect(isUnusable([0, 24])).toBe(true)
   expect(isUnusable([14, 24])).toBe(true)
   expect(isUnusable([1, 0])).toBe(false)
-  expect(isUnusable([4, 3])).toBe(false)   // Pico GP0=E4
+  expect(isUnusable([3, 2])).toBe(false)   // Pico GP0=D3
 })
 
 test("key は 'x,y'", () => {
