@@ -8,7 +8,7 @@ test("生成ジャンパが verifyLayout を通る（信号＋レール混在）
   const refs = ["U1", "Rg", "Q1"]
   const nets = {
     V5: ["U1.VBUS"],                    // 端点1だが（他部品なし）→ ここでは検証用に2以上に調整
-    GATE_DRV: ["U1.GP14", "Rg.pin1"],
+    GATE_DRV: ["U1.GP17", "Rg.pin1"],
     GATE: ["Rg.pin2", "Q1.G"],
     GND: ["U1.GND", "Q1.S"],
   }

@@ -1,9 +1,9 @@
 // circuit/perfboard/place.ts
 // PLACEMENT(手置き)＋Pico(固定)を解決し "Ref.pin"→XY を得る。盤外・穴重複・未解決を検証。
 import { inBounds, isUnusable, key, rotate, type XY } from "./board"
-import { picoPinXY, picoSignalXY, PICO_PIN_NUMBER } from "./pico"
+import { picoPinXY, picoSignalXY, PICO_PIN_NUMBER, PICO_GND_PINS } from "./pico"
 import { FOOTPRINTS } from "./footprints"
-import { PLACEMENT, type Place } from "./layout"
+import { PLACEMENT, GND_ASSIGN, type Place } from "./layout"
 import { NETS } from "../parts"
 
 export interface Placement {
@@ -48,6 +48,12 @@ export function resolvePlacement(placement: Record<string, Place> = PLACEMENT): 
       const n = normEndpoint(ep)
       if (!pinXY[n]) errors.push(`未解決ネット端点: ${net.name} の ${n}`)
     }
+  }
+
+  // 4) GND_ASSIGN の妥当性: 落とし先が実在の GND ピン、対象端点が解決済み
+  for (const [ep, pin] of Object.entries(GND_ASSIGN)) {
+    if (!PICO_GND_PINS.includes(pin)) errors.push(`GND_ASSIGN: pin${pin} は GND ピンではない (${ep})`)
+    if (!pinXY[normEndpoint(ep)]) errors.push(`GND_ASSIGN: 未解決の端点 ${ep}`)
   }
 
   return { pinXY, occupied, errors }

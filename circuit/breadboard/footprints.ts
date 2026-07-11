@@ -12,7 +12,7 @@ export interface Footprint {
 
 // ref → Footprint。smtlk 全12部品を網羅。
 export const FOOTPRINTS: Record<string, Footprint> = {
-  U1:   { pinOrder: ["VBUS", "GND", "GP15", "GP14", "GP16", "GP18", "GP17"], edgeAffinity: "left",  label: "U1",  value: "Pico W" },
+  U1:   { pinOrder: ["VBUS", "GND", "GP16", "GP17", "GP2", "GP5", "GP3"], edgeAffinity: "left",  label: "U1",  value: "Pico W" },
   M1:   { pinOrder: ["SIG", "VPLUS", "GND"], edgeAffinity: "right", label: "M1",  value: "Servo" },
   Q1:   { pinOrder: ["G", "D", "S"], edgeAffinity: null, label: "Q1",  value: "MOSFET" },
   Rg:   { pinOrder: ["pin1", "pin2"], edgeAffinity: null, label: "Rg",  value: "220Ω" },

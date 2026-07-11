@@ -2,6 +2,8 @@
 import { expect, test } from "bun:test"
 import { buildWires } from "./wire"
 import { resolvePlacement, normEndpoint } from "./place"
+import { picoPinXY } from "./pico"
+import type { XY } from "./board"
 import { NETS } from "../parts"
 
 test("k 端点のネットは k-1 本の配線になる（全ネット合計）", () => {
@@ -22,6 +24,8 @@ test("各ネットの配線は全端点を連結する（1 連結成分）", () 
   const p = resolvePlacement()
   const segs = buildWires(p.pinXY)
   for (const net of NETS) {
+    // GND は Pico 内部で全 GND ピンが導通しており、図の配線は複数成分に分かれる（別途検証）。
+    if (net.name === "GND") continue
     const nodes = new Set(net.endpoints.map(normEndpoint))
     if (nodes.size < 2) continue
     const netSegs = segs.filter((s) => s.net === net.name)
@@ -35,6 +39,17 @@ test("各ネットの配線は全端点を連結する（1 連結成分）", () 
     }))
     expect(roots.size, `${net.name} not fully connected`).toBe(1)
   }
+})
+
+test("GND: 指定端点は指定の Pico GND ピンへ直結する", () => {
+  const p = resolvePlacement()
+  const segs = buildWires(p.pinXY)
+  const gnd = segs.filter((s) => s.net === "GND")
+  const has = (a: XY, b: XY) => gnd.some((s) =>
+    (s.a.join() === a.join() && s.b.join() === b.join()) ||
+    (s.a.join() === b.join() && s.b.join() === a.join()))
+  expect(has(p.pinXY["D1.K"], picoPinXY(3))).toBe(true)       // LED → pin3
+  expect(has(p.pinXY["SW1.pin2"], picoPinXY(8))).toBe(true)   // ボタン → pin8
 })
 
 test("解決済みピンが無ければ配線ゼロ（filter 経路）", () => {

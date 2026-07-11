@@ -12,9 +12,14 @@ export function picoPinXY(pin: number): XY {
 }
 
 // parts.ts の U1 ピン名 → 物理ピン番号（本回路で使う 7 本）
+// LED/ボタン=左列(GP2/GP3/GP5)、サーボ=右列(GP16/GP17)。GND は代表を pin23 とし、
+// 実配線では最寄り/指定の GND ピンへ落とす（Pico 内部で全 GND ピンは導通）。
 export const PICO_PIN_NUMBER: Record<string, number> = {
-  VBUS: 40, GND: 23, GP15: 20, GP14: 19, GP16: 21, GP18: 24, GP17: 22,
+  VBUS: 40, GND: 23, GP16: 21, GP17: 22, GP2: 4, GP5: 7, GP3: 5,
 }
+
+// Pico の全 GND 物理ピン（内部で相互導通）。個別 GND 落とし先の検証に使う。
+export const PICO_GND_PINS: number[] = [3, 8, 13, 18, 23, 28, 38]
 
 export function picoSignalXY(signal: string): XY {
   const pin = PICO_PIN_NUMBER[signal]

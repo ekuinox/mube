@@ -2,7 +2,7 @@
 //!
 //! 現状: CYW43439 を起動し、WPA2 で WiFi に接続して DHCP で IP を取得したうえで、
 //! TCP ポート 6000 を listen し、`smtlk_core::serve_connection` でロックコマンドを捌く。
-//! SG90 サーボ（GP15 PWM + GP14 電源ゲート）への指令は `SERVO_CMD: Signal` 経由で
+//! SG90 サーボ（GP16 PWM + GP17 電源ゲート）への指令は `SERVO_CMD: Signal` 経由で
 //! `servo_task` が受け取る。オンボード LED は接続中に点灯する
 //!（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっているため、
 //! 制御にも WiFi チップの初期化が要る）。
@@ -151,16 +151,16 @@ async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'sta
 async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
 
-    // サーボ駆動: PWM 信号 = GP15（slice7 ch B）、電源ゲート = GP14（active-high）。
-    let gate = Output::new(p.PIN_14, Level::Low);
-    let servo_pwm = Pwm::new_output_b(p.PWM_SLICE7, p.PIN_15, PwmConfig::default());
+    // サーボ駆動: PWM 信号 = GP16（slice0 ch A）、電源ゲート = GP17（active-high）。
+    let gate = Output::new(p.PIN_17, Level::Low);
+    let servo_pwm = Pwm::new_output_a(p.PWM_SLICE0, p.PIN_16, PwmConfig::default());
     let servo = Servo::new(servo_pwm, gate);
-    // 二色ステータス LED: 赤=GP16（施錠）, 黄緑=GP18（解錠）。コモンカソード、active-high。
-    let led_r = Output::new(p.PIN_16, Level::Low);
-    let led_g = Output::new(p.PIN_18, Level::Low);
+    // 二色ステータス LED: 赤=GP2（施錠）, 黄緑=GP5（解錠）。コモンカソード、active-high。
+    let led_r = Output::new(p.PIN_2, Level::Low);
+    let led_g = Output::new(p.PIN_5, Level::Low);
     spawner.spawn(servo_task(servo, led_r, led_g).unwrap());
-    // ボタン: GP17 内部プルアップ（アクティブ Low）。押下でロックをトグル。
-    let button = Input::new(p.PIN_17, Pull::Up);
+    // ボタン: GP3 内部プルアップ（アクティブ Low）。押下でロックをトグル。
+    let button = Input::new(p.PIN_3, Pull::Up);
     spawner.spawn(button_task(button).unwrap());
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。

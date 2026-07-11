@@ -1,4 +1,4 @@
-//! SG90 サーボ駆動。電源ゲート（GP14）と PWM 信号（GP15）を協調させ、
+//! SG90 サーボ駆動。電源ゲート（GP17）と PWM 信号（GP16）を協調させ、
 //! 「給電 → 目標角のパルス送出 → 整定待ち → 給電断」のワンショットで施錠/解錠する。
 //!
 //! 角度→パルス幅変換とキャリブ定数（SERVO_MIN_US / SERVO_MAX_US / LOCK_DEG / UNLOCK_DEG）は
@@ -21,7 +21,7 @@ const SETTLE_MS: u64 = 500; // パルス送出後に到達を待つ時間
 pub const PWM_DIV: u8 = 125;
 pub const PWM_TOP: u16 = 20000;
 
-/// サーボ駆動。PWM（GP15 = slice7 ch B）と電源ゲート（GP14, active-high）を保持する。
+/// サーボ駆動。PWM（GP16 = slice0 ch A）と電源ゲート（GP17, active-high）を保持する。
 pub struct Servo<'d> {
     pwm: Pwm<'d>,
     gate: Output<'d>,
@@ -29,13 +29,13 @@ pub struct Servo<'d> {
 }
 
 impl<'d> Servo<'d> {
-    /// 初期状態は「給電断・PWM 停止」。`pwm` は main 側で `Pwm::new_output_b(
-    /// PWM_SLICE7, PIN_15, PwmConfig::default())` として渡す。`gate` は GP14。
+    /// 初期状態は「給電断・PWM 停止」。`pwm` は main 側で `Pwm::new_output_a(
+    /// PWM_SLICE0, PIN_16, PwmConfig::default())` として渡す。`gate` は GP17。
     pub fn new(pwm: Pwm<'d>, gate: Output<'d>) -> Self {
         let mut cfg = PwmConfig::default();
         cfg.divider = (PWM_DIV as u16).to_fixed();
         cfg.top = PWM_TOP;
-        cfg.compare_b = 0;
+        cfg.compare_a = 0;
         cfg.enable = false;
         let mut servo = Self { pwm, gate, cfg };
         servo.pwm.set_config(&servo.cfg);
@@ -46,7 +46,7 @@ impl<'d> Servo<'d> {
     /// ワンショット駆動: 給電 → 目標角のパルス送出 → 整定待ち → 給電断。
     pub async fn move_to(&mut self, state: LockState) {
         self.gate.set_high(); // Q1 ON = サーボに給電
-        self.cfg.compare_b = pulse_us_for(state);
+        self.cfg.compare_a = pulse_us_for(state);
         self.cfg.enable = true;
         self.pwm.set_config(&self.cfg); // パルス送出開始
         Timer::after(Duration::from_millis(SETTLE_MS)).await;

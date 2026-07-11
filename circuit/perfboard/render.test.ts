@@ -18,7 +18,7 @@ test("妥当な SVG 文字列（root と viewBox）", () => {
 
 test("Pico 使用ピンの信号ラベルを含む", () => {
   const s = svg()
-  expect(s).toContain("GP15")
+  expect(s).toContain("GP16")
   expect(s).toContain("VBUS")
 })
 

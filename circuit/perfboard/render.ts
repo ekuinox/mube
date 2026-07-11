@@ -1,11 +1,11 @@
 // circuit/perfboard/render.ts
 // ユニバーサル基板 配線図の SVG。上端=文字(x:A..)/左端=数字(y:1..)で実基板と突き合わせ可能に。
 import { BOARD, isUnusable, type XY } from "./board"
-import { picoAllPinsXY, PICO_PIN_NUMBER, picoSignalXY } from "./pico"
+import { picoAllPinsXY, picoPinXY, PICO_PIN_NUMBER, picoSignalXY } from "./pico"
 import { FOOTPRINTS } from "./footprints"
 import type { Placement } from "./place"
 import type { WireSeg } from "./wire"
-import { PLACEMENT } from "./layout"
+import { PLACEMENT, GND_ASSIGN } from "./layout"
 
 const PITCH = 18
 const ML = 46, MT = 40, MR = 200, MB = 96
@@ -71,6 +71,12 @@ export function renderPerfboardSvg(p: Placement, wires: WireSeg[]): string {
     const [cx, cy] = px(picoSignalXY(sig))
     out.push(circle(cx, cy, 4, { fill: "#2b3a55" }))
     out.push(text(cx, cy - 7, sig, { "text-anchor": "middle", "font-size": 9, fill: "#2b3a55", "font-weight": 600 }))
+  }
+  // 明示指定した GND 落とし先も強調（Pico の他の GND ピン）
+  for (const pin of new Set(Object.values(GND_ASSIGN))) {
+    const [cx, cy] = px(picoPinXY(pin))
+    out.push(circle(cx, cy, 4, { fill: "#333" }))
+    out.push(text(cx, cy - 7, "GND", { "text-anchor": "middle", "font-size": 9, fill: "#333", "font-weight": 600 }))
   }
 
   // 配線（点対点）

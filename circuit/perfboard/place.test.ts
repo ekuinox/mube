@@ -15,7 +15,7 @@ test("既定 PLACEMENT は検証エラー無し（盤内・重複無し・全ネ
 
 test("U1 の 7 信号が pico 由来の穴で入る", () => {
   const p = resolvePlacement()
-  expect(p.pinXY["U1.GP15"]).toEqual([4, 22])
+  expect(p.pinXY["U1.GP16"]).toEqual([11, 22])  // SERVO_SIG
   expect(p.pinXY["U1.VBUS"]).toEqual([11, 3])
 })
 
