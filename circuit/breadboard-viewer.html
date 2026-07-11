@@ -62,12 +62,15 @@
 <div id="status">読み込み中…</div>
 
 <script>
+// プリセット定義。キーは <select> の value、file は breadboard-serve.py が
+// build/ に生成する SVG 名（breadboard-<preset>.svg）と一致させる。
 const PRESETS = {
   servo_drive: { file: 'breadboard-servo_drive.svg', label: 'サーボ駆動 (SERVO_DRIVE)' },
   led_button:  { file: 'breadboard-led_button.svg',  label: 'LED＋ボタン (LED_BUTTON)' },
   full:        { file: 'breadboard-full.svg',        label: '全体 (FULL)' },
 };
 
+// 操作対象の DOM 参照をまとめて取得
 const app = document.getElementById('app');
 const stage = document.getElementById('stage');
 const img = document.getElementById('svg');
@@ -75,9 +78,10 @@ const statusEl = document.getElementById('status');
 const metaEl = document.getElementById('meta');
 const presetSel = document.getElementById('preset');
 
-let scale = 1, tx = 0, ty = 0;   // 現在のビュー変換
-let baseScale = 1;               // 「全体表示」の基準スケール
+let scale = 1, tx = 0, ty = 0;   // 現在のビュー変換（拡大率と平行移動量 px）
+let baseScale = 1;               // 「全体表示」時の基準スケール（fit で更新）
 
+// 現在の tx / ty / scale を stage の CSS transform に反映する
 function apply() {
   stage.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
 }
@@ -94,30 +98,35 @@ function fit() {
   apply();
 }
 
+// 画面座標 (cx, cy) を固定点に factor 倍ズームする。
+// 拡大率は全体表示の 0.5〜12 倍にクランプする。
 function zoomAt(cx, cy, factor) {
   const next = Math.min(Math.max(scale * factor, baseScale * 0.5), baseScale * 12);
   const k = next / scale;
-  // カーソル位置を固定点にしてズーム
+  // (cx, cy) が画面上で動かないよう平行移動量を補正する
   tx = cx - (cx - tx) * k;
   ty = cy - (cy - ty) * k;
   scale = next;
   apply();
 }
 
+// 指定プリセットの SVG を読み込み、成否をステータス表示に反映する
 function load(key) {
   const p = PRESETS[key];
   if (!p) return;
   statusEl.textContent = `読み込み中: ${p.file}`;
   statusEl.classList.remove('err');
   img.onload = () => {
-    fit();
+    fit();  // 読み込めたら全体表示にフィット
     metaEl.innerHTML = `表示中: <b>${p.label}</b><br>サイズ: <b>${img.naturalWidth} × ${img.naturalHeight}</b> px`;
     statusEl.textContent = `表示中: ${p.file}`;
   };
   img.onerror = () => {
+    // SVG 未生成（breadboard-serve.py 未実行など）だとここに来る
     statusEl.textContent = `読み込み失敗: ${p.file}（未生成かも）`;
     statusEl.classList.add('err');
   };
+  // ?t= はブラウザキャッシュを無効化し、再生成した SVG を確実に読み直すため
   img.src = p.file + '?t=' + Date.now();
 }
 
@@ -144,15 +153,17 @@ const endDrag = (e) => { dragging = false; app.classList.remove('dragging'); };
 app.addEventListener('pointerup', endDrag);
 app.addEventListener('pointercancel', endDrag);
 
-// --- 操作: ズームボタン ---
+// --- 操作: ズームボタン（画面中央を固定点にズーム / リセットは全体表示） ---
 const center = () => [window.innerWidth / 2, window.innerHeight / 2];
 document.getElementById('zoomIn').onclick  = () => zoomAt(...center(), 1.25);
 document.getElementById('zoomOut').onclick = () => zoomAt(...center(), 1 / 1.25);
 document.getElementById('zoomReset').onclick = () => fit();
 
+// プリセット切替で読み直し、ウィンドウリサイズで全体表示にフィットし直す
 presetSel.addEventListener('change', () => load(presetSel.value));
 window.addEventListener('resize', () => fit());
 
+// 初期表示: 現在選択中のプリセットを読み込む
 load(presetSel.value);
 </script>
 </body>

@@ -8,10 +8,12 @@
 #   PORT=9000 ./circuit/breadboard.sh   # ポート変更
 #   Ctrl-C で停止
 set -uo pipefail
+# bun が無い＝dev シェル外。nix にも PATH が通っていなければ既定プロファイルを足し、
+# リポジトリルートの dev シェルへ自分自身を再突入させる（引数はそのまま引き継ぐ）。
 if ! command -v bun >/dev/null 2>&1; then
   command -v nix >/dev/null 2>&1 || export PATH="/nix/var/nix/profiles/default/bin:$PATH"
   exec nix develop "$(cd "$(dirname "$0")/.." && pwd)" -c "$0" "$@"
 fi
 cd "$(dirname "$0")"
-bun install --frozen-lockfile
-exec uv run --script breadboard-serve.py "$@"
+bun install --frozen-lockfile          # lockfile 固定で依存を再現インストール
+exec uv run --script breadboard-serve.py "$@"  # 生成・配信は Python 側へ委譲
