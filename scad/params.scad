@@ -84,16 +84,17 @@ wire_clearance    = 4;      // space above servo for wiring
 // --- Universal board (stacked on Pico via pin headers) ---
 uboard_l = 72;    // long side (along Pico pin direction = Y)
 uboard_w = 47;    // short side (across Pico width = X)
-uboard_t = 1.6;   // board thickness (P-03229 Cタイプ)
+uboard_t = 1.6;   // board thickness (UP-203GSR / P-03229 とも 1.6)
 
 // Pico top face -> universal board underside gap (as-built). ヘッダ自由高さは
 // 約 8mm だが、背高ポスト＋ネジで基板をここまで着座させる（ピンは約2mm深く挿さる）。
 pin_header_h = 6;
 
-// Universal board corner mounting holes (秋月 P-03229 datasheet).
-uboard_mount_span_l = 66;   // corner-hole center pitch, long side (along Y)
-uboard_mount_span_w = 41;   // corner-hole center pitch, short side (along X)
-uboard_mount_d      = 3.2;  // corner hole dia (M2/M3 clearance)
+// Universal board corner mounting holes. UP-203GSR (72×47, 両面ガラコン) に
+// 自分で四隅穴を開ける前提: 各外辺から 4mm 内側 → ピッチ = 72-2*4 / 47-2*4。
+uboard_mount_span_l = 64;   // corner-hole center pitch, long side (along Y): 72 - 2*4
+uboard_mount_span_w = 39;   // corner-hole center pitch, short side (along X): 47 - 2*4
+uboard_mount_d      = 3.2;  // corner hole dia (M2/M3 clearance, P-03229 と同径)
 // Measured board offset from the Pico center (USB-up top view: holes sit 1mm to
 // the right and 1mm down from nominal). Applied to the posts and the body cuts.
 uboard_mount_off_x  = 1;    // +X
