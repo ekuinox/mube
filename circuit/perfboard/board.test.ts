@@ -1,19 +1,28 @@
 // circuit/perfboard/board.test.ts
 import { expect, test } from "bun:test"
-import { BOARD, PICO_ANCHOR, PICO_ROW_SPAN_HOLES, inBounds, key, rotate } from "./board"
+import { BOARD, PICO_ANCHOR, PICO_ROW_SPAN_HOLES, inBounds, isUnusable, key, rotate } from "./board"
 
-test("盤面既定は 18 x 28、Pico 定数は実測値", () => {
-  expect(BOARD).toEqual({ width: 18, height: 28 })
-  expect(PICO_ANCHOR).toEqual([3, 2])
+test("盤面既定は 15 x 25(O25)、Pico 定数は実測値", () => {
+  expect(BOARD).toEqual({ width: 15, height: 25 })
+  expect(PICO_ANCHOR).toEqual([4, 3])
   expect(PICO_ROW_SPAN_HOLES).toBe(7)
 })
 
 test("inBounds は 0..width-1 / 0..height-1", () => {
   expect(inBounds([0, 0])).toBe(true)
-  expect(inBounds([17, 27])).toBe(true)
-  expect(inBounds([18, 0])).toBe(false)
-  expect(inBounds([0, 28])).toBe(false)
+  expect(inBounds([14, 24])).toBe(true)
+  expect(inBounds([15, 0])).toBe(false)
+  expect(inBounds([0, 25])).toBe(false)
   expect(inBounds([-1, 0])).toBe(false)
+})
+
+test("四隅は使用不可、それ以外は使用可", () => {
+  expect(isUnusable([0, 0])).toBe(true)
+  expect(isUnusable([14, 0])).toBe(true)
+  expect(isUnusable([0, 24])).toBe(true)
+  expect(isUnusable([14, 24])).toBe(true)
+  expect(isUnusable([1, 0])).toBe(false)
+  expect(isUnusable([4, 3])).toBe(false)   // Pico GP0=E4
 })
 
 test("key は 'x,y'", () => {

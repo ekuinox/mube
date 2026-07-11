@@ -82,9 +82,10 @@ build/ に body.stl / lid.stl / socket.stl を出力する。dev シェル外で
 `.sh` は bun が無ければ Nix dev シェルへ再突入し、3D プレビューと同じく cloudflared quick tunnel で
 公開 URL（https://*.trycloudflare.com）を出す。SVG は build/ の派生物なのでコミットしない。
 
-実装用の**ユニバーサル基板（P-03229）配線図**も同じビューアで見られる（プルダウン「ユニバーサル基板 (実装用)」）。
-配線図は `circuit/perfboard/` が生成し、部品の手置きは `circuit/perfboard/layout.ts` を編集して調整する
-（`at: [x, y]` は左上原点・各部品の 1 番ピンの穴）。Pico は実測 GP0=(3,2) で固定配置される。
+実装用の**ユニバーサル基板配線図**も同じビューアで見られる（プルダウン「ユニバーサル基板 (実装用)」）。
+実基板は横 A〜M・縦 1〜25 の格子（`board.ts` の `BOARD` = 13×25）で、**四隅の穴は固定用のため使用不可**
+（図では×印）。配線図は `circuit/perfboard/` が生成し、部品の手置きは `circuit/perfboard/layout.ts` を
+編集して調整する（`at: [x, y]` は左上原点・各部品の 1 番ピンの穴）。Pico は実測 GP0=(3,2) で固定配置される。
 
 ## ファームウェア（Rust / Embassy）
 

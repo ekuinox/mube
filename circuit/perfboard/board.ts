@@ -2,9 +2,17 @@
 // ユニバーサル基板の格子モデル。左上原点 (0,0)、x=横(右+)、y=縦(下+)。
 export type XY = [number, number]
 
-export const BOARD = { width: 18, height: 28 }   // x: 0..17, y: 0..27（実基板の穴数で確定）
-export const PICO_ANCHOR: XY = [3, 2]            // Pico GP0(物理ピン1)。利用者実測
+export const BOARD = { width: 15, height: 25 }   // x: 0..14(A..O), y: 0..24(1..25)。実基板 O25
+export const PICO_ANCHOR: XY = [4, 3]            // Pico GP0(物理ピン1)=E4。利用者実測
 export const PICO_ROW_SPAN_HOLES = 7             // Pico 2ピン列の x 間隔（実測一致）
+
+// 四隅の穴は使用不可（別基板への固定に使うため実際には穴が塞がっている）
+export const UNUSABLE_HOLES: XY[] = [
+  [0, 0], [BOARD.width - 1, 0], [0, BOARD.height - 1], [BOARD.width - 1, BOARD.height - 1],
+]
+export function isUnusable([x, y]: XY): boolean {
+  return UNUSABLE_HOLES.some(([ux, uy]) => ux === x && uy === y)
+}
 
 export function inBounds([x, y]: XY): boolean {
   return x >= 0 && x < BOARD.width && y >= 0 && y < BOARD.height

@@ -1,6 +1,6 @@
 // circuit/perfboard/place.ts
 // PLACEMENT(手置き)＋Pico(固定)を解決し "Ref.pin"→XY を得る。盤外・穴重複・未解決を検証。
-import { inBounds, key, rotate, type XY } from "./board"
+import { inBounds, isUnusable, key, rotate, type XY } from "./board"
 import { picoPinXY, picoSignalXY, PICO_PIN_NUMBER } from "./pico"
 import { FOOTPRINTS } from "./footprints"
 import { PLACEMENT, type Place } from "./layout"
@@ -35,6 +35,7 @@ export function resolvePlacement(placement: Record<string, Place> = PLACEMENT): 
       const xy: XY = [pl.at[0] + rx, pl.at[1] + ry]
       const k = key(xy)
       if (!inBounds(xy)) { errors.push(`盤外: ${ref}.${pin.name} @ [${xy}]`); continue }
+      if (isUnusable(xy)) { errors.push(`使用不可(四隅): ${ref}.${pin.name} @ [${xy}]`); continue }
       if (occupied.has(k)) errors.push(`重複: ${ref}.${pin.name} が使用済み穴 [${xy}] と衝突`)
       occupied.add(k)
       pinXY[`${ref}.${pin.name}`] = xy

@@ -1,6 +1,6 @@
 // circuit/perfboard/render.ts
 // ユニバーサル基板 配線図の SVG。上端=文字(x:A..)/左端=数字(y:1..)で実基板と突き合わせ可能に。
-import { BOARD, type XY } from "./board"
+import { BOARD, isUnusable, type XY } from "./board"
 import { picoAllPinsXY, PICO_PIN_NUMBER, picoSignalXY } from "./pico"
 import { FOOTPRINTS } from "./footprints"
 import type { Placement } from "./place"
@@ -49,9 +49,15 @@ export function renderPerfboardSvg(p: Placement, wires: WireSeg[]): string {
     out.push(text(ML - 26, cy + 4, String(y + 1), { "font-size": 11, fill: "#556" }))
   }
 
-  // 穴
+  // 穴（四隅は使用不可＝×印）
   for (let x = 0; x < BOARD.width; x++) for (let y = 0; y < BOARD.height; y++) {
-    const [cx, cy] = px([x, y]); out.push(circle(cx, cy, 2.2, { fill: "#fff", stroke: "#b7c4a3" }))
+    const [cx, cy] = px([x, y])
+    if (isUnusable([x, y])) {
+      out.push(line(cx - 4, cy - 4, cx + 4, cy + 4, { stroke: "#c33", "stroke-width": 1.6 }))
+      out.push(line(cx - 4, cy + 4, cx + 4, cy - 4, { stroke: "#c33", "stroke-width": 1.6 }))
+    } else {
+      out.push(circle(cx, cy, 2.2, { fill: "#fff", stroke: "#b7c4a3" }))
+    }
   }
 
   // Pico ゴースト（2×20 の外形）と使用ピン
@@ -105,6 +111,7 @@ export function renderPerfboardSvg(p: Placement, wires: WireSeg[]): string {
     "手置き配置は circuit/perfboard/layout.ts で調整。",
     "配線は点対点のはんだジャンパ。電源/GNDはバス代わりに太線可。",
     "Pico の 2 列に挟まれた内側は Pico 本体上。部品は外側へ。",
+    "四隅(×印)は固定用で使用不可。",
   ]
   let ny = MT + (BOARD.height - 1) * PITCH + 30
   for (const t of notes) { out.push(text(ML, ny, t, { "font-size": 10, fill: "#555" })); ny += 15 }
