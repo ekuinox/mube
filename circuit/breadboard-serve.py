@@ -66,6 +66,17 @@ def render_diagrams() -> None:
         if not out.exists():
             sys.exit(f"expected {out} was not produced")
 
+    # ユニバーサル基板（実装用）配線図も生成
+    print("rendering PERFBOARD -> build/perfboard.svg")
+    proc = subprocess.run(
+        ["bun", "perfboard.ts"],
+        cwd=str(CIRCUIT), capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        sys.stderr.write(proc.stdout)
+        sys.stderr.write(proc.stderr)
+        sys.exit("bun failed rendering perfboard")
+
 
 def start_server() -> socketserver.TCPServer:
     handler = functools.partial(
