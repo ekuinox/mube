@@ -76,6 +76,8 @@ def render_diagrams() -> None:
         sys.stderr.write(proc.stdout)
         sys.stderr.write(proc.stderr)
         sys.exit("bun failed rendering perfboard")
+    if not (BUILD / "perfboard.svg").exists():
+        sys.exit("expected build/perfboard.svg was not produced")
 
 
 def start_server() -> socketserver.TCPServer:
