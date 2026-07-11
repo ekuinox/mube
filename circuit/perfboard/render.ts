@@ -37,8 +37,7 @@ export function renderPerfboardSvg(p: Placement, wires: WireSeg[]): string {
   out.push(rect(0, 0, W, H, { fill: "#f5f5f0" }))
 
   // 盤面枠
-  const [bx0, by0] = px([0, 0]); const [bx1, by1] = px([BOARD.width - 1, BOARD.height - 1])
-  out.push(rect(bx0 - PITCH / 2, by0 - PITCH / 2, (BOARD.width) * PITCH, (BOARD.height) * PITCH, { fill: "#d9e6c9", stroke: "#8aa06a", rx: 6 }))
+  out.push(rect(ML - PITCH / 2, MT - PITCH / 2, (BOARD.width) * PITCH, (BOARD.height) * PITCH, { fill: "#d9e6c9", stroke: "#8aa06a", rx: 6 }))
 
   // 目盛り（上=文字, 左=数字）
   for (let x = 0; x < BOARD.width; x++) {
@@ -75,16 +74,18 @@ export function renderPerfboardSvg(p: Placement, wires: WireSeg[]): string {
   }
 
   // 部品（ピン穴＋外形＋ラベル＋極性/カソード帯）
-  for (const [ref, pl] of Object.entries(PLACEMENT)) {
+  for (const ref of Object.keys(PLACEMENT)) {
     const fp = FOOTPRINTS[ref]; if (!fp) continue
-    const pts = fp.pins.map((pin) => px(p.pinXY[`${ref}.${pin.name}`]))
+    const xys = fp.pins.map((pin) => p.pinXY[`${ref}.${pin.name}`])
+    if (xys.some((v) => !v)) continue   // 未解決ピンがあれば描画をスキップ（NaN 防止）
+    const pts = xys.map(px)
     const minX = Math.min(...pts.map((q) => q[0])), maxX = Math.max(...pts.map((q) => q[0]))
     const minY = Math.min(...pts.map((q) => q[1])), maxY = Math.max(...pts.map((q) => q[1]))
     out.push(rect(minX - 6, minY - 6, maxX - minX + 12, maxY - minY + 12, { fill: "#fff", "fill-opacity": 0.65, stroke: "#c08a3a", rx: 4 }))
     for (const pin of fp.pins) { const [cx, cy] = px(p.pinXY[`${ref}.${pin.name}`]); out.push(circle(cx, cy, 3.2, { fill: "#c08a3a" })) }
     out.push(text((minX + maxX) / 2, minY - 9, `${fp.label} ${fp.value ?? ""}`.trim(), { "text-anchor": "middle", "font-size": 9.5, fill: "#8a5a1a", "font-weight": 600 }))
-    if (fp.polarityPin) { const [cx, cy] = px(p.pinXY[`${ref}.${fp.polarityPin}`]); out.push(text(cx - 6, cy - 5, "+", { "font-size": 12, fill: "#b00", "font-weight": 700 })) }
-    if (fp.stripePin) { const [cx, cy] = px(p.pinXY[`${ref}.${fp.stripePin}`]); out.push(line(cx - 5, cy - 6, cx - 5, cy + 6, { stroke: "#333", "stroke-width": 2 })) }
+    if (fp.polarityPin) { const q = p.pinXY[`${ref}.${fp.polarityPin}`]; if (q) { const [cx, cy] = px(q); out.push(text(cx - 6, cy - 5, "+", { "font-size": 12, fill: "#b00", "font-weight": 700 })) } }
+    if (fp.stripePin) { const q = p.pinXY[`${ref}.${fp.stripePin}`]; if (q) { const [cx, cy] = px(q); out.push(line(cx - 5, cy - 6, cx - 5, cy + 6, { stroke: "#333", "stroke-width": 2 })) } }
   }
 
   // 凡例
