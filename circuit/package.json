@@ -6,7 +6,8 @@
     "test": "bun test",
     "dev": "tsci dev",
     "build": "tsci build",
-    "breadboard": "bun breadboard-auto.ts"
+    "breadboard": "bun breadboard-auto.ts",
+    "perfboard": "bun perfboard.ts"
   },
   "devDependencies": {
     "@tscircuit/cli": "latest",
