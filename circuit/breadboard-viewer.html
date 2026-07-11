@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>smtlk — ブレッドボード配線図ビューア</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: system-ui, sans-serif; }
+  #app { position: fixed; inset: 0; background: #1b1f24; touch-action: none; cursor: grab; }
+  #app.dragging { cursor: grabbing; }
+  #stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+  #stage img { display: block; box-shadow: 0 8px 30px rgba(0,0,0,.5); border-radius: 6px; }
+  #ui {
+    position: fixed; top: 12px; left: 12px; z-index: 10;
+    background: rgba(20,24,29,.82); border: 1px solid #333; border-radius: 10px;
+    padding: 12px 14px; color: #e7e9ec; backdrop-filter: blur(6px); max-width: 80vw;
+  }
+  #ui h1 { font-size: 14px; margin: 0 0 8px; font-weight: 600; letter-spacing: .02em; }
+  #ui label { font-size: 12px; color: #aab1ba; display: block; margin-bottom: 4px; }
+  select {
+    font-size: 14px; padding: 6px 8px; border-radius: 6px; border: 1px solid #3a4048;
+    background: #262b31; color: #e7e9ec; width: 100%;
+  }
+  #meta { margin-top: 10px; font-size: 12px; color: #aab1ba; line-height: 1.5; }
+  #meta b { color: #e7e9ec; font-weight: 600; }
+  #hint { margin-top: 8px; font-size: 11px; color: #79808a; }
+  #zoom { position: fixed; bottom: 12px; right: 12px; z-index: 10; display: flex; gap: 6px; }
+  #zoom button {
+    font-size: 16px; width: 34px; height: 34px; border-radius: 8px; border: 1px solid #3a4048;
+    background: rgba(38,43,49,.9); color: #e7e9ec; cursor: pointer; line-height: 1;
+  }
+  #zoom button:hover { background: #333a41; }
+  #status {
+    position: fixed; bottom: 12px; left: 12px; z-index: 10; font-size: 12px;
+    color: #aab1ba; background: rgba(20,24,29,.7); padding: 4px 8px; border-radius: 6px;
+  }
+  .err { color: #ff8a8a !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"><img id="svg" alt="breadboard wiring diagram" /></div>
+</div>
+<div id="ui">
+  <h1>smtlk ブレッドボード配線図</h1>
+  <label for="preset">プリセット</label>
+  <select id="preset">
+    <option value="servo_drive">サーボ駆動 (SERVO_DRIVE)</option>
+    <option value="led_button">LED＋ボタン (LED_BUTTON)</option>
+    <option value="full">全体 (FULL)</option>
+  </select>
+  <div id="meta"></div>
+  <div id="hint">ドラッグ=移動 / ホイール=ズーム / 下の +/⟲/− でも操作</div>
+</div>
+<div id="zoom">
+  <button id="zoomOut" title="縮小">−</button>
+  <button id="zoomReset" title="全体表示にリセット">⟲</button>
+  <button id="zoomIn" title="拡大">＋</button>
+</div>
+<div id="status">読み込み中…</div>
+
+<script>
+const PRESETS = {
+  servo_drive: { file: 'breadboard-servo_drive.svg', label: 'サーボ駆動 (SERVO_DRIVE)' },
+  led_button:  { file: 'breadboard-led_button.svg',  label: 'LED＋ボタン (LED_BUTTON)' },
+  full:        { file: 'breadboard-full.svg',        label: '全体 (FULL)' },
+};
+
+const app = document.getElementById('app');
+const stage = document.getElementById('stage');
+const img = document.getElementById('svg');
+const statusEl = document.getElementById('status');
+const metaEl = document.getElementById('meta');
+const presetSel = document.getElementById('preset');
+
+let scale = 1, tx = 0, ty = 0;   // 現在のビュー変換
+let baseScale = 1;               // 「全体表示」の基準スケール
+
+function apply() {
+  stage.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+}
+
+// 画像を画面中央にフィットさせる（全体表示）
+function fit() {
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  if (!iw || !ih) return;
+  const margin = 0.92;
+  baseScale = Math.min(window.innerWidth / iw, window.innerHeight / ih) * margin;
+  scale = baseScale;
+  tx = (window.innerWidth - iw * scale) / 2;
+  ty = (window.innerHeight - ih * scale) / 2;
+  apply();
+}
+
+function zoomAt(cx, cy, factor) {
+  const next = Math.min(Math.max(scale * factor, baseScale * 0.5), baseScale * 12);
+  const k = next / scale;
+  // カーソル位置を固定点にしてズーム
+  tx = cx - (cx - tx) * k;
+  ty = cy - (cy - ty) * k;
+  scale = next;
+  apply();
+}
+
+function load(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  statusEl.textContent = `読み込み中: ${p.file}`;
+  statusEl.classList.remove('err');
+  img.onload = () => {
+    fit();
+    metaEl.innerHTML = `表示中: <b>${p.label}</b><br>サイズ: <b>${img.naturalWidth} × ${img.naturalHeight}</b> px`;
+    statusEl.textContent = `表示中: ${p.file}`;
+  };
+  img.onerror = () => {
+    statusEl.textContent = `読み込み失敗: ${p.file}（未生成かも）`;
+    statusEl.classList.add('err');
+  };
+  img.src = p.file + '?t=' + Date.now();
+}
+
+// --- 操作: ホイールズーム ---
+app.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+  zoomAt(e.clientX, e.clientY, factor);
+}, { passive: false });
+
+// --- 操作: ドラッグでパン ---
+let dragging = false, lastX = 0, lastY = 0;
+app.addEventListener('pointerdown', (e) => {
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
+  app.classList.add('dragging'); app.setPointerCapture(e.pointerId);
+});
+app.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  tx += e.clientX - lastX; ty += e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  apply();
+});
+const endDrag = (e) => { dragging = false; app.classList.remove('dragging'); };
+app.addEventListener('pointerup', endDrag);
+app.addEventListener('pointercancel', endDrag);
+
+// --- 操作: ズームボタン ---
+const center = () => [window.innerWidth / 2, window.innerHeight / 2];
+document.getElementById('zoomIn').onclick  = () => zoomAt(...center(), 1.25);
+document.getElementById('zoomOut').onclick = () => zoomAt(...center(), 1 / 1.25);
+document.getElementById('zoomReset').onclick = () => fit();
+
+presetSel.addEventListener('change', () => load(presetSel.value));
+window.addEventListener('resize', () => fit());
+
+load(presetSel.value);
+</script>
+</body>
+</html>
