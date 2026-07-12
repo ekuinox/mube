@@ -71,6 +71,17 @@ build/ に body.stl / lid.stl / socket.stl を出力する。dev シェル外で
 孤立ネットを検出する。GPIO 番号は `index.tsx` の pinLabels に集約し、ファームの割り当て
 （GP15/14/16/18/17）と一致させている。ERC は静的チェックで生成物は無い（旧手配線表・部品表は廃止）。テストは `./test/erc.sh`（bun test）。
 
+### ブレッドボード配線図をブラウザで確認
+
+    ./circuit/breadboard.sh            # 全プリセット生成 → 公開URLを表示
+    NO_TUNNEL=1 ./circuit/breadboard.sh # トンネル無しで http://127.0.0.1:8766 に配信
+
+`circuit/breadboard-auto.ts` の自動 place & route でブレッドボード配線図（SVG）を全プリセット
+（サーボ駆動 SERVO_DRIVE / LED＋ボタン LED_BUTTON / 全体 FULL）生成し、ブラウザビューア
+（`circuit/breadboard-viewer.html`：プリセット切替・ドラッグ移動・ホイールズーム）を配信する。
+`.sh` は bun が無ければ Nix dev シェルへ再突入し、3D プレビューと同じく cloudflared quick tunnel で
+公開 URL（https://*.trycloudflare.com）を出す。SVG は build/ の派生物なのでコミットしない。
+
 ## ファームウェア（Rust / Embassy）
 
 リポジトリルートは Cargo workspace。`crates/firmware/` が embassy / CYW43 WiFi / PWM の接合部、
