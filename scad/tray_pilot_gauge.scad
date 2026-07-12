@@ -1,5 +1,5 @@
 // トレイ・ポストの M2 自己タップ下穴ゲージ（実際のポスト条件を再現）。
-// tray_post_d 径・tray_post_h 高さのポストを並べ、各ポスト上面から
+// tray_fix_d 径・tray_fix_h 高さのポストを並べ、各ポスト上面から
 // tray_screw_grip 深さの袋下穴を設計径 1.7〜2.2mm（0.1刻み）で開ける。
 // 印刷して M2 を上からねじ込み、「しっかり効くが割れない」設計値を
 // tray_screw_pilot に採用する。
@@ -36,7 +36,7 @@ linear_extrude(height = base_t)
 for (i = [0 : len(gauge_ds) - 1])
   translate([gauge_pitch * (i + 0.5), base_w / 2, 0])
     difference() {
-      cylinder(d = tray_post_d, h = base_t + tray_post_h);
-      translate([0, 0, base_t + tray_post_h - tray_screw_grip])
+      cylinder(d = tray_fix_d, h = base_t + tray_fix_h);
+      translate([0, 0, base_t + tray_fix_h - tray_screw_grip])
         cylinder(d = gauge_ds[i], h = tray_screw_grip + 0.1);
     }
