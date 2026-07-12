@@ -36,18 +36,15 @@ module pico_w_mounts() {
     }
 }
 
-// Negative geometry cut through the body floor so the tray can be screwed from
-// BELOW: a shank clearance hole plus a pan-head counterbore on the underside.
-// Positions match the tray's support posts (uboard corner pitch); centered at
-// origin. Cut with the floor's z origin at 0 (floor spans z=0..wall).
+// トレイを本体裏から留めるための床カット：シャンク貫通穴＋裏面の皿ザグリ。
+// 位置はトレイ固定ポスト tray_fix_pts に一致（ワールド座標, 床の z 原点=0）。
 module tray_mount_cuts() {
-  for (sx = [-1, 1], sy = [-1, 1])
-    translate([sx * uboard_mount_span_w/2 + uboard_mount_off_x,
-               sy * uboard_mount_span_l/2 + uboard_mount_off_y, 0]) {
-      // shank clearance all the way through the floor
+  for (p = tray_fix_pts)
+    translate([p[0], p[1], 0]) {
+      // シャンクは床を貫通
       translate([0, 0, -0.1])
         cylinder(d = tray_screw_clear, h = wall + 0.2);
-      // head counterbore from the underside (z=0 face)
+      // 皿頭のザグリ（裏面 z=0 側から）
       translate([0, 0, -0.1])
         cylinder(d = tray_head_d, h = tray_head_h + 0.1);
     }
