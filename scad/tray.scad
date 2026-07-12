@@ -1,56 +1,69 @@
 include <params.scad>
 use <hardware.scad>
 
-// Electronics carrier tray: Pico on short bosses, universal board on tall
-// corner posts above it. The whole tray screws down into the body floor.
-// Footprint centered at origin, long axis (Pico length / uboard long side)
-// along Y — matching how the body orients the Pico.
+// 電子部品トレイ（ワールド座標＝軸原点フレームで構築）。
+// Pico を +Y 天井壁寄りに短ボスで載せ、その右へブレッドボードを浅い囲い壁ポケット
+// で落とし込む。四隅付近の固定ポスト4本で本体床へ M2 セルフタップ留め。Pico は
+// 位置決めピン（ボス）＋コーナー爪で押さえる。床は translate([0,0,wall]) で本体床上へ。
 module tray() {
   difference() {
     union() {
-    // floor plate — shifted by the board offset so it stays under the posts,
-    // while the Pico bosses and everything else keep their absolute positions.
-    translate([uboard_mount_off_x, uboard_mount_off_y, tray_t/2])
-      cube([tray_fw, tray_fl, tray_t], center = true);
+      // 床プレート（Pico・ポケット・固定ポストを内包）
+      translate([(tray_x0 + tray_x1)/2, (tray_y0 + tray_y1)/2, tray_t/2])
+        cube([tray_x1 - tray_x0, tray_y1 - tray_y0, tray_t], center = true);
 
-    // Pico short bosses (reuse hardware module), long axis along Y
-    translate([0, 0, tray_t])
-      rotate([0, 0, 90]) pico_w_mounts();
+      // Pico 短ボス＋位置決めピン（長軸 Y ＝ 90 度回転）を Pico 中心へ
+      translate([pico_x, pico_y, tray_t])
+        rotate([0, 0, 90]) pico_w_mounts();
 
-    // universal-board support posts at the (measured-offset) corner pitch. The
-    // board corners rest on the flat tops (held by solder to the Pico). Each post
-    // also anchors the tray to the body: an M2 screw self-taps up into it from the
-    // body underside (pilot cut below) — no nut.
-    for (sx = [-1, 1], sy = [-1, 1])
-      translate([sx * uboard_mount_span_w/2 + uboard_mount_off_x,
-                 sy * uboard_mount_span_l/2 + uboard_mount_off_y, tray_t])
-        cylinder(d = tray_post_d, h = tray_post_h);
+      // BB 浅い囲い壁ポケット（外形 - 内形 を壁高ぶん押し出し）
+      translate([bb_off_x, bb_off_y, tray_t])
+        linear_extrude(height = bb_pocket_wall_h)
+          difference() {
+            square([bb_w + 2*(bb_clearance + bb_pocket_wt),
+                    bb_l + 2*(bb_clearance + bb_pocket_wt)], center = true);
+            square([bb_w + 2*bb_clearance, bb_l + 2*bb_clearance], center = true);
+          }
+
+      // 固定ポスト4本（床上に立てる）
+      for (p = tray_fix_pts)
+        translate([p[0], p[1], tray_t])
+          cylinder(d = tray_fix_d, h = tray_fix_h);
+
+      // Pico コーナー爪（Pico の -X/+X 長辺中央を上から掴む L 字）
+      pico_clip(pico_x - pico_w/2, pico_y,  1);   // -X 側（フックは +X 向き）
+      pico_clip(pico_x + pico_w/2, pico_y, -1);   // +X 側（フックは -X 向き）
     }
 
-    // orientation marker: recessed arrow into the +Y (USB) end of the floor.
-    // Seat the Pico with its USB connector on this side — the body's USB opening
-    // is on the +Y wall.
-    tray_usb_marker();
+    // 固定ポスト下穴（トレイ裏 z0 から grip 深さ。床を貫通してポストへ効く）
+    for (p = tray_fix_pts)
+      translate([p[0], p[1], -0.1])
+        cylinder(d = tray_screw_pilot, h = tray_screw_grip + 0.1);
 
-    // two self-tap pilots per post, separated by a solid divider:
-    //  - bottom (from the tray underside): the tray->body screw
-    //  - top (from the post top): the board hold-down screw
-    for (sx = [-1, 1], sy = [-1, 1])
-      translate([sx * uboard_mount_span_w/2 + uboard_mount_off_x,
-                 sy * uboard_mount_span_l/2 + uboard_mount_off_y, 0]) {
-        translate([0, 0, -0.1])
-          cylinder(d = tray_screw_pilot, h = tray_screw_grip + 0.1);
-        translate([0, 0, tray_t + tray_post_h - tray_screw_grip])
-          cylinder(d = tray_screw_pilot, h = tray_screw_grip + 0.1);
-      }
+    // USB 向きマーカー（Pico の +Y 端側の床に凹み矢印）
+    tray_usb_marker();
   }
 }
 
-// Recessed arrow on the floor top pointing +Y (the USB side), roughly Pico-boss
-// sized. Sits in the clear band beyond the Pico.
+// Pico を上から押さえるコーナー爪。edge_x = Pico の長辺 x、dir = フックが伸びる向き
+// (+1 で +X, -1 で -X)。柱は Pico 上面まで、先端に pico_clip_hook の張り出し。
+module pico_clip(edge_x, edge_y, dir) {
+  // 柱：Pico の外側すぐに立てる（fit_clearance ぶん離す）
+  post_x = edge_x + dir * (fit_clearance + pico_clip_t/2);
+  translate([post_x, edge_y, tray_t]) {
+    // 縦柱
+    translate([0, 0, pico_clip_h/2])
+      cube([pico_clip_t, pico_clip_w, pico_clip_h], center = true);
+    // 先端フック（Pico 上面高さで内側へ張り出す）
+    translate([-dir * (pico_clip_t/2 + pico_clip_hook/2), 0, pico_clip_h])
+      cube([pico_clip_hook + pico_clip_t, pico_clip_w, 1.2], center = true);
+  }
+}
+
+// Pico の +Y（USB）端側を指す凹み矢印。USB 端はこちら＝本体 +Y 壁の開口に合わせる。
 module tray_usb_marker() {
   depth = 0.6;
-  translate([0, 30, tray_t - depth])
+  translate([pico_x, pico_y + pico_l/2 - 6, tray_t - depth])
     linear_extrude(height = depth + 0.1)
       polygon(points = [[-2.5, 0], [2.5, 0], [0, 4.5]]);
 }

@@ -81,6 +81,36 @@ pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 48.4: servo
 pedestal_wall_t   = 2.5;    // pedestal wall thickness
 wire_clearance    = 4;      // space above servo for wiring
 
+// --- Interior extents from the axis at origin (mm) ---
+// -X/-Y はドアクリアランスの硬い制約で不変。BB を収めるため +X/+Y に拡大する。
+// （後続の Pico 配置・BB・トレイ定数が参照するため、依存順でここに置く）
+ext_left  = 27;    // -X toward frame; <= clear_left
+ext_right = 84;    // +X; BB ポケット右(74) + 固定ポスト + 壁を収める
+ext_down  = 26;    // -Y toward handle; <= clear_down
+ext_up    = 120;   // +Y free; BB ポケット上端(118.25) + 壁マージンを収める
+
+inner_l = ext_left + ext_right;          // 111
+inner_w = ext_down + ext_up;             // 146
+// inner_h: servo stack is the tallest — pedestal_top(48.4) + servo(22.5) + clearance(4) - floor wall
+inner_h = pedestal_top_z + servo_body_h + wire_clearance - wall; // 72.5
+
+body_l = inner_l + 2*wall;               // 115.8
+body_w = inner_w + 2*wall;               // 150.8
+body_h = inner_h + 2*wall;
+
+// body center relative to the axis (axis sits low-left, body grows up-right)
+center_x = (ext_right - ext_left) / 2;   // 28.5
+center_y = (ext_up - ext_down) / 2;      // 47
+
+// --- Pico placement in the +Y free space ---
+// Pico は +Y 天井壁寄り（長軸 Y, USB は +Y 壁から）。USB プラグの届き量を master
+// 同等（Pico の USB 端 → +Y 内壁 = pico_usb_gap）に保つよう pico_y を導出する。
+// +Y 内壁の y は center_y + inner_w/2 = ext_up（恒等式）。
+pico_usb_gap = 11;                            // Pico USB 端 → +Y 天井内壁（プラグ届き）
+pico_x = 0;
+pico_y = ext_up - pico_usb_gap - pico_l/2;    // 83.5
+pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;  // 25.4
+
 // --- Breadboard (half-size, 実測 85.5 x 54.5mm) ---
 // 浅い囲い壁ポケットへ落とし込む。厚み bb_t は形状に使わない（壁高で位置決め）。
 bb_l = 85.5;              // long side (along Y)
@@ -136,35 +166,6 @@ pico_clip_w    = 4;      // 爪幅
 pico_clip_t    = 2;      // 爪の柱厚
 pico_clip_hook = 1.2;    // Pico 上端を掴む張り出し
 pico_clip_h    = pico_boss_h + pico_h;   // 爪の柱高（= Pico 上面）
-
-// --- Pico placement in the +Y free space ---
-// Pico は +Y 天井壁寄り（長軸 Y, USB は +Y 壁から）。USB プラグの届き量を master
-// 同等（Pico の USB 端 → +Y 内壁 = pico_usb_gap）に保つよう pico_y を導出する。
-// +Y 内壁の y は center_y + inner_w/2 = ext_up（下の派生値と一致する恒等式）。
-pico_usb_gap = 11;                            // Pico USB 端 → +Y 天井内壁（プラグ届き）
-pico_x = 0;
-pico_y = ext_up - pico_usb_gap - pico_l/2;    // 83.5
-pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;  // 25.4
-
-// --- Interior extents from the axis at origin (mm) ---
-// -X/-Y はドアクリアランスの硬い制約で不変。BB を収めるため +X/+Y に拡大する。
-ext_left  = 27;    // -X toward frame; <= clear_left
-ext_right = 84;    // +X; BB ポケット右(74) + 固定ポスト + 壁を収める
-ext_down  = 26;    // -Y toward handle; <= clear_down
-ext_up    = 120;   // +Y free; BB ポケット上端(118.25) + 壁マージンを収める
-
-inner_l = ext_left + ext_right;          // 54
-inner_w = ext_down + ext_up;             // 126
-// inner_h: servo stack is the tallest — pedestal_top(48.4) + servo(22.5) + clearance(4) - floor wall
-inner_h = pedestal_top_z + servo_body_h + wire_clearance - wall; // 72.5
-
-body_l = inner_l + 2*wall;
-body_w = inner_w + 2*wall;
-body_h = inner_h + 2*wall;
-
-// body center relative to the axis (axis sits low-left, body grows up-right)
-center_x = (ext_right - ext_left) / 2;   // 0
-center_y = (ext_up - ext_down) / 2;      // 37
 
 // --- Sanity / clearance checks ---
 assert(wall > 0, "wall must be positive");
