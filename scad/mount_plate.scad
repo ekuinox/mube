@@ -8,7 +8,8 @@ include <params.scad>
 //   Z=wall..pedestal_top_z: pedestal walls rising around the rosette
 //   Z=pedestal_top_z:       platform where servo tabs rest (with shaft hole)
 //
-// The brace stub is retained for torque reaction toward the door handle (-Y).
+// 以前あったハンドル側(-Y)への突っ張りスタブは廃止した。レバーには突っ張らせない
+// 方針のため、サーボ反力トルクはペデスタル自体で受ける（スタブは生成していない）。
 module mount_plate() {
   c = fit_clearance;
   pedestal_r = rosette_d/2 + pedestal_wall_t + c;
