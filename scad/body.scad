@@ -37,9 +37,8 @@ module body() {
       cylinder(d = rosette_d + fit_clearance, h = wall + 0.2);
 
     // tray fastening: clearance holes + head counterbores through the floor
-    // (tray is screwed from the body underside)
-    translate([pico_x, pico_y, 0])
-      tray_mount_cuts();
+    // (tray は本体裏からネジ留め。位置はワールド座標の tray_fix_pts)
+    tray_mount_cuts();
 
     // USB on the +Y top wall
     translate([pico_x, wall_y_top, usb_z])

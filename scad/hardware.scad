@@ -25,29 +25,30 @@ module sg90_cutout() {
   }
 }
 
-// Four Pico W rest bosses, each with a locating pin that enters the Pico's φ2.1
-// mounting hole (no screw — a fastener here would hit the pin-header plastic).
-// Footprint centered at origin.
+// Pico W 四隅スタンドオフ。基板を pico_boss_h だけ浮かせて下側 GPIO ピンを床から
+// 逃がし、四隅の φ2.1 穴へ上から M2 セルフタップで留める。中心の下穴は上面から
+// pico_screw_grip 深さ。フットプリントは原点中心。
 module pico_w_mounts() {
-  for (sx = [-1, 1], sy = [-1, 1])
-    translate([sx * pico_hole_dx/2, sy * pico_hole_dy/2, 0]) {
-      cylinder(d = pico_boss_d, h = pico_boss_h);              // rest shoulder
-      cylinder(d = pico_pin_d, h = pico_boss_h + pico_pin_h);  // locating pin
-    }
+  difference() {
+    for (sx = [-1, 1], sy = [-1, 1])
+      translate([sx * pico_hole_dx/2, sy * pico_hole_dy/2, 0])
+        cylinder(d = pico_boss_d, h = pico_boss_h);            // スタンドオフ
+    // セルフタップ下穴（上面から grip 深さ。上面を確実に開けるため +0.1 突き抜け）
+    for (sx = [-1, 1], sy = [-1, 1])
+      translate([sx * pico_hole_dx/2, sy * pico_hole_dy/2, pico_boss_h - pico_screw_grip])
+        cylinder(d = pico_screw_pilot, h = pico_screw_grip + 0.1);
+  }
 }
 
-// Negative geometry cut through the body floor so the tray can be screwed from
-// BELOW: a shank clearance hole plus a pan-head counterbore on the underside.
-// Positions match the tray's support posts (uboard corner pitch); centered at
-// origin. Cut with the floor's z origin at 0 (floor spans z=0..wall).
+// トレイを本体裏から留めるための床カット：シャンク貫通穴＋裏面の皿ザグリ。
+// 位置はトレイ固定ポスト tray_fix_pts に一致（ワールド座標, 床の z 原点=0）。
 module tray_mount_cuts() {
-  for (sx = [-1, 1], sy = [-1, 1])
-    translate([sx * uboard_mount_span_w/2 + uboard_mount_off_x,
-               sy * uboard_mount_span_l/2 + uboard_mount_off_y, 0]) {
-      // shank clearance all the way through the floor
+  for (p = tray_fix_pts)
+    translate([p[0], p[1], 0]) {
+      // シャンクは床を貫通
       translate([0, 0, -0.1])
         cylinder(d = tray_screw_clear, h = wall + 0.2);
-      // head counterbore from the underside (z=0 face)
+      // 皿頭のザグリ（裏面 z=0 側から）
       translate([0, 0, -0.1])
         cylinder(d = tray_head_d, h = tray_head_h + 0.1);
     }

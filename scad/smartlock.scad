@@ -17,12 +17,14 @@ if (part == "body") body();
 else if (part == "lid") lid();
 else if (part == "socket") thumbturn_socket();
 else if (part == "tray") tray();
-// トレイの +X/+Y 側の 1/4 象限を切り出したクーポン（ポスト高・ネジ効き・穴位置確認用）
+// トレイの +X/+Y 隅（右固定ポスト＋BB ポケット角）を切り出したクーポン
+// （固定ポストのネジ効き・ポケット壁の勘合確認用）
 else if (part == "tray_coupon")
   intersection() {
     tray();
-    translate([0, 0, -1])
-      cube([tray_fw/2 + 3, tray_fl/2 + 3, tray_post_h + tray_t + 3]);
+    translate([pocket_outer_right - 8, pocket_outer_top - 40, -1])
+      cube([tray_fix_x_right + tray_fix_d/2 + 3 - (pocket_outer_right - 8),
+            40 + 3, tray_fix_h + tray_t + bb_pocket_wall_h + 3]);
   }
 // ポケット周辺のみ切り出した薄型クーポン（ホーンフィット確認用）
 else if (part == "socket_coupon")
@@ -62,7 +64,7 @@ else if (part == "asm_socket")
           thumbturn_socket();
 else if (part == "asm_tray")
   color("Plum")
-    translate([pico_x, pico_y, wall + exp * 10]) tray();
+    translate([0, 0, wall + exp * 10]) tray();
 else {
   // full assembly
   color("SteelBlue") body();
@@ -77,5 +79,5 @@ else {
           thumbturn_socket();
 
   color("Plum")
-    translate([pico_x, pico_y, wall + exp * 10]) tray();
+    translate([0, 0, wall + exp * 10]) tray();
 }

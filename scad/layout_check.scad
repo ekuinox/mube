@@ -17,7 +17,8 @@ servo_top_z = servo_z + servo_body_h;
 pico_floor_z = wall + tray_t;   // Pico はトレイ床(厚み tray_t)の上に載る
 usb_z = pico_floor_z + pico_boss_h + pico_h + usb_connector_h/2;
 
-uboard_z = pico_floor_z + pico_boss_h + pico_h + pin_header_h;
+// BB は Pico と同じトレイ床上に載る（囲い壁ポケット底）
+bb_z = pico_floor_z;
 
 pedestal_r = rosette_d/2 + pedestal_wall_t + fit_clearance;
 socket_ow = knob_w_base + knob_t + 2*socket_wall;
@@ -81,9 +82,10 @@ module part_pico() {
                pico_floor_z + pico_boss_h/2])
       cylinder(d=pico_boss_d, h=pico_boss_h, center=true);
 }
-module part_uboard() {
-  translate([pico_x, pico_y, uboard_z + uboard_t/2])
-    cube([uboard_w, uboard_l, uboard_t], center=true);
+module part_breadboard() {
+  // ブレッドボード本体
+  translate([bb_off_x, bb_off_y, bb_z + bb_t/2])
+    cube([bb_w, bb_l, bb_t], center=true);
 }
 module part_led_btn() {
   translate([0, led_y, body_h]) cylinder(d=led_hole_d, h=wall, center=true);
@@ -213,7 +215,7 @@ module front_view() {
   wf_front() part_servo();
   wf_front() part_servo_tabs();
   wf_front() part_pico();
-  wf_front() part_uboard();
+  wf_front() part_breadboard();
   wf_front() part_led_btn();
   wf_front() part_usb();
 
@@ -229,8 +231,8 @@ module front_view() {
   leader(0, led_y, lx1, led_y, "LED");
   leader(0, btn_y, lx1, btn_y + 6, "BTN");
   leader(pico_w/2, pico_y, lx2, pico_y - 3, "Pico W");
-  leader(uboard_w/2, pico_y + pico_l/4, lx2, pico_y + pico_l/4 + 8,
-         str("基板 ", uboard_l, "x", uboard_w));
+  leader(bb_off_x + bb_w/2, bb_off_y, lx2, bb_off_y + 8,
+         str("BB ", bb_l, "x", bb_w));
 
   // USB（上端）
   wall_y_top = center_y + inner_w/2;
@@ -270,7 +272,7 @@ module side_view() {
   wf_side() part_servo();
   wf_side() part_servo_tabs();
   wf_side() part_pico();
-  wf_side() part_uboard();
+  wf_side() part_breadboard();
   wf_side() part_led_btn();
   wf_side() part_usb();
 
@@ -288,8 +290,8 @@ module side_view() {
   // Pico エリア（右側）
   lx_r = by1 + body_w + 12;
   leader(pico_y, pico_floor_z + pico_boss_h, lx_r, pico_floor_z + pico_boss_h, "Pico W");
-  leader(pico_y, uboard_z + uboard_t, lx_r, uboard_z + uboard_t + 8,
-         str("基板 ", uboard_l, "x", uboard_w));
+  leader(bb_off_y, bb_z + bb_t, lx_r, bb_z + bb_t + 8,
+         str("BB ", bb_l, "x", bb_w));
 
   // --- 寸法線（左端、さらに外） ---
   dx1 = lx2 - 15;
