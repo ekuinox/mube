@@ -13,18 +13,27 @@ module tray() {
       translate([(tray_x0 + tray_x1)/2, (tray_y0 + tray_y1)/2, tray_t/2])
         cube([tray_x1 - tray_x0, tray_y1 - tray_y0, tray_t], center = true);
 
-      // Pico 短ボス＋位置決めピン（長軸 Y ＝ 90 度回転）を Pico 中心へ
+      // Pico 四隅スタンドオフ（長軸 Y ＝ 90 度回転）を Pico 中心へ
       translate([pico_x, pico_y, tray_t])
         rotate([0, 0, 90]) pico_w_mounts();
 
-      // BB 浅い囲い壁ポケット（外形 - 内形 を壁高ぶん押し出し）
-      translate([bb_off_x, bb_off_y, tray_t])
+      // BB 囲い壁ポケット（Pico と反対の +X 側を bb_ext_farx 広げた非対称リング）。
+      // 外形/内形の端をワールド座標の pocket_*_left/right/bottom/top から直に組む。
+      translate([0, 0, tray_t])
         linear_extrude(height = bb_pocket_wall_h)
           difference() {
-            square([bb_w + 2*(bb_clearance + bb_pocket_wt),
-                    bb_l + 2*(bb_clearance + bb_pocket_wt)], center = true);
-            square([bb_w + 2*bb_clearance, bb_l + 2*bb_clearance], center = true);
+            translate([pocket_outer_left, pocket_outer_bottom])
+              square([pocket_outer_right - pocket_outer_left,
+                      pocket_outer_top - pocket_outer_bottom]);
+            translate([pocket_inner_left, pocket_inner_bottom])
+              square([pocket_inner_right - pocket_inner_left,
+                      pocket_inner_top - pocket_inner_bottom]);
           }
+
+      // BB 押さえレール（上下短辺のみ）。BB を傾けて短辺の下へ潜らせ、リップで浮き止め。
+      // 両長辺はオープン（-X の Pico 側ジャンパが自由）。壁backingで丈夫＝しならず折れない。
+      bb_rail(pocket_inner_top,    -1);   // +Y 短辺（内向き -Y）
+      bb_rail(pocket_inner_bottom, +1);   // -Y 短辺（内向き +Y）
 
       // 固定ポスト4本（床上に立てる）
       for (p = tray_fix_pts)
@@ -39,6 +48,26 @@ module tray() {
 
     // USB 向きマーカー（Pico の +Y 端側の床に凹み矢印）
     tray_usb_marker();
+  }
+}
+
+// BB 押さえレール（短辺）。y_in = 短辺の内壁面 y、d = 内向き符号（+Y 短辺は -1、
+// -Y 短辺は +1）。囲い壁を BB 上面(bb_t)まで立て、上端リップが内側へ bb_rail_hook
+// だけ overhang して BB 上端の短辺を押さえる。リップ上面はテーパー（傾け差し込みガイド）。
+// 壁で全長 backing されるので、しならず折れない。ポケット X 全幅にわたる。
+module bb_rail(y_in, d) {
+  x0 = pocket_outer_left;
+  xw = pocket_outer_right - pocket_outer_left;
+  // 壁を BB 上面まで（内壁面 y_in から外側 -d 方向へ bb_pocket_wt）
+  wy0 = min(y_in, y_in - d*bb_pocket_wt);
+  translate([x0, wy0, tray_t]) cube([xw, bb_pocket_wt, bb_t]);
+  // リップ（下面=BB 上面、内側 d へ overhang、上へテーパー）
+  hull() {
+    ly0 = min(y_in + d*bb_rail_hook, y_in - d*bb_pocket_wt);
+    translate([x0, ly0, tray_t + bb_t])
+      cube([xw, bb_pocket_wt + bb_rail_hook, 0.4]);
+    translate([x0, wy0, tray_t + bb_t + bb_rail_lip_h])
+      cube([xw, bb_pocket_wt, 0.4]);
   }
 }
 
