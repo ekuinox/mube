@@ -86,7 +86,7 @@ wire_clearance    = 4;      // space above servo for wiring
 // -X/-Y はドアクリアランスの硬い制約で不変。BB を収めるため +X/+Y に拡大する。
 // （後続の Pico 配置・BB・トレイ定数が参照するため、依存順でここに置く）
 ext_left  = 27;    // -X toward frame; <= clear_left
-ext_right = 85;    // +X; BB ポケット右(76.5, farx 拡張込) + 固定ポスト + 壁を収める
+ext_right = 86;    // +X; BB ポケット右(76.5) + 固定ポスト + トレイ床(+X端84.5)に 1.5mm 余裕
 ext_down  = 26;    // -Y toward handle; <= clear_down
 ext_up    = 120;   // +Y free; BB ポケット上端(118.25) + 壁マージンを収める
 
