@@ -23,8 +23,8 @@ else if (part == "tray_coupon")
   intersection() {
     tray();
     translate([pocket_outer_right - 8, pocket_outer_top - 40, -1])
-      cube([tray_fix_x_right + tray_fix_d/2 + 3 - (pocket_outer_right - 8),
-            40 + 3, tray_fix_h + tray_t + bb_pocket_wall_h + 3]);
+      cube([tray_fix_x_right + tray_sleeve_od/2 + 3 - (pocket_outer_right - 8),
+            40 + 3, tray_boss_h + tray_cap_t + bb_pocket_wall_h + 3]);
   }
 // ポケット周辺のみ切り出した薄型クーポン（ホーンフィット確認用）
 else if (part == "socket_coupon")

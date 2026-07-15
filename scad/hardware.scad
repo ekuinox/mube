@@ -40,18 +40,18 @@ module pico_w_mounts() {
   }
 }
 
-// トレイを本体裏から留めるための床カット：シャンク貫通穴＋裏面の皿ザグリ。
-// 位置はトレイ固定ポスト tray_fix_pts に一致（ワールド座標, 床の z 原点=0）。
-module tray_mount_cuts() {
+// トレイを本体天面（内側）から留めるための本体側ボス。tray_fix_pts の各点に、床上面
+// （z=wall）から tray_boss_h 立てる。上面から tray_screw_pilot の袋下穴を tray_screw_grip
+// 深さで彫る（ドア面 z=0 は貫通させない）。トレイのスリーブが下からこれに被さり、天面から
+// M2 セルフタップでキャップ耳をボス上面へ締めるとトレイが固定される。加算形状（union で使う）。
+module tray_mount_bosses() {
   for (p = tray_fix_pts)
-    translate([p[0], p[1], 0]) {
-      // シャンクは床を貫通
-      translate([0, 0, -0.1])
-        cylinder(d = tray_screw_clear, h = wall + 0.2);
-      // 皿頭のザグリ（裏面 z=0 側から）
-      translate([0, 0, -0.1])
-        cylinder(d = tray_head_d, h = tray_head_h + 0.1);
-    }
+    translate([p[0], p[1], wall])
+      difference() {
+        cylinder(d = tray_boss_d, h = tray_boss_h);
+        translate([0, 0, tray_boss_h - tray_screw_grip])
+          cylinder(d = tray_screw_pilot, h = tray_screw_grip + 0.1);
+      }
 }
 
 // USB plug opening, centered at origin, cut along Y.

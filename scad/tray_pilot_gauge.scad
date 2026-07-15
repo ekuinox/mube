@@ -1,14 +1,13 @@
-// トレイ・ポストの M2 自己タップ下穴ゲージ（実際のポスト条件を再現）。
-// tray_fix_d 径・tray_fix_h 高さのポストを並べ、各ポスト上面から
-// tray_screw_grip 深さの袋下穴を設計径 1.7〜2.2mm（0.1刻み）で開ける。
-// 印刷して M2 を上からねじ込み、「しっかり効くが割れない」設計値を
-// tray_screw_pilot に採用する。
+// 本体ボスの M2 自己タップ下穴ゲージ（実際のボス条件を再現）。
+// tray_boss_d 径・tray_boss_h 高さのボスを並べ、各ボス上面から tray_screw_grip 深さの
+// 袋下穴を設計径 1.7〜2.2mm（0.1刻み）で開ける。印刷して M2 を上からねじ込み、
+// 「しっかり効くが割れない」設計値を tray_screw_pilot に採用する。
 //
-// 平板ゲージ(pilot_gauge.scad)ではなくポスト形状にしたのは、深い縦穴が
-// 平板の貫通穴と収縮量が違うため（実機で平板由来の 2.2 がポストでは緩かった）。
-// 印刷向き：ベースをベッドに置きポストを立てる（本番同等）。下穴は上からの縦穴。
-// 識別：小径側の角を落としてある（面取り側が最小径 1.7）。各ポスト手前の刻み
-// ノッチが左から i+1 個 = 何番目か（1個=1.7, 2個=1.8, ...）。
+// 平板ゲージ(pilot_gauge.scad)ではなく立てたボス形状にしたのは、深い縦穴が平板の貫通穴と
+// 収縮量が違うため（実機で平板由来の 2.2 がポストでは緩かった）。印刷向き：ベースをベッドに
+// 置きボスを立てる（本番同等）。下穴は上からの縦穴。
+// 識別：小径側の角を落としてある（面取り側が最小径 1.7）。各ボス手前の刻みノッチが左から
+// i+1 個 = 何番目か（1個=1.7, 2個=1.8, ...）。
 
 include <params.scad>
 
@@ -36,7 +35,7 @@ linear_extrude(height = base_t)
 for (i = [0 : len(gauge_ds) - 1])
   translate([gauge_pitch * (i + 0.5), base_w / 2, 0])
     difference() {
-      cylinder(d = tray_fix_d, h = base_t + tray_fix_h);
-      translate([0, 0, base_t + tray_fix_h - tray_screw_grip])
+      cylinder(d = tray_boss_d, h = base_t + tray_boss_h);
+      translate([0, 0, base_t + tray_boss_h - tray_screw_grip])
         cylinder(d = gauge_ds[i], h = tray_screw_grip + 0.1);
     }

@@ -26,6 +26,8 @@ module body() {
       }
       // bottom mount face with pedestal
       mount_plate();
+      // トレイ天面留めの固定ボス（tray_fix_pts に床から立てる。union 側）
+      tray_mount_bosses();
     }
 
     // servo pocket at pedestal top; tabs rest on pedestal surface
@@ -35,10 +37,6 @@ module body() {
     // floor opening for thumb-turn knob (through mount plate center)
     translate([0, 0, -0.1])
       cylinder(d = rosette_d + fit_clearance, h = wall + 0.2);
-
-    // tray fastening: clearance holes + head counterbores through the floor
-    // (tray は本体裏からネジ留め。位置はワールド座標の tray_fix_pts)
-    tray_mount_cuts();
 
     // USB on the +Y top wall
     translate([pico_x, wall_y_top, usb_z])
