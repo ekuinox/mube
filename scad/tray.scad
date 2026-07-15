@@ -44,20 +44,22 @@ module tray() {
     }
 
     // 固定スリーブのボス逃げボア（床貫通〜ボス収容）＋キャップのネジ通し＋頭ザグリ（天面から）。
-    // キャップ裏はいきなり細穴にせず自己サポート・テーパーで開口を広げ、床下向き印刷でも
-    // ネジ穴が垂れて塞がらないようにする（実機で塞がった対策）。throat=0.5mm。
+    // キャップ裏はボア全径から段差なしで絞る自己サポート・ファンネルにする。平らな張り出し
+    // （ブリッジ）を一切作らないので、床下向き印刷でもネジ穴が垂れて塞がらない（実機で塞がった対策）。
+    // クランプはネジ張力×トレイ床が本体床に密着で効くので、キャップがボス上面に当たる平面は不要。
+    // throat=0.3mm。
     for (p = tray_fix_pts)
       translate([p[0], p[1], 0]) {
-        // ボス逃げボア（床貫通〜ボス収容）
+        // ボス逃げボア（床貫通〜ボス収容, φ tray_sleeve_id 一定）
         translate([0, 0, -0.1])
           cylinder(d = tray_sleeve_id, h = tray_boss_h + 0.1);
-        // 自己サポート・テーパー（天井 tray_cap_cone_d → 上へ tray_screw_clear へ絞る）
+        // 自己サポート・ファンネル（ボア全径 tray_sleeve_id → 上へ tray_screw_clear へ絞る）
         translate([0, 0, tray_boss_h - 0.01])
-          cylinder(d1 = tray_cap_cone_d, d2 = tray_screw_clear,
-                   h = tray_cap_t - tray_head_h - 0.5);
-        // ネジ通し throat（テーパー上端〜天面。頭ザグリと重ねる）
-        translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h - 0.5 - 0.01])
-          cylinder(d = tray_screw_clear, h = tray_head_h + 0.5 + 0.2);
+          cylinder(d1 = tray_sleeve_id, d2 = tray_screw_clear,
+                   h = tray_cap_t - tray_head_h - 0.3);
+        // ネジ通し throat（ファンネル上端〜天面。頭ザグリと重ねる）
+        translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h - 0.3 - 0.01])
+          cylinder(d = tray_screw_clear, h = tray_head_h + 0.3 + 0.2);
         // 頭ザグリ（天面から）
         translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h])
           cylinder(d = tray_head_d, h = tray_head_h + 0.2);
