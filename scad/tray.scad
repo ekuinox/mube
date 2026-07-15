@@ -36,7 +36,8 @@ module tray() {
       bb_rail(pocket_inner_bottom, +1);   // -Y 短辺（内向き +Y）
 
       // 固定スリーブ solid（ボア/ネジ穴は下の difference で彫る）。床下面 z=0 から立て、
-      // ボス収容分 + キャップ分の高さ。
+      // ボス収容分 + キャップ分の高さ。z=0 起点で床プレート(0..tray_t)と重複するが union で
+      // 合体するため問題ない（z=tray_t にするとスリーブが床面で分断される）。
       for (p = tray_fix_pts)
         translate([p[0], p[1], 0])
           cylinder(d = tray_sleeve_od, h = tray_boss_h + tray_cap_t);

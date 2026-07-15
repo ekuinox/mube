@@ -300,6 +300,8 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
    - ボス⇔スリーブの横嵌め：スルッと入りガタつかないか（きつい/緩い）。
    - M2 セルフタップの効き（下穴 `tray_screw_pilot=2.1`・効き代の妥当性。`tray_pilot_gauge` 併用可）。
    - 締結時にキャップ耳がボス上面へ密着し、トレイ相当が浮かずクランプできるか。
+   - キャップ耳の座残り（tray_cap_t - tray_head_h = 0.9mm）で M2 パン頭が引き抜けないか。頭が座面に食い込むようなら tray_cap_t を ~3.0 へ増やす（座残り 1.4mm）。
+   - 右スリーブ↔+X 壁の余裕が 0.7mm と最小。boss_fit 確定時に viewer で干渉を目視する。
 2. 実測から `boss_fit`（必要なら `tray_sleeve_wt` / `tray_cap_t`）を確定し、`params.scad` を更新（コメントに実測値の根拠を残す）。
 3. `./test/render.sh scad/tray.scad` と `./build.sh` を再実行して NoError。
 4. viewer で目視（`viewer-preview` スキル）。最終的に本体（body / tray）を印刷して組み確認。

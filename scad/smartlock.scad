@@ -17,8 +17,8 @@ if (part == "body") body();
 else if (part == "lid") lid();
 else if (part == "socket") thumbturn_socket();
 else if (part == "tray") tray();
-// トレイの +X/+Y 隅（右固定ポスト＋BB ポケット角）を切り出したクーポン
-// （固定ポストのネジ効き・ポケット壁の勘合確認用）
+// トレイの +X/+Y 隅（右固定スリーブ＋BB ポケット角）を切り出したクーポン
+// （固定スリーブのネジ効き・ポケット壁の勘合確認用）
 else if (part == "tray_coupon")
   intersection() {
     tray();
