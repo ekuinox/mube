@@ -43,13 +43,22 @@ module tray() {
           cylinder(d = tray_sleeve_od, h = tray_boss_h + tray_cap_t);
     }
 
-    // 固定スリーブのボス逃げボア（床貫通〜ボス収容）＋キャップのネジ通し＋頭ザグリ（天面から）
+    // 固定スリーブのボス逃げボア（床貫通〜ボス収容）＋キャップのネジ通し＋頭ザグリ（天面から）。
+    // キャップ裏はいきなり細穴にせず自己サポート・テーパーで開口を広げ、床下向き印刷でも
+    // ネジ穴が垂れて塞がらないようにする（実機で塞がった対策）。throat=0.5mm。
     for (p = tray_fix_pts)
       translate([p[0], p[1], 0]) {
+        // ボス逃げボア（床貫通〜ボス収容）
         translate([0, 0, -0.1])
           cylinder(d = tray_sleeve_id, h = tray_boss_h + 0.1);
-        translate([0, 0, tray_boss_h - 0.1])
-          cylinder(d = tray_screw_clear, h = tray_cap_t + 0.2);
+        // 自己サポート・テーパー（天井 tray_cap_cone_d → 上へ tray_screw_clear へ絞る）
+        translate([0, 0, tray_boss_h - 0.01])
+          cylinder(d1 = tray_cap_cone_d, d2 = tray_screw_clear,
+                   h = tray_cap_t - tray_head_h - 0.5);
+        // ネジ通し throat（テーパー上端〜天面。頭ザグリと重ねる）
+        translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h - 0.5 - 0.01])
+          cylinder(d = tray_screw_clear, h = tray_head_h + 0.5 + 0.2);
+        // 頭ザグリ（天面から）
         translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h])
           cylinder(d = tray_head_d, h = tray_head_h + 0.2);
       }

@@ -159,7 +159,12 @@ tray_boss_d    = 5;                       // 本体ボス外径（Pico の pico_
 tray_boss_h    = tray_screw_grip + 1;     // ボス高 = 効き代5 + 底残し1 = 6（床下=ドア面を貫通しない）
 boss_fit       = 0.4;                     // ボス⇔スリーブ横嵌めすき間（フェーズ2でクーポン実測して確定）
 tray_sleeve_wt = 1.0;                      // スリーブ壁厚
-tray_cap_t     = 2.5;                      // スリーブ上端キャップ厚（頭ザグリ tray_head_h=1.6 + 座残し 0.9）
+tray_cap_t     = 3.0;                      // スリーブ上端キャップ厚（頭ザグリ tray_head_h=1.6 + 座残し 1.4）
+// キャップ裏の自己サポート・テーパー天井の開口径。ネジ穴(tray_screw_clear=2.4)を天井直で
+// 開けるとボア(φ5.8)の上にブリッジが架かり、φ小の穴が垂れて塞がる（実機で発生）。天井の開口を
+// これだけ大きく取り、上へ 45°以内で tray_screw_clear まで絞ることで垂れずに開く。ボス径(5)未満に
+// 保ち、cone より外の平リング（cone_d〜ボス径）でボス上面がキャップを受ける。
+tray_cap_cone_d = 3.8;
 tray_sleeve_id = tray_boss_d + 2*boss_fit;             // ボア径（ボス逃げ）= 5.8
 tray_sleeve_od = tray_sleeve_id + 2*tray_sleeve_wt;    // スリーブ外径 = 7.8
 
@@ -226,6 +231,8 @@ assert(pocket_outer_left  >= pico_x + pico_w/2 + pico_bb_gap - 0.001, "Pico↔BB
 assert(tray_boss_d > tray_screw_pilot + 1.6, "ボス肉厚が下穴に対して薄すぎる");
 assert(tray_screw_grip < tray_boss_h, "ネジ下穴 grip がボス高を超える（床貫通の恐れ）");
 assert(tray_cap_t > tray_head_h, "キャップ厚が頭ザグリ深さ以下（頭が座らない）");
+assert(tray_screw_clear < tray_cap_cone_d && tray_cap_cone_d < tray_boss_d, "テーパー開口径がネジ穴〜ボス径の範囲外（受けリング/ネジ通しが破綻）");
+assert(tray_cap_t - tray_head_h - 0.5 >= (tray_cap_cone_d - tray_screw_clear)/2, "テーパーが 45°より急（自己サポート不可）");
 assert(tray_fix_x_right - tray_sleeve_od/2 >= pocket_outer_right, "右スリーブが BB ポケットに食い込む");
 assert(tray_fix_x_right + tray_sleeve_od/2 <= ext_right, "右スリーブが +X 壁を超える");
 assert(tray_fix_x_left  + tray_sleeve_od/2 <= pico_x - pico_w/2, "左スリーブが Pico に食い込む");
