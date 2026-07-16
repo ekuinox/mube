@@ -4,8 +4,6 @@
 wall          = 2.4;
 fit_clearance = 0.4;
 $fn           = 64;
-box_corner_r  = 3;      // outer shell corner fillet radius
-lid_lip_h     = 4;      // lid inner-lip depth
 
 // --- SG90 servo (datasheet nominal) ---
 servo_body_l  = 22.8;
@@ -48,15 +46,6 @@ pico_boss_h   = pico_pin_drop + 0.5;  // スタンドオフ高（下ピン先端
 pico_screw_pilot = 2.1; // M2 セルフタップ下穴径（tray と同仕様。A1 mini 補正込みの実績値）
 pico_screw_grip  = 5;   // セルフタップ効き深さ（スタンドオフ上面から）
 
-// --- USB micro-B connector (Pico W) ---
-usb_w           = 12.0;  // 開口幅はケーブルプラグ基準。コネクタ幅9では実機でプラグが通らず拡大(2026-07-04)。クリアランス込み設計開口 12.8
-usb_h           = 6.0;
-usb_connector_h = 2.6;   // connector body height above PCB (measured)
-
-// --- Indicators ---
-led_hole_d    = 5.2;
-button_hole_d = 6.2;
-led_btn_spacing = 16;   // center-to-center distance between LED and button
 
 // --- Door-fit clearances from the thumb-turn axis (origin = rosette center) ---
 clear_left  = 50;   // -X to door edge/frame（実測: ~50 未満の上限。精密値は未確定）
@@ -80,7 +69,7 @@ horn_h            = servo_horn_stack + horn_seat_clear - (horn_thick + horn_clea
 socket_oh         = knob_engage + socket_wall + 6;   // socket total height (18)
 pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 48.4: servo tabs rest here
 pedestal_wall_t   = 2.5;    // pedestal wall thickness
-wire_clearance    = 4;      // space above servo for wiring
+wire_clearance    = 4;      // space above servo for wiring (pedestal height calculation 用; 壁・蓋は廃止済み)
 
 // --- Interior extents from the axis at origin (mm) ---
 // -X/-Y はドアクリアランスの硬い制約で不変。BB を収めるため +X/+Y に拡大する。
@@ -90,24 +79,18 @@ ext_right = 86;    // +X; BB ポケット右(76.5) + 固定ポスト + トレイ
 ext_down  = 26;    // -Y toward handle; <= clear_down
 ext_up    = 120;   // +Y free; BB ポケット上端(118.25) + 壁マージンを収める
 
-inner_l = ext_left + ext_right;          // 111
-inner_w = ext_down + ext_up;             // 146
-// inner_h: servo stack is the tallest — pedestal_top(48.4) + servo(22.5) + clearance(4) - floor wall
-inner_h = pedestal_top_z + servo_body_h + wire_clearance - wall; // 72.5
-
-body_l = inner_l + 2*wall;               // 115.8
-body_w = inner_w + 2*wall;               // 150.8
-body_h = inner_h + 2*wall;
+// プレート外形（旧・箱外形と同じ footprint。壁は無いが名前は互換のため維持）
+body_l = ext_left + ext_right + 2*wall;   // 115.8
+body_w = ext_down + ext_up  + 2*wall;     // 150.8
 
 // body center relative to the axis (axis sits low-left, body grows up-right)
 center_x = (ext_right - ext_left) / 2;   // 28.5
 center_y = (ext_up - ext_down) / 2;      // 47
 
 // --- Pico placement in the +Y free space ---
-// Pico は +Y 天井壁寄り（長軸 Y, USB は +Y 壁から）。USB プラグの届き量を master
-// 同等（Pico の USB 端 → +Y 内壁 = pico_usb_gap）に保つよう pico_y を導出する。
-// +Y 内壁の y は center_y + inner_w/2 = ext_up（恒等式）。
-pico_usb_gap = 11;                            // Pico USB 端 → +Y 天井内壁（プラグ届き）
+// Pico の配置。pico_usb_gap は「Pico USB 端 → プレート +Y 端（旧内壁線 ext_up）の余白」で、
+// USB プラグの抜き差しスペースとして維持する（壁開口は廃止済み・オープン構成）。
+pico_usb_gap = 11;
 pico_x = 0;
 pico_y = ext_up - pico_usb_gap - pico_l/2;    // 83.5
 pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;  // 25.4
@@ -214,8 +197,6 @@ assert(horn_arm_l + horn_clearance + 0.4 <= (knob_w_base + knob_t)/2 + socket_wa
 // Pico が +Y 天井壁寄りでペデスタルをクリア
 assert(pico_y - pico_l/2 > pedestal_outer, "Pico -Y 端がペデスタルに干渉");
 assert(pico_y + pico_l/2 <= ext_up, "Pico +Y 端が内寸を超える");
-// USB プラグ届き量が正（Pico USB 端 → +Y 内壁 = pico_usb_gap）
-assert(pico_usb_gap > 0 && ext_up - (pico_y + pico_l/2) >= pico_usb_gap - 0.01, "USB プラグ届き量が不足");
 // Pico 四隅スタンドオフ: 下ピンを床から逃がし、下穴がスタンドオフ内に収まる
 assert(pico_boss_h >= pico_pin_drop, "スタンドオフ高が下ピン突出を逃がせない");
 assert(pico_screw_grip < pico_boss_h, "ネジ下穴 grip がスタンドオフ高を超える");

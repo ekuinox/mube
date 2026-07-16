@@ -81,12 +81,3 @@ module tray_mount_bosses() {
   for (p = tray_fix_pts)
     translate([p[0], p[1], wall]) m2_boss();
 }
-
-// USB plug opening, centered at origin, cut along Y.
-module usb_cutout() {
-  c = fit_clearance;
-  rotate([90, 0, 0])
-    translate([0, 0, -wall*2])
-      linear_extrude(height = wall*4)
-        offset(r = c) square([usb_w, usb_h], center = true);
-}

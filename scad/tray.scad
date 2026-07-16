@@ -71,7 +71,7 @@ module bb_rail(y_in, d) {
   }
 }
 
-// Pico の +Y（USB）端側を指す凹み矢印。USB 端はこちら＝本体 +Y 壁の開口に合わせる。
+// Pico の +Y（USB）端側を指す凹み矢印。オープン構成でも USB 端の向き合わせ目印として残す。
 module tray_usb_marker() {
   depth = 0.6;
   translate([pico_x, pico_y + pico_l/2 - 6, tray_t - depth])

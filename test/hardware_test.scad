@@ -4,7 +4,7 @@ use <../scad/hardware.scad>
 difference() {
   cube([60, 40, 30], center = true);
   sg90_cutout();
-  usb_cutout();
 }
 pico_w_mounts();
+tray_mount_bosses();
 echo("hardware_test ok");
