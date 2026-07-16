@@ -13,6 +13,8 @@ module body() {
       translate([center_x, center_y, 0])
         linear_extrude(height = wall)
           plate_outline_2d();
+      // 上面リブ（外周一周＋横桟）
+      plate_ribs();
       // ペデスタル受けカーブ（ローブ通過の切り欠き＝回り止め）
       pedestal_curb();
       // 固定ボス（トレイ4＋ペデスタル4、天面 M2 留め）
@@ -29,6 +31,30 @@ module body() {
 module plate_outline_2d() {
   offset(r = 2) offset(r = -2)
     square([body_l, body_w], center = true);
+}
+
+// 上面リブ: 外周一周＋横桟。受けカーブ・スリーブ・ロゼット開口の周りは半径 ped_curb_ro+1 で
+// 丸ごと逃がす（開口の上をリブが橋渡しして印刷ブリッジになるのも防ぐ）。トレイ床の下（y>=tray_y0）
+// には横桟を置かない（plate_rib_ys で保証、assert 済み）。
+module plate_ribs() {
+  translate([0, 0, wall])
+    linear_extrude(height = plate_rib_h)
+      difference() {
+        union() {
+          // 外周リブ（プレート輪郭の内側 plate_rib_w 幅）
+          translate([center_x, center_y])
+            difference() {
+              plate_outline_2d();
+              offset(delta = -plate_rib_w) plate_outline_2d();
+            }
+          // 横桟（全幅。外周リブと融合する）
+          for (y = plate_rib_ys)
+            translate([center_x, y])
+              square([body_l, plate_rib_w], center = true);
+        }
+        // 受けカーブ・スリーブ・中央開口まわりの逃げ
+        circle(r = ped_curb_ro + 1);
+      }
 }
 
 // 受けカーブ: フランジ基礎円（φ ped_base_d）を囲む土手リング。ped_fix_angles の各角度に
