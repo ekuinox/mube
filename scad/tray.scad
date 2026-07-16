@@ -35,35 +35,16 @@ module tray() {
       bb_rail(pocket_inner_top,    -1);   // +Y 短辺（内向き -Y）
       bb_rail(pocket_inner_bottom, +1);   // -Y 短辺（内向き +Y）
 
-      // 固定スリーブ solid（ボア/ネジ穴は下の difference で彫る）。床下面 z=0 から立て、
-      // ボス収容分 + キャップ分の高さ。z=0 起点で床プレート(0..tray_t)と重複するが union で
-      // 合体するため問題ない（z=tray_t にするとスリーブが床面で分断される）。
+      // 固定スリーブ solid（内側は下の difference で彫る）。床下面 z=0 から立てるので床プレート
+      // (0..tray_t) と重複するが union で合体するため問題ない（z=tray_t にするとスリーブが床面で
+      // 分断される）。形状は hardware.scad の共有モジュール（トレイ/ペデスタル共用）。
       for (p = tray_fix_pts)
-        translate([p[0], p[1], 0])
-          cylinder(d = tray_sleeve_od, h = tray_boss_h + tray_cap_t);
+        translate([p[0], p[1], 0]) m2_sleeve_solid();
     }
 
-    // 固定スリーブのボス逃げボア（床貫通〜ボス収容）＋キャップのネジ通し＋頭ザグリ（天面から）。
-    // キャップ裏はボア全径から段差なしで絞る自己サポート・ファンネルにする。平らな張り出し
-    // （ブリッジ）を一切作らないので、床下向き印刷でもネジ穴が垂れて塞がらない（実機で塞がった対策）。
-    // クランプはネジ張力×トレイ床が本体床に密着で効くので、キャップがボス上面に当たる平面は不要。
-    // throat=0.3mm。
+    // 固定スリーブの内側カット（ボア/ファンネル/throat/頭ザグリ。hardware.scad の共有モジュール）
     for (p = tray_fix_pts)
-      translate([p[0], p[1], 0]) {
-        // ボス逃げボア（床貫通〜ボス収容, φ tray_sleeve_id 一定）
-        translate([0, 0, -0.1])
-          cylinder(d = tray_sleeve_id, h = tray_boss_h + 0.1);
-        // 自己サポート・ファンネル（ボア全径 tray_sleeve_id → 上へ tray_screw_clear へ絞る）
-        translate([0, 0, tray_boss_h - 0.01])
-          cylinder(d1 = tray_sleeve_id, d2 = tray_screw_clear,
-                   h = tray_cap_t - tray_head_h - 0.3);
-        // ネジ通し throat（ファンネル上端〜天面。頭ザグリと重ねる）
-        translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h - 0.3 - 0.01])
-          cylinder(d = tray_screw_clear, h = tray_head_h + 0.3 + 0.2);
-        // 頭ザグリ（天面から）
-        translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h])
-          cylinder(d = tray_head_d, h = tray_head_h + 0.2);
-      }
+      translate([p[0], p[1], 0]) m2_sleeve_cuts();
 
     // USB 向きマーカー（Pico の +Y 端側の床に凹み矢印）
     tray_usb_marker();
