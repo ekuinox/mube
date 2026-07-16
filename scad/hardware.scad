@@ -41,7 +41,7 @@ module pico_w_mounts() {
 }
 
 // M2 セルフタップ用ボス1本（原点基準・呼び出し側で translate）。床上面に立て、上面から
-// tray_screw_pilot の袋下穴を tray_screw_grip 深さで彫る（下=ドア面を貫通しない）。
+// tray_screw_pilot の袋下穴を tray_screw_grip 深さで彫る（下=ドア面を貫通しない）。加算形状（union 側で使う）。
 module m2_boss() {
   difference() {
     cylinder(d = tray_boss_d, h = tray_boss_h);
