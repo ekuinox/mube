@@ -164,6 +164,20 @@ tray_x1 = tray_fix_x_right + tray_sleeve_od/2;        // 85.3
 tray_y0 = pocket_outer_bottom - 0.75;            // 27
 tray_y1 = pocket_outer_top    + 0.25;            // 118.5
 
+// ペデスタルのボルトオン分離（プレート受けカーブ＋底フランジ、天面 M2 留め）。
+// トレイと同じボス/スリーブ/ファンネル構造を流用。フランジ基礎円が受けカーブに落ちて軸センタ
+// リング、対角4ローブがカーブ切り欠きと噛んでサーボ反力トルクの回り止め、M2×4 は抜け止め専任。
+ped_flange_t   = 2.4;    // 底フランジ厚（トレイ床と同厚＝スリーブ構造を無改造で流用）
+ped_fix_r      = 30;     // 固定ボス配置半径。対角4点で -X/-Y プレート端(26/27)とトレイ床(y>=27)を回避
+ped_fix_angles = [45, 135, 225, 315];
+ped_fix_pts    = [for (a = ped_fix_angles) [ped_fix_r*cos(a), ped_fix_r*sin(a)]];
+pedestal_fit   = 0.3;    // フランジ⇔受けカーブの横嵌めすき間（フェーズ2でクーポン実測して確定）
+ped_curb_wt    = 2.0;    // 受けカーブ壁厚
+ped_curb_h     = ped_flange_t;   // カーブ高（フランジ上面と面一）
+ped_lobe_w     = 10;     // フランジローブ幅（スリーブ od 7.8 を内包し、カーブ切り欠きと噛む）
+ped_base_d     = 2*(rosette_d/2 + pedestal_wall_t + fit_clearance);  // フランジ基礎円 = 筒外径 50.8
+ped_curb_ri    = ped_base_d/2 + pedestal_fit;    // カーブ内半径 25.7
+ped_curb_ro    = ped_curb_ri + ped_curb_wt;      // カーブ外半径 27.7
 
 // --- Sanity / clearance checks ---
 assert(wall > 0, "wall must be positive");
@@ -219,3 +233,10 @@ assert(tray_fix_x_left  - tray_sleeve_od/2 >= -ext_left, "左スリーブが -X 
 assert(tray_x1 <= ext_right && tray_x0 >= -ext_left, "トレイ床 X が内寸を超える");
 assert(tray_y1 <= ext_up && tray_y0 >= -ext_down, "トレイ床 Y が内寸を超える");
 assert(tray_y0 >= pedestal_outer - 1, "トレイ床下端がペデスタルに寄りすぎ");
+// ペデスタル・ボルトオンの配置ガード
+assert(ped_fix_r*sin(45) + tray_sleeve_od/2 <= tray_y0, "ペデスタルスリーブがトレイ床に食い込む");
+assert(ped_fix_r*cos(45) + tray_sleeve_od/2 <= min(ext_left, ext_down), "ペデスタルスリーブがプレート端を超える");
+assert(ped_curb_ro <= min(ext_left, ext_down) + wall - 0.2, "受けカーブがプレート端に寄りすぎ");
+assert(ped_fix_r - tray_sleeve_od/2 > rosette_d/2 + fit_clearance, "ペデスタルボスがロゼット開口に食い込む");
+assert(ped_lobe_w > tray_sleeve_od, "ローブ幅がスリーブ外径より細い（スリーブがローブから食み出す）");
+assert(ped_flange_t < tray_boss_h, "フランジ厚がボス高以上（ボスがスリーブに届かない）");

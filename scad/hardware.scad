@@ -81,3 +81,9 @@ module tray_mount_bosses() {
   for (p = tray_fix_pts)
     translate([p[0], p[1], wall]) m2_boss();
 }
+
+// ペデスタルをプレート天面から留めるための本体側ボス。ped_fix_pts（対角4点）に床上面から立てる。
+module ped_mount_bosses() {
+  for (p = ped_fix_pts)
+    translate([p[0], p[1], wall]) m2_boss();
+}

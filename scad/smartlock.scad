@@ -1,5 +1,6 @@
 include <params.scad>
 use <body.scad>
+use <pedestal.scad>
 use <socket.scad>
 use <tray.scad>
 
@@ -15,6 +16,7 @@ exp = exploded ? 1 : 0;
 if (part == "body") body();
 else if (part == "socket") thumbturn_socket();
 else if (part == "tray") tray();
+else if (part == "pedestal") pedestal();
 // トレイの +X/+Y 隅（右固定スリーブ＋BB ポケット角）を切り出したクーポン
 // （固定スリーブのネジ効き・ポケット壁の勘合確認用）
 else if (part == "tray_coupon")
@@ -53,13 +55,13 @@ else if (part == "socket_coupon")
   }
 // ペデスタル天板のみ切り出した薄型クーポン（サーボ耳の位置・ネジ効き確認用）
 else if (part == "mount_coupon")
-  translate([0, 0, -(pedestal_top_z - servo_plate_t)]) // 天板下面をベッドに接地
+  translate([0, 0, -(pedestal_top_z - wall - servo_plate_t)]) // 天板下面をベッドに接地
     intersection() {
-      body();
-      translate([0, 0, pedestal_top_z - servo_plate_t])
-        // 半径をペデスタル外周までに絞り、body の外壁を巻き込まない
+      pedestal();
+      translate([0, 0, pedestal_top_z - wall - servo_plate_t])
+        // 半径をペデスタル外周までに絞り、フランジ/スリーブを巻き込まない
         cylinder(r = rosette_d/2 + pedestal_wall_t + fit_clearance + 0.1,
-                 h = servo_plate_t + 0.5); // +0.5 = 天板上面のマージン
+                 h = servo_plate_t + 0.5);
     }
 // 床フットプリントのみ切り出した薄型クーポン（ロゼット嵌合＋ドア左/下クリアランス確認用）。
 // 床(wall)に加えて台座リングを 8mm 残し、ロゼットの出っ張りがボア(Ø45.8)へ逃げるかを確認する
@@ -79,6 +81,9 @@ else if (part == "asm_socket")
 else if (part == "asm_tray")
   color("Plum")
     translate([0, 0, wall + exp * 10]) tray();
+else if (part == "asm_pedestal")
+  color("Khaki")
+    translate([0, 0, wall + exp * 8]) pedestal();
 else {
   // full assembly
   color("SteelBlue") body();
@@ -88,6 +93,9 @@ else {
       rotate([180, 0, 0])
         translate([0, 0, -socket_oh/2])
           thumbturn_socket();
+
+  color("Khaki")
+    translate([0, 0, wall + exp * 8]) pedestal();
 
   color("Plum")
     translate([0, 0, wall + exp * 10]) tray();

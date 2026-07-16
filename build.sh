@@ -7,7 +7,7 @@ if ! command -v openscad >/dev/null 2>&1; then
 fi
 cd "$(dirname "$0")"
 mkdir -p build
-for p in body socket tray asm_body asm_socket asm_tray; do
+for p in body pedestal socket tray asm_body asm_pedestal asm_socket asm_tray; do
   echo "== building $p =="
   log="$(openscad -D "part=\"$p\"" -o "build/$p.stl" scad/smartlock.scad 2>&1)"
   status=$?
