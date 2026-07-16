@@ -46,6 +46,26 @@ else if (part == "tray_mount_coupon") {
         cube([2*hw, 2*hw, tray_boss_h + tray_cap_t + 2], center = true);
     }
 }
+// ペデスタル固定の嵌合クーポン（フランジ⇔受けカーブの横嵌め pedestal_fit・ローブ⇔切り欠きの
+// 噛み・M2 の効き・面一沈み確認用）。45° の固定点まわりを本物の body/pedestal から切り出す。
+// 両方とも底面 z=0 がベッド接地。ペデスタル側は印刷用に +X へ退避。
+else if (part == "ped_mount_coupon") {
+  cp = ped_fix_pts[0];   // 45° の固定点 (≈21.2, 21.2)
+  hw = 14;               // 切り出し半幅（カーブ切り欠き・ローブ・ボス・カーブ本体を含む）
+  // プレート側（床パッチ＋ボス1本＋カーブの切り欠き部分）
+  intersection() {
+    body();
+    translate([cp[0], cp[1], (wall + tray_boss_h + 2)/2 - 0.1])
+      cube([2*hw, 2*hw, wall + tray_boss_h + 2], center = true);
+  }
+  // ペデスタル側（フランジローブ＋スリーブ1個＋筒壁の一部）
+  translate([2*hw + 8, 0, 0])
+    intersection() {
+      pedestal();
+      translate([cp[0], cp[1], (tray_boss_h + tray_cap_t + 2)/2 - 0.1])
+        cube([2*hw, 2*hw, tray_boss_h + tray_cap_t + 2], center = true);
+    }
+}
 // ポケット周辺のみ切り出した薄型クーポン（ホーンフィット確認用）
 else if (part == "socket_coupon")
   intersection() {
