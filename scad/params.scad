@@ -69,7 +69,6 @@ horn_h            = servo_horn_stack + horn_seat_clear - (horn_thick + horn_clea
 socket_oh         = knob_engage + socket_wall + 6;   // socket total height (18)
 pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 48.4: servo tabs rest here
 pedestal_wall_t   = 2.5;    // pedestal wall thickness
-wire_clearance    = 4;      // space above servo for wiring (pedestal height calculation 用; 壁・蓋は廃止済み)
 
 // --- Interior extents from the axis at origin (mm) ---
 // -X/-Y はドアクリアランスの硬い制約で不変。BB を収めるため +X/+Y に拡大する。
