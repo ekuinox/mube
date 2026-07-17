@@ -40,25 +40,50 @@ module pico_w_mounts() {
   }
 }
 
-// トレイを本体裏から留めるための床カット：シャンク貫通穴＋裏面の皿ザグリ。
-// 位置はトレイ固定ポスト tray_fix_pts に一致（ワールド座標, 床の z 原点=0）。
-module tray_mount_cuts() {
-  for (p = tray_fix_pts)
-    translate([p[0], p[1], 0]) {
-      // シャンクは床を貫通
-      translate([0, 0, -0.1])
-        cylinder(d = tray_screw_clear, h = wall + 0.2);
-      // 皿頭のザグリ（裏面 z=0 側から）
-      translate([0, 0, -0.1])
-        cylinder(d = tray_head_d, h = tray_head_h + 0.1);
-    }
+// M2 セルフタップ用ボス1本（原点基準・呼び出し側で translate）。床上面に立て、上面から
+// tray_screw_pilot の袋下穴を tray_screw_grip 深さで彫る（下=ドア面を貫通しない）。加算形状（union 側で使う）。
+module m2_boss() {
+  difference() {
+    cylinder(d = tray_boss_d, h = tray_boss_h);
+    translate([0, 0, tray_boss_h - tray_screw_grip])
+      cylinder(d = tray_screw_pilot, h = tray_screw_grip + 0.1);
+  }
 }
 
-// USB plug opening, centered at origin, cut along Y.
-module usb_cutout() {
-  c = fit_clearance;
-  rotate([90, 0, 0])
-    translate([0, 0, -wall*2])
-      linear_extrude(height = wall*4)
-        offset(r = c) square([usb_w, usb_h], center = true);
+// M2 スリーブ1個の外形（原点基準）。union 側で使い、内側は m2_sleeve_cuts() で彫る。
+// ボスに被さって XY 位置決めし、天面から M2 でキャップを締める（トレイで実機検証済みの構造）。
+module m2_sleeve_solid() {
+  cylinder(d = tray_sleeve_od, h = tray_boss_h + tray_cap_t);
+}
+
+// M2 スリーブ1個の内側カット一式（原点基準）。difference 側で使う。
+// キャップ裏はボア全径から段差なしで絞る自己サポート・ファンネル。平らな張り出し（ブリッジ）を
+// 一切作らないので、床下向き印刷でもネジ穴が垂れて塞がらない（実機で塞がった対策）。throat=0.3mm。
+module m2_sleeve_cuts() {
+  // ボス逃げボア（下端貫通〜ボス収容, φ tray_sleeve_id 一定）
+  translate([0, 0, -0.1])
+    cylinder(d = tray_sleeve_id, h = tray_boss_h + 0.1);
+  // 自己サポート・ファンネル（ボア全径 tray_sleeve_id → 上へ tray_screw_clear へ絞る）
+  translate([0, 0, tray_boss_h - 0.01])
+    cylinder(d1 = tray_sleeve_id, d2 = tray_screw_clear,
+             h = tray_cap_t - tray_head_h - 0.3);
+  // ネジ通し throat（ファンネル上端〜天面。頭ザグリと重ねる）
+  translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h - 0.3 - 0.01])
+    cylinder(d = tray_screw_clear, h = tray_head_h + 0.3 + 0.2);
+  // 頭ザグリ（天面から）
+  translate([0, 0, tray_boss_h + tray_cap_t - tray_head_h])
+    cylinder(d = tray_head_d, h = tray_head_h + 0.2);
+}
+
+// トレイを本体天面（内側）から留めるための本体側ボス。tray_fix_pts の各点に床上面
+// （z=wall）から立てる。トレイのスリーブが被さり、天面から M2 セルフタップで固定する。
+module tray_mount_bosses() {
+  for (p = tray_fix_pts)
+    translate([p[0], p[1], wall]) m2_boss();
+}
+
+// ペデスタルをプレート天面から留めるための本体側ボス。ped_fix_pts（対角4点）に床上面から立てる。
+module ped_mount_bosses() {
+  for (p = ped_fix_pts)
+    translate([p[0], p[1], wall]) m2_boss();
 }

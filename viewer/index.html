@@ -46,7 +46,7 @@
   <select id="part">
     <option value="assembly.stl">組立プレビュー (assembly)</option>
     <option value="body.stl">本体 (body)</option>
-    <option value="lid.stl">蓋 (lid)</option>
+    <option value="pedestal.stl">サーボ台座 (pedestal)</option>
     <option value="socket.stl">サムターンソケット (socket)</option>
     <option value="tray.stl">電子部品トレイ (tray)</option>
   </select>
@@ -93,10 +93,10 @@ let grid = null, axes = null;
 const defaultMat = new THREE.MeshStandardMaterial({ color: 0x7fb2e6, metalness: 0.15, roughness: 0.55, flatShading: false });
 
 const assemblyParts = [
-  { file: 'asm_body.stl',   color: 0x4682b4, name: '本体' },
-  { file: 'asm_lid.stl',    color: 0x3cb371, name: '蓋' },
-  { file: 'asm_socket.stl', color: 0xf4a460, name: 'ソケット' },
-  { file: 'asm_tray.stl',   color: 0xdda0dd, name: 'トレイ' },
+  { file: 'asm_body.stl',      color: 0x4682b4, name: '本体' },
+  { file: 'asm_pedestal.stl',  color: 0xf0e68c, name: 'サーボ台座' },
+  { file: 'asm_socket.stl',    color: 0xf4a460, name: 'ソケット' },
+  { file: 'asm_tray.stl',      color: 0xdda0dd, name: 'トレイ' },
 ];
 
 let meshes = [];

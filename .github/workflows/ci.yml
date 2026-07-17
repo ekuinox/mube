@@ -72,8 +72,14 @@ jobs:
         run: |
           nix develop --command bash -euo pipefail -c '
             for f in scad/smartlock.scad scad/smoke.scad test/*.scad; do
+              # clash_check.scad は「空出力が正解」の干渉検査フィクスチャなので
+              # 通常レンダリング（非空 STL 前提）からは除外し、次の専用ステップで判定する
+              case "$f" in test/clash_check.scad) continue ;; esac
               echo "::group::render $f"
               ./test/render.sh "$f"
               echo "::endgroup::"
             done
           '
+
+      - name: Part clash check (組立位置での部品間体積干渉が無いこと)
+        run: nix develop --command ./test/clash.sh

@@ -4,8 +4,6 @@
 wall          = 2.4;
 fit_clearance = 0.4;
 $fn           = 64;
-box_corner_r  = 3;      // outer shell corner fillet radius
-lid_lip_h     = 4;      // lid inner-lip depth
 
 // --- SG90 servo (datasheet nominal) ---
 servo_body_l  = 22.8;
@@ -48,15 +46,6 @@ pico_boss_h   = pico_pin_drop + 0.5;  // スタンドオフ高（下ピン先端
 pico_screw_pilot = 2.1; // M2 セルフタップ下穴径（tray と同仕様。A1 mini 補正込みの実績値）
 pico_screw_grip  = 5;   // セルフタップ効き深さ（スタンドオフ上面から）
 
-// --- USB micro-B connector (Pico W) ---
-usb_w           = 12.0;  // 開口幅はケーブルプラグ基準。コネクタ幅9では実機でプラグが通らず拡大(2026-07-04)。クリアランス込み設計開口 12.8
-usb_h           = 6.0;
-usb_connector_h = 2.6;   // connector body height above PCB (measured)
-
-// --- Indicators ---
-led_hole_d    = 5.2;
-button_hole_d = 6.2;
-led_btn_spacing = 16;   // center-to-center distance between LED and button
 
 // --- Door-fit clearances from the thumb-turn axis (origin = rosette center) ---
 clear_left  = 50;   // -X to door edge/frame（実測: ~50 未満の上限。精密値は未確定）
@@ -80,7 +69,6 @@ horn_h            = servo_horn_stack + horn_seat_clear - (horn_thick + horn_clea
 socket_oh         = knob_engage + socket_wall + 6;   // socket total height (18)
 pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 48.4: servo tabs rest here
 pedestal_wall_t   = 2.5;    // pedestal wall thickness
-wire_clearance    = 4;      // space above servo for wiring
 
 // --- Interior extents from the axis at origin (mm) ---
 // -X/-Y はドアクリアランスの硬い制約で不変。BB を収めるため +X/+Y に拡大する。
@@ -88,29 +76,33 @@ wire_clearance    = 4;      // space above servo for wiring
 ext_left  = 27;    // -X toward frame; <= clear_left
 ext_right = 86;    // +X; BB ポケット右(76.5) + 固定ポスト + トレイ床(+X端84.5)に 1.5mm 余裕
 ext_down  = 26;    // -Y toward handle; <= clear_down
-ext_up    = 120;   // +Y free; BB ポケット上端(118.25) + 壁マージンを収める
+ext_up    = 122.3; // +Y free; BB ポケット上端(120.55) + 余白。BB 系のカーブ逃げ +2.3 シフト
+                   // (bb_off_y のアンカー変更) と同量を足し、Pico(ext_up 基準)も +2.3 の剛体
+                   // シフトになるようにしてトレイ単体の形状を不変に保つ
 
-inner_l = ext_left + ext_right;          // 111
-inner_w = ext_down + ext_up;             // 146
-// inner_h: servo stack is the tallest — pedestal_top(48.4) + servo(22.5) + clearance(4) - floor wall
-inner_h = pedestal_top_z + servo_body_h + wire_clearance - wall; // 72.5
-
-body_l = inner_l + 2*wall;               // 115.8
-body_w = inner_w + 2*wall;               // 150.8
-body_h = inner_h + 2*wall;
+// プレート外形（旧・箱外形と同じ footprint。壁は無いが名前は互換のため維持）
+body_l = ext_left + ext_right + 2*wall;   // 115.8
+body_w = ext_down + ext_up  + 2*wall;     // 153.1
 
 // body center relative to the axis (axis sits low-left, body grows up-right)
 center_x = (ext_right - ext_left) / 2;   // 28.5
-center_y = (ext_up - ext_down) / 2;      // 47
+center_y = (ext_up - ext_down) / 2;      // 48.15
 
 // --- Pico placement in the +Y free space ---
-// Pico は +Y 天井壁寄り（長軸 Y, USB は +Y 壁から）。USB プラグの届き量を master
-// 同等（Pico の USB 端 → +Y 内壁 = pico_usb_gap）に保つよう pico_y を導出する。
-// +Y 内壁の y は center_y + inner_w/2 = ext_up（恒等式）。
-pico_usb_gap = 11;                            // Pico USB 端 → +Y 天井内壁（プラグ届き）
+// Pico の配置。pico_usb_gap は「Pico USB 端 → プレート +Y 端（旧内壁線 ext_up）の余白」で、
+// USB プラグの抜き差しスペースとして維持する（壁開口は廃止済み・オープン構成）。
+pico_usb_gap = 11;
 pico_x = 0;
-pico_y = ext_up - pico_usb_gap - pico_l/2;    // 83.5
+pico_y = ext_up - pico_usb_gap - pico_l/2;    // 85.8
 pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;  // 25.4
+
+// ペデスタル受けカーブの半径系（BB/トレイの -Y アンカーが参照するため、依存順でここに定義。
+// カーブ本体・ローブ等の残りのペデスタル定数は後段の「ペデスタルのボルトオン分離」ブロック）
+pedestal_fit   = 0.3;    // フランジ⇔受けカーブの横嵌めすき間（フェーズ2でクーポン実測して確定）
+ped_curb_wt    = 2.0;    // 受けカーブ壁厚
+ped_base_d     = 2*(rosette_d/2 + pedestal_wall_t + fit_clearance);  // フランジ基礎円 = 筒外径 50.8
+ped_curb_ri    = ped_base_d/2 + pedestal_fit;    // カーブ内半径 25.7
+ped_curb_ro    = ped_curb_ri + ped_curb_wt;      // カーブ外半径 27.7
 
 // --- Breadboard (half-size, 実測 85.5 x 54.5mm) ---
 // 浅い囲い壁ポケットへ落とし込む。厚み bb_t は形状に使わない（壁高で位置決め）。
@@ -124,25 +116,27 @@ bb_pocket_wall_h = 5.0;   // ポケット壁高（BB 下部を囲って位置決
 bb_rail_hook  = 1.5;      // リップの内側 overhang（BB 上端短辺へのかぶさり）
 bb_rail_lip_h = 1.5;      // リップの縦厚（上面テーパーで傾け差し込みガイド）
 pico_bb_gap      = 4;     // Pico 右端 → ポケット外壁左のすき間（ジャンパ差込）
-bb_ped_gap       = 2.35;  // ポケット外壁下端 → ペデスタル外周のすき間
+bb_ped_gap       = 2.35;  // ポケット外壁下端 → 受けカーブ外周のすき間
 
 // BB 中心（ワールド座標）。ポケット外壁の左端が Pico 右端から pico_bb_gap、
-// 下端がペデスタル外周から bb_ped_gap だけ離れるように置く。
+// 下端が受けカーブ外周（ped_curb_ro。ペデスタル系で最も +Y に張り出す本体形状）から
+// bb_ped_gap だけ離れるように置く。旧アンカーは筒外周 pedestal_outer(25.4) だったが、
+// カーブ(27.7)の方が外にあり実機でトレイ床前縁が乗り上げたため、カーブ基準に変更（+2.3 シフト）。
 bb_off_x = pico_x + pico_w/2 + pico_bb_gap + bb_pocket_wt + bb_clearance + bb_w/2;  // 44.25
-bb_off_y = pedestal_outer + bb_ped_gap + bb_pocket_wt + bb_clearance + bb_l/2;      // 73
+bb_off_y = ped_curb_ro + bb_ped_gap + bb_pocket_wt + bb_clearance + bb_l/2;         // 75.3
 
 // BB ポケット内壁の端（BB 外形＋クリアランス）。Pico すき間を保つため -X（Pico 側）は
 // 動かさず、反対の +X（ツメ2つの下辺）側だけ bb_ext_farx ぶん外へ広げる。
 bb_ext_farx = 2.5;   // Pico と反対側(+X)へポケット内寸を拡張する量（Pico すき間 4mm を保つ）
 pocket_inner_left   = bb_off_x - bb_w/2 - bb_clearance;                 // 16.5（元通り＝gap 保持）
 pocket_inner_right  = bb_off_x + bb_w/2 + bb_clearance + bb_ext_farx;   // 74.5
-pocket_inner_bottom = bb_off_y - bb_l/2 - bb_clearance;                 // 30.25
-pocket_inner_top    = bb_off_y + bb_l/2 + bb_clearance;                 // 115.75
+pocket_inner_bottom = bb_off_y - bb_l/2 - bb_clearance;                 // 32.05
+pocket_inner_top    = bb_off_y + bb_l/2 + bb_clearance;                 // 118.55
 // ポケット外形の端（アサート・床範囲・固定ポスト配置の基準）
 pocket_outer_left   = pocket_inner_left   - bb_pocket_wt;  // 14.5（元通り）
 pocket_outer_right  = pocket_inner_right  + bb_pocket_wt;  // 76.5
-pocket_outer_bottom = pocket_inner_bottom - bb_pocket_wt;  // 27.75
-pocket_outer_top    = pocket_inner_top    + bb_pocket_wt;  // 118.25
+pocket_outer_bottom = pocket_inner_bottom - bb_pocket_wt;  // 30.05
+pocket_outer_top    = pocket_inner_top    + bb_pocket_wt;  // 120.55
 
 // --- Electronics carrier tray ---
 tray_t           = 2.4;    // tray floor thickness
@@ -152,26 +146,54 @@ tray_screw_clear = 2.4;    // M2 shank clearance（本体床の貫通）
 tray_head_d      = 4.2;    // M2 pan-head counterbore 径（本体床裏）
 tray_head_h      = 1.6;    // counterbore 深さ
 
-// トレイ固定ポスト（専用。本体裏から M2 セルフタップで留める）。BB ポケットと
-// Pico を避け、左ストリップ2本＋ポケット右2本に配置する。
-tray_fix_d       = 6;      // 固定ポスト外径
-tray_fix_h       = 6;      // 固定ポスト高（ネジ効き tray_screw_grip=5 + マージン）
-tray_fix_gap     = 1;      // ポケット外壁 → 右ポストのすき間
-tray_fix_x_left  = -20;    // 左ポスト列（Pico 左 -10.5 と壁 -27 の間）
-tray_fix_x_right = pocket_outer_right + tray_fix_gap + tray_fix_d/2;  // 78
-tray_fix_y_lo    = 40;
-tray_fix_y_hi    = 100;
+// トレイ天面留め：本体側ボス＋トレイ側スリーブ（旧・裏留めポストを置換）。
+// ボディ床からボスを立て、トレイのスリーブが上から被さる。天面から M2 セルフタップで
+// キャップ耳をボス上面へ締めてトレイを固定する。ドア面(z=0)は袋下穴で貫通させない。
+tray_boss_d    = 5;                       // 本体ボス外径（Pico の pico_boss_d に倣い肉厚確保）
+tray_boss_h    = tray_screw_grip + 1;     // ボス高 = 効き代5 + 底残し1 = 6（床下=ドア面を貫通しない）
+boss_fit       = 0.4;                     // ボス⇔スリーブ横嵌めすき間（フェーズ2でクーポン実測して確定）
+tray_sleeve_wt = 1.0;                      // スリーブ壁厚
+// キャップ厚。頭ザグリ tray_head_h=1.6 + ネジ通し throat + 自己サポート・ファンネル分を含む。
+// ファンネルはボア全径 tray_sleeve_id から段差なしで tray_screw_clear まで絞るので、45°以内に
+// 収めるには tray_cap_t - tray_head_h - throat >= (tray_sleeve_id - tray_screw_clear)/2 が要る。
+tray_cap_t     = 3.8;
+tray_sleeve_id = tray_boss_d + 2*boss_fit;             // ボア径（ボス逃げ）= 5.8
+tray_sleeve_od = tray_sleeve_id + 2*tray_sleeve_wt;    // スリーブ外径 = 7.8
+
+tray_fix_gap     = 1;      // ポケット外壁 → 右スリーブのすき間
+tray_fix_x_left  = -20;    // 左スリーブ列（Pico 左 -10.5 と壁 -27 の間）
+tray_fix_x_right = pocket_outer_right + tray_fix_gap + tray_sleeve_od/2;  // 81.4
+tray_fix_y_lo    = 42.3;   // 旧40。BB系のカーブ逃げ+2.3シフトに追従（トレイ形状不変）
+tray_fix_y_hi    = 102.3;  // 旧100。同上
 tray_fix_pts = [
   [tray_fix_x_left,  tray_fix_y_lo], [tray_fix_x_left,  tray_fix_y_hi],
   [tray_fix_x_right, tray_fix_y_lo], [tray_fix_x_right, tray_fix_y_hi],
 ];
 
-// トレイ床矩形（Pico・ポケット・固定ポストを内包。1mm マージン）。
-tray_x0 = tray_fix_x_left  - tray_fix_d/2 - 1;   // -24
-tray_x1 = tray_fix_x_right + tray_fix_d/2 + 1;   // 82
-tray_y0 = pocket_outer_bottom - 0.75;            // 27
-tray_y1 = pocket_outer_top    + 0.25;            // 118.5
+// トレイ床 X 範囲（スリーブ外径基準）。右は +X 壁が近いのでスリーブ外周に flush（余白0）。
+tray_x0 = tray_fix_x_left  - tray_sleeve_od/2 - 1;   // -24.9
+tray_x1 = tray_fix_x_right + tray_sleeve_od/2;        // 85.3
+tray_y0 = pocket_outer_bottom - 0.75;            // 29.3
+tray_y1 = pocket_outer_top    + 0.25;            // 120.8
 
+// ペデスタルのボルトオン分離（プレート受けカーブ＋底フランジ、天面 M2 留め）。
+// トレイと同じボス/スリーブ/ファンネル構造を流用。フランジ基礎円が受けカーブに落ちて軸センタ
+// リング、対角4ローブがカーブ切り欠きと噛んでサーボ反力トルクの回り止め、M2×4 は抜け止め専任。
+ped_flange_t   = 2.4;    // 底フランジ厚（トレイ床と同厚＝スリーブ構造を無改造で流用）
+ped_fix_r      = 30;     // 固定ボス配置半径。対角4点で -X/-Y プレート端(26/27)とトレイ床(y>=29.3)を回避
+ped_fix_angles = [45, 135, 225, 315];
+ped_fix_pts    = [for (a = ped_fix_angles) [ped_fix_r*cos(a), ped_fix_r*sin(a)]];
+ped_curb_h     = ped_flange_t;   // カーブ高（フランジ上面と面一）
+ped_lobe_w     = 10;     // フランジローブ幅（スリーブ od 7.8 を内包し、カーブ切り欠きと噛む）
+// （pedestal_fit / ped_curb_wt / ped_base_d / ped_curb_ri / ped_curb_ro は BB アンカーが
+//   参照するため前方の「受けカーブの半径系」ブロックで定義済み）
+ped_curb_tray_gap = 1.0; // 受けカーブ外周 → トレイ床下端に要求する最小すき間（干渉ガード用）
+
+// プレート上面リブ（手持ち時の剛性・印刷反り対策。ドア面はフラット維持）。
+// 横桟はトレイ床(y>=tray_y0=29.3)とペデスタルスリーブ帯(対角 y≈17.3〜25.1)を避けた位置に置く。
+plate_rib_h  = 4;            // リブ高（床上面から）
+plate_rib_w  = 2;            // リブ幅
+plate_rib_ys = [-14, 14];    // 横桟の y（ワールド y＝ロゼット軸基準。プレート中心基準ではない）（受けカーブとの交差は差し引きで自動処理）
 
 // --- Sanity / clearance checks ---
 assert(wall > 0, "wall must be positive");
@@ -204,24 +226,38 @@ assert(horn_arm_l + horn_clearance + 0.4 <= (knob_w_base + knob_t)/2 + socket_wa
 // Pico が +Y 天井壁寄りでペデスタルをクリア
 assert(pico_y - pico_l/2 > pedestal_outer, "Pico -Y 端がペデスタルに干渉");
 assert(pico_y + pico_l/2 <= ext_up, "Pico +Y 端が内寸を超える");
-// USB プラグ届き量が正（Pico USB 端 → +Y 内壁 = pico_usb_gap）
-assert(pico_usb_gap > 0 && ext_up - (pico_y + pico_l/2) >= pico_usb_gap - 0.01, "USB プラグ届き量が不足");
 // Pico 四隅スタンドオフ: 下ピンを床から逃がし、下穴がスタンドオフ内に収まる
 assert(pico_boss_h >= pico_pin_drop, "スタンドオフ高が下ピン突出を逃がせない");
 assert(pico_screw_grip < pico_boss_h, "ネジ下穴 grip がスタンドオフ高を超える");
 assert(pico_boss_d > pico_screw_pilot + 1.6, "スタンドオフ肉厚が下穴に対して薄すぎる");
 // BB ポケットが内寸に収まる（+X/+Y 壁・ペデスタルをクリア）
-assert(pocket_outer_right <= ext_right, "BB ポケット右端が +X 壁を超える");
-assert(pocket_outer_top   <= ext_up,    "BB ポケット上端が +Y 壁を超える");
+assert(pocket_outer_right <= ext_right, "BB ポケット右端がプレート端(+X)を超える");
+assert(pocket_outer_top   <= ext_up,    "BB ポケット上端がプレート端(+Y)を超える");
 assert(pocket_outer_bottom >= pedestal_outer, "BB ポケット下端がペデスタルに干渉");
 assert(bb_rail_hook > bb_clearance, "BB レールリップの overhang がクリアランス以下（掴めない）");
 assert(pocket_outer_left  >= pico_x + pico_w/2 + pico_bb_gap - 0.001, "Pico↔BB ポケットのすき間不足");
-// 固定ポストが BB・Pico・壁と干渉しない
-assert(tray_fix_x_right - tray_fix_d/2 >= pocket_outer_right, "右固定ポストが BB ポケットに食い込む");
-assert(tray_fix_x_right + tray_fix_d/2 <= ext_right, "右固定ポストが +X 壁を超える");
-assert(tray_fix_x_left  + tray_fix_d/2 <= pico_x - pico_w/2, "左固定ポストが Pico に食い込む");
-assert(tray_fix_x_left  - tray_fix_d/2 >= -ext_left, "左固定ポストが -X 壁を超える");
+assert(tray_boss_d > tray_screw_pilot + 1.6, "ボス肉厚が下穴に対して薄すぎる");
+assert(tray_screw_grip < tray_boss_h, "ネジ下穴 grip がボス高を超える（床貫通の恐れ）");
+assert(tray_cap_t > tray_head_h, "キャップ厚が頭ザグリ深さ以下（頭が座らない）");
+// ファンネルがボア全径→ネジ穴を 45°以内で絞れること（平らな張り出し=ブリッジを作らず塞がらない）
+assert(tray_cap_t - tray_head_h - 0.3 >= (tray_sleeve_id - tray_screw_clear)/2, "ファンネルが 45°より急（自己サポート不可でネジ穴が塞がる）");
+assert(tray_fix_x_right - tray_sleeve_od/2 >= pocket_outer_right, "右スリーブが BB ポケットに食い込む");
+assert(tray_fix_x_right + tray_sleeve_od/2 <= ext_right, "右スリーブがプレート端(+X)を超える");
+assert(tray_fix_x_left  + tray_sleeve_od/2 <= pico_x - pico_w/2, "左スリーブが Pico に食い込む");
+assert(tray_fix_x_left  - tray_sleeve_od/2 >= -ext_left, "左スリーブがプレート端(-X)を超える");
 // トレイ床が内寸に収まる（ドロップイン可能）
 assert(tray_x1 <= ext_right && tray_x0 >= -ext_left, "トレイ床 X が内寸を超える");
 assert(tray_y1 <= ext_up && tray_y0 >= -ext_down, "トレイ床 Y が内寸を超える");
 assert(tray_y0 >= pedestal_outer - 1, "トレイ床下端がペデスタルに寄りすぎ");
+// ペデスタル・ボルトオンの配置ガード
+assert(ped_fix_r*sin(45) + tray_sleeve_od/2 <= tray_y0, "ペデスタルスリーブがトレイ床に食い込む");
+assert(ped_fix_r*cos(45) + tray_sleeve_od/2 <= min(ext_left, ext_down), "ペデスタルスリーブがプレート端を超える");
+assert(ped_curb_ro <= min(ext_left, ext_down) + wall - 0.2, "受けカーブがプレート端に寄りすぎ");
+assert(ped_fix_r - tray_sleeve_od/2 > rosette_d/2 + fit_clearance, "ペデスタルボスがロゼット開口に食い込む");
+assert(ped_lobe_w > tray_sleeve_od, "ローブ幅がスリーブ外径より細い（スリーブがローブから食み出す）");
+assert(ped_flange_t < tray_boss_h, "フランジ厚がボス高以上（ボスがスリーブに届かない）");
+// 受けカーブはペデスタル系で最も +Y に張り出す本体形状。トレイ床前縁が乗り上げた実機不具合
+// (2026-07-17) の再発防止。体積干渉は test/clash.sh でも検出する
+assert(tray_y0 >= ped_curb_ro + ped_curb_tray_gap, "受けカーブがトレイ床に近すぎる（bb_ped_gap か ext_up を見直す）");
+assert(max(plate_rib_ys) + plate_rib_w/2 < tray_y0, "横桟がトレイ床に食い込む");
+assert(max(plate_rib_ys) + plate_rib_w/2 <= ped_fix_r*sin(45) - tray_sleeve_od/2, "横桟がペデスタルスリーブに食い込む");
