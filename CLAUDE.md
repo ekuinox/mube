@@ -27,6 +27,7 @@
 | ロジックの host テスト（実機不要） | `nix develop -c cargo host-test` |
 | SCAD レンダリングテスト | `./test/render.sh <scad>` |
 | 回路 ERC（導通・ショート） | `./test/erc.sh` |
+| 部品間の体積干渉チェック（body/tray/pedestal） | `./test/clash.sh` |
 
 ## 触る時の注意（規約・地雷）
 
