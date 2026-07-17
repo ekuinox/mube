@@ -7,7 +7,7 @@ use crate::lock::LockState;
 const SERVO_MIN_US: u16 = 1000; // フルストローク下端のパルス幅[µs]
 const SERVO_MAX_US: u16 = 2000; // フルストローク上端のパルス幅[µs]
 const LOCK_DEG: u16 = 0; // 施錠側の角度
-const UNLOCK_DEG: u16 = 90; // 解錠側の角度（サムターンの回転量に合わせる）
+const UNLOCK_DEG: u16 = 150; // 解錠側の角度（サムターンの回転量に合わせる）
 
 /// 角度[deg]→パルス幅[µs]。u16 同士の積は溢れるため u32 で計算する。
 pub const fn pulse_us(deg: u16) -> u16 {
@@ -38,6 +38,6 @@ mod tests {
     #[test]
     fn pulse_us_for_states() {
         assert_eq!(pulse_us_for(LockState::Locked), 1000);
-        assert_eq!(pulse_us_for(LockState::Unlocked), 1500);
+        assert_eq!(pulse_us_for(LockState::Unlocked), 1833);
     }
 }
