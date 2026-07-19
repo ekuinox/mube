@@ -6,7 +6,7 @@ use crate::lock::LockState;
 // --- キャリブ定数（実機合わせはここだけ触る） ---
 const SERVO_MIN_US: u16 = 1000; // フルストローク下端のパルス幅[µs]
 const SERVO_MAX_US: u16 = 2000; // フルストローク上端のパルス幅[µs]
-const LOCK_DEG: u16 = 0; // 施錠側の角度
+const LOCK_DEG: u16 = 20; // 施錠側の角度（0°=1000µs で異音。端点突き当たり疑いで安全側へ退避中）
 const UNLOCK_DEG: u16 = 150; // 解錠側の角度（サムターンの回転量に合わせる）
 
 /// 角度[deg]→パルス幅[µs]。u16 同士の積は溢れるため u32 で計算する。
@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn pulse_us_for_states() {
-        assert_eq!(pulse_us_for(LockState::Locked), 1000);
+        assert_eq!(pulse_us_for(LockState::Locked), 1111);
         assert_eq!(pulse_us_for(LockState::Unlocked), 1833);
     }
 }
