@@ -90,6 +90,23 @@ sock_wall_x0   = 7.5;  // 壁の内端 |x|（ドーム逃げ）。>= servo_dome_
 sock_funnel    = 2.0;  // 壁上端ファンネルの開き量（高さも同値 = 45°）
 servo_dome_d   = 12;   // ギアヘッドのドーム外径（暫定・要実測）
 
+// --- ソケット押さえ爪（クーポン v4 で形状確定: 横配置・浅くさび 4 本） ---
+// バー先端付近の長辺側から爪を出し、返しをバー上面に被せて浅いくさびで
+// 押さえ付ける。ばねの横力が坂で下向きの面圧に変換され、浮きには自己ロック
+// 気味に効く。梁は本体スラブ（ノブポケットの脇の実体部）へ深く根を張る。
+socket_claws      = true;
+sock_claw_preload = 0.5;  // くさび予圧（v4 実測: 0.3/0.5 とも良好 → クリープ余裕で 0.5）
+sock_claw_hk      = 1.2;  // 返しのバー上面への被さり量
+sock_claw_face    = 0.8;  // 返し先端の垂直面（印刷丸まり対策）
+sock_claw_tipc    = 0.05; // 返し先端とバー上面のすき間（先端は必ず越えられる）
+sock_claw_w       = 5;    // 爪幅（バー長手方向）
+sock_claw_t       = 1.2;  // 梁厚
+sock_claw_x       = 12.5; // 爪の中心 |x|（バー先端寄り・壁帯の中）
+sock_claw_root    = 10;   // 梁根元のローカル z（深いほど梁が長くしなやか。クーポン v4 と同等の梁長を確保しつつ、ノブポケット側壁への窓開けを最小にする値）
+sock_claw_side    = 0.8;  // 爪の左右逃がし
+sock_claw_back    = 1.5;  // 梁背面の撓みしろ
+sock_claw_lead    = 1.6;  // 差し込みガイド高
+
 // --- Interior extents from the axis at origin (mm) ---
 // -X/-Y はドアクリアランスの硬い制約で不変。BB を収めるため +X/+Y に拡大する。
 // （後続の Pico 配置・BB・トレイ定数が参照するため、依存順でここに置く）
@@ -249,6 +266,16 @@ assert(sock_wall_x0 >= servo_dome_d/2 + 1, "キャプチャ壁の内端がギア
 assert(sock_wall_x0 < horn_arm_l, "壁の内端がバー先端より外（壁がバーを囲えない）");
 assert(sock_funnel < sock_wall_h, "ファンネルが壁高より大きい");
 assert(sock_wall_h > horn_thick + horn_clearance + 1, "壁高が浮き許容を生まない（バー厚+1mm 超が必要）");
+
+// --- 押さえ爪の整合チェック ---
+// 爪位置でのバー半幅（ポケット縁 = 爪内面の y）
+sock_claw_bar_hw = horn_clearance +
+  (horn_arm_w_tip + (horn_arm_w_base - horn_arm_w_tip) * (1 - sock_claw_x/horn_arm_l)) / 2;
+assert(sock_claw_x + sock_claw_w/2 + sock_claw_side < horn_arm_l + horn_clearance, "爪帯がバー先端を超える");
+assert(sock_claw_x - sock_claw_w/2 - sock_claw_side > sock_wall_x0, "爪帯が壁内端（ドーム逃げ）に食い込む");
+assert(sock_claw_bar_hw > knob_t/2 + fit_clearance + 0.4, "爪の根元の直下がノブポケット（実体が無い）");
+assert(sock_claw_root <= socket_oh, "爪の根元がソケット全高を超える");
+assert(sock_claw_preload < sock_claw_hk/2, "予圧がくさび勾配に対して過大（坂が急になり自己ロックが崩れる）");
 
 // --- Electronics tray / breadboard layout checks ---
 // Pico が +Y 天井壁寄りでペデスタルをクリア
