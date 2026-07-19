@@ -17,7 +17,7 @@ for p in body pedestal socket tray asm_body asm_pedestal asm_socket asm_tray; do
   fi
 done
 # Standalone scad files (top-level geometry, not smartlock parts).
-for g in tray_pilot_gauge pilot_gauge; do
+for g in tray_pilot_gauge pilot_gauge spline_gauge horn_snap_coupon; do
   echo "== building $g =="
   log="$(openscad -o "build/$g.stl" "scad/$g.scad" 2>&1)"
   status=$?
