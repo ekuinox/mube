@@ -18,3 +18,4 @@ __pycache__/
 circuit/node_modules/
 circuit/dist/
 circuit/.tscircuit/
+.superpowers/
