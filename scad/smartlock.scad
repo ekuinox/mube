@@ -9,7 +9,8 @@ part = "assembly";
 // exploded=0: assembled, exploded=1: exploded view
 exploded = 1;
 
-socket_z = knob_h - knob_engage;
+// ソケット下端の高さ（プレート座標）。ドア面はパッド厚ぶんプレートより下にある
+socket_z = knob_h - knob_engage - mount_pad_t;
 
 exp = exploded ? 1 : 0;
 
@@ -66,12 +67,13 @@ else if (part == "ped_mount_coupon") {
         cube([2*hw, 2*hw, tray_boss_h + tray_cap_t + 2], center = true);
     }
 }
-// ポケット周辺のみ切り出した薄型クーポン（ホーンフィット確認用）
+// ポケット周辺のみ切り出した薄型クーポン（ホーンフィット＋キャプチャ壁確認用）
 else if (part == "socket_coupon")
   intersection() {
     thumbturn_socket();
-    linear_extrude(height = horn_thick + horn_clearance + socket_wall + 0.5) // +0.5 = ポケット底面上のマージン
-      square([200, 200], center = true);
+    translate([0, 0, -sock_wall_h - 0.5])
+      linear_extrude(height = sock_wall_h + 0.5 + horn_thick + horn_clearance + socket_wall + 0.5)
+        square([200, 200], center = true);
   }
 // ペデスタル天板のみ切り出した薄型クーポン（サーボ耳の位置・ネジ効き確認用）
 else if (part == "mount_coupon")
