@@ -15,6 +15,9 @@
             pkgs.cloudflared  # quick tunnel binary (pip's pycloudflared lacks aarch64)
             pkgs.rustup       # Pico W firmware toolchain; rust-toolchain.toml が stable + thumbv6m を自動導入
             pkgs.bun          # tscircuit/ の TS 回路記述を実行（tsci は bun 管理の npm パッケージ）
+            pkgs.trunk            # yew(WASM) を dist へビルド（crates/webui）
+            pkgs.wasm-bindgen-cli # trunk が使う wasm-bindgen（ネット取得を避け系から供給）
+            pkgs.binaryen         # wasm-opt（release 最適化）
             # Backlog.md（backlog/ の残タスク管理 CLI）。nixpkgs 未収載で、GitHub リリースの
             # linux-arm64 バイナリは実行すると素の bun として振る舞い壊れていたため（v1.48.0 で確認）、
             # バージョン固定の bunx ラッパーで提供する。初回実行時のみ bun キャッシュへの取得が走る。
