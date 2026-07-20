@@ -29,7 +29,7 @@ fn main() {
     for f in ["index.html", "webui.js", "webui_bg.wasm"] {
         if !dist.join(f).exists() {
             panic!(
-                "crates/webui/dist/{f} が無い。先に `cd crates/webui && trunk build` を実行してから firmware をビルドすること。"
+                "crates/webui/dist/{f} が無い。先に `cd crates/webui && trunk build --release` を実行してから firmware をビルドすること。"
             );
         }
     }
