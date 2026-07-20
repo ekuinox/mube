@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/firmware", "crates/smtlk-core"]
+members = ["crates/firmware", "crates/mube-core"]
 
 # サイズ優先。embedded ではデバッグビルドでも opt-level を上げないと体感が重い。
 [profile.dev]

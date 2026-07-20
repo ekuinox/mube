@@ -27,20 +27,20 @@ jobs:
           touch crates/firmware/cyw43-firmware/43439A0_clm.bin
           touch crates/firmware/cyw43-firmware/nvram_rp2040.bin
 
-      - name: cargo check (smtlk-core)
-        run: cargo check -p smtlk-core --locked --target x86_64-unknown-linux-gnu
+      - name: cargo check (mube-core)
+        run: cargo check -p mube-core --locked --target x86_64-unknown-linux-gnu
 
-      - name: cargo check (smtlk-firmware)
-        run: cargo check -p smtlk-firmware --locked --target thumbv6m-none-eabi
+      - name: cargo check (mube-firmware)
+        run: cargo check -p mube-firmware --locked --target thumbv6m-none-eabi
 
-      - name: cargo clippy (smtlk-core)
-        run: cargo clippy -p smtlk-core --locked --target x86_64-unknown-linux-gnu -- -D warnings
+      - name: cargo clippy (mube-core)
+        run: cargo clippy -p mube-core --locked --target x86_64-unknown-linux-gnu -- -D warnings
 
-      - name: cargo clippy (smtlk-firmware)
-        run: cargo clippy -p smtlk-firmware --locked --target thumbv6m-none-eabi -- -D warnings
+      - name: cargo clippy (mube-firmware)
+        run: cargo clippy -p mube-firmware --locked --target thumbv6m-none-eabi -- -D warnings
 
-      - name: cargo test (smtlk-core)
-        run: cargo test -p smtlk-core --locked --target x86_64-unknown-linux-gnu
+      - name: cargo test (mube-core)
+        run: cargo test -p mube-core --locked --target x86_64-unknown-linux-gnu
 
   circuit:
     runs-on: ubuntu-latest
@@ -68,18 +68,20 @@ jobs:
       # バックエンドが無く、レンダリング挙動が一致しない。
       - uses: DeterminateSystems/nix-installer-action@main
 
+      - name: bun test (scad ヘルパ + lockctl)
+        run: nix develop --command bun test scad/ lockctl.test.ts
+
       - name: Render SCAD models to STL (fails on WARNING/ERROR)
         run: |
           nix develop --command bash -euo pipefail -c '
-            for f in scad/smartlock.scad scad/smoke.scad test/*.scad; do
-              # clash_check.scad は「空出力が正解」の干渉検査フィクスチャなので
-              # 通常レンダリング（非空 STL 前提）からは除外し、次の専用ステップで判定する
-              case "$f" in test/clash_check.scad) continue ;; esac
+            # clash_check.scad は「空出力が正解」の干渉検査フィクスチャなので
+            # *_test.scad グロブに含まれず、次の専用ステップで判定する
+            for f in scad/smartlock.scad scad/smoke.scad scad/*_test.scad; do
               echo "::group::render $f"
-              ./test/render.sh "$f"
+              bun scad/render.ts "$f"
               echo "::endgroup::"
             done
           '
 
       - name: Part clash check (組立位置での部品間体積干渉が無いこと)
-        run: nix develop --command ./test/clash.sh
+        run: nix develop --command bun scad/clash.ts

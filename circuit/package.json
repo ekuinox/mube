@@ -1,5 +1,5 @@
 {
-  "name": "smtlk-circuit",
+  "name": "mube-circuit",
   "private": true,
   "scripts": {
     "check": "bun check.ts",

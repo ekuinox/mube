@@ -1,14 +1,14 @@
 [package]
-name = "smtlk-firmware"
+name = "mube-firmware"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "Pico W (RP2040) firmware for the smtlk smart lock — Embassy async + CYW43 WiFi"
+description = "Pico W (RP2040) firmware for the mube smart lock — Embassy async + CYW43 WiFi"
 
 # embassy は crates.io 公開版に固定（再現性は版指定＋Cargo.lock で担保）。
 # 版を上げる際は各クレートの CHANGELOG と feature 名の変更に注意する。
 [dependencies]
-smtlk-core = { path = "../smtlk-core", features = ["defmt"] }
+mube-core = { path = "../mube-core", features = ["defmt"] }
 
 embassy-executor = { version = "0.10", features = ["platform-cortex-m", "executor-thread", "executor-interrupt", "defmt"] }
 embassy-time = { version = "0.5", features = ["defmt", "defmt-timestamp-uptime"] }

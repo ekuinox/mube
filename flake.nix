@@ -1,5 +1,5 @@
 {
-  description = "smtlk smart lock enclosure dev environment";
+  description = "mube smart lock enclosure dev environment";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -12,10 +12,15 @@
         default = pkgs.mkShell {
           packages = [
             pkgs.openscad-unstable  # 3D render with Manifold backend (headless via Mesa EGL)
-            pkgs.uv           # runs viewer/serve.py (PEP 723), provisions its own Python
             pkgs.cloudflared  # quick tunnel binary (pip's pycloudflared lacks aarch64)
             pkgs.rustup       # Pico W firmware toolchain; rust-toolchain.toml が stable + thumbv6m を自動導入
             pkgs.bun          # tscircuit/ の TS 回路記述を実行（tsci は bun 管理の npm パッケージ）
+            # Backlog.md（backlog/ の残タスク管理 CLI）。nixpkgs 未収載で、GitHub リリースの
+            # linux-arm64 バイナリは実行すると素の bun として振る舞い壊れていたため（v1.48.0 で確認）、
+            # バージョン固定の bunx ラッパーで提供する。初回実行時のみ bun キャッシュへの取得が走る。
+            (pkgs.writeShellScriptBin "backlog" ''
+              exec ${pkgs.bun}/bin/bunx backlog.md@1.48.0 "$@"
+            '')
             pkgs.librsvg      # SVG -> PNG 変換
             pkgs.mesa         # swrast ソフトウェアレンダラ（headless 3D レンダリング用）
             pkgs.libglvnd     # EGL ディスパッチャー
@@ -26,7 +31,7 @@
             # 動的に解決するため x86_64 / aarch64 どちらの環境でも同じコマンドで動く。
             (pkgs.writeShellScriptBin "cargo-host-test" ''
               shift  # cargo が外部サブコマンドに渡す先頭引数（"host-test"）を除去する
-              exec cargo test -p smtlk-core --target "$(uname -m)-unknown-linux-gnu" "$@"
+              exec cargo test -p mube-core --target "$(uname -m)-unknown-linux-gnu" "$@"
             '')
           ];
           FONTCONFIG_FILE = let

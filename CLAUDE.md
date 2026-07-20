@@ -7,37 +7,41 @@
 
 - `scad/` — 筐体（OpenSCAD）
 - `circuit/` — 回路（tscircuit / TS: 導通・ショート ERC。bun 管理）
-- `viewer/` — STL ブラウザビューア（Three.js + cloudflared quick tunnel）
+- `viewer/` — STL ブラウザビューア（Three.js + cloudflared quick tunnel。bun）
 - `crates/firmware/` — Pico W ファーム（Embassy/CYW43/PWM 接合部、thumbv6m-none-eabi）
-- `crates/smtlk-core/` — ハード非依存ロジック（LockState/コマンド解釈/serve ループ/サーボ角度。host テスト可）
-- `build/` — 派生物（STL 出力。非コミット）
-- `test/`, `docs/` — テスト / 設計ドキュメント
+- `crates/mube-core/` — ハード非依存ロジック（LockState/コマンド解釈/serve ループ/サーボ角度。host テスト可）
+- `scad/build/`, `circuit/build/` — 派生物（STL/SVG 出力。非コミット）
+- `backlog/` — 残タスク（Backlog.md 管理。タスク = markdown ファイル）
+- `docs/` — 設計ドキュメント
 
 ## コマンドの打ち方（落とし穴）
 
-`openscad` / `cargo` / `uv` は nix dev シェルの中にしか無い。
-
-- `.sh` 系（`./build.sh`, `./test/render.sh`）は自分で nix dev シェルに再突入するのでそのまま実行可。
-- 素の `cargo` / `uv` / `openscad` は **`nix develop -c <cmd>`** 経由で実行する。
+正式なコマンドは下表の素の形（Nix はツールを揃える手段のひとつで、プロジェクトの前提ではない）。
+ただし**この開発機の非対話シェルには `openscad` / `cargo` / `bun` / `cloudflared` が PATH に無い**ので、
+Claude が実行するときは各コマンドに `nix develop -c` を前置する（例: `nix develop -c bun scad/build.ts`。
+`.sh` の自動再突入は廃止済み）。
 
 | やりたいこと | コマンド |
 | --- | --- |
-| 筐体ビルド（STL を build/ へ） | `./build.sh` |
-| ファームビルド（既定ターゲット thumbv6m） | `nix develop -c cargo build --locked` |
-| ロジックの host テスト（実機不要） | `nix develop -c cargo host-test` |
-| SCAD レンダリングテスト | `./test/render.sh <scad>` |
-| 回路 ERC（導通・ショート） | `./test/erc.sh` |
-| 部品間の体積干渉チェック（body/tray/pedestal） | `./test/clash.sh` |
+| 筐体ビルド（STL を scad/build/ へ） | `bun scad/build.ts` |
+| SCAD レンダリングテスト（STL/PNG） | `bun scad/render.ts <scad> [out]` |
+| 部品間の体積干渉チェック | `bun scad/clash.ts` |
+| scad ツールの単体テスト | `bun test scad/` |
+| 回路 ERC（導通・ショート） | `cd circuit && bun install --frozen-lockfile && bun test` |
+| ファームビルド（既定ターゲット thumbv6m） | `cargo build` |
+| ロジックの host テスト（実機不要） | `cargo host-test` |
+| 3D ビューア公開 | `bun viewer/serve.ts` |
+| ブレッドボード配線図ビューア | `bun circuit/breadboard-serve.ts` |
 
 ## 触る時の注意（規約・地雷）
 
-- Rust コードを変更したらコミット前に `nix develop -c cargo host-test` を通すこと。テストが落ちたまま完了扱いにしない。
-- `build/` と `*.stl` は派生物。コミットしない（.gitignore 済み）。
+- Rust コードを変更したらコミット前に host テスト（`cargo host-test`）を通すこと。テストが落ちたまま完了扱いにしない。
+- `scad/build/` / `circuit/build/` と `*.stl` は派生物。コミットしない（.gitignore 済み）。
 - 秘密扱い・未コミット: WiFi 認証（ビルド時環境変数 `WIFI_SSID` / `WIFI_PASSWORD`。`crates/firmware/src/config.rs` が `option_env!` で埋め込む）と CYW43 ブロブ（`crates/firmware/cyw43-firmware/*.bin`、ライセンス物）。実値を会話やコミットに載せない。
-- サーボ実機合わせはキャリブ定数だけを安全側から調整する。角度→パルス変換（`SERVO_MIN_US` / `SERVO_MAX_US` / `LOCK_DEG` / `UNLOCK_DEG`）は `crates/smtlk-core/src/servo_math.rs`、整定待ち `SETTLE_MS` は `crates/firmware/src/servo.rs`。
-- 採寸・ドア固定の未確定値は params/socket/mount_plate に隔離（README「未確定」参照）。
-- Cargo.lock はコミット済み。再現は `--locked` で。
+- サーボ実機合わせはキャリブ定数だけを安全側から調整する。角度→パルス変換（`SERVO_MIN_US` / `SERVO_MAX_US` / `LOCK_DEG` / `UNLOCK_DEG`）は `crates/mube-core/src/servo_math.rs`、整定待ち `SETTLE_MS` は `crates/firmware/src/servo.rs`。
+- 採寸は実測済みで確定（記録は docs/measurements-checklist.md）。残タスクは Backlog.md（`backlog/tasks/` の markdown）で管理する。CLI は devShell の `backlog`（`backlog task list --plain` など）。タスクのタイトル・本文は日本語。作成直後にファイル名だけ `task-N-<英語のkebab-case>.md`（小文字・ハイフン区切り・スペース無し）へリネームする（ツールは frontmatter の id で解決し、既存ファイル名は編集でも保持されるため、リネームしても壊れない）。
+- Cargo.lock はコミット済み。ビルドの厳密な再現が要る場面（CI・リリース）だけ `--locked` を付ける。
 
 ## 詳細
 
-コマンド詳細・採寸・TCP プロトコル（LOCK/UNLOCK/STATUS）・書き込み手順は **README.md** を参照。
+コマンド表は README.md、ファームのセットアップから書き込み、TCP プロトコル（LOCK/UNLOCK/STATUS）までは docs/firmware.md、採寸は docs/measurements-checklist.md を参照。

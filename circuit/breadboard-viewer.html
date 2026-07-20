@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>smtlk — ブレッドボード配線図ビューア</title>
+<title>mube — ブレッドボード配線図ビューア</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -44,7 +44,7 @@
   <div id="stage"><img id="svg" alt="breadboard wiring diagram" /></div>
 </div>
 <div id="ui">
-  <h1>smtlk ブレッドボード配線図</h1>
+  <h1>mube ブレッドボード配線図</h1>
   <label for="preset">プリセット</label>
   <select id="preset">
     <option value="servo_drive">サーボ駆動 (SERVO_DRIVE)</option>
@@ -62,8 +62,8 @@
 <div id="status">読み込み中…</div>
 
 <script>
-// プリセット定義。キーは <select> の value、file は breadboard-serve.py が
-// build/ に生成する SVG 名（breadboard-<preset>.svg）と一致させる。
+// プリセット定義。キーは <select> の value、file は breadboard-serve.ts が
+// circuit/build/ に生成する SVG 名（breadboard-<preset>.svg）と一致させる。
 const PRESETS = {
   servo_drive: { file: 'breadboard-servo_drive.svg', label: 'サーボ駆動 (SERVO_DRIVE)' },
   led_button:  { file: 'breadboard-led_button.svg',  label: 'LED＋ボタン (LED_BUTTON)' },
@@ -122,7 +122,7 @@ function load(key) {
     statusEl.textContent = `表示中: ${p.file}`;
   };
   img.onerror = () => {
-    // SVG 未生成（breadboard-serve.py 未実行など）だとここに来る
+    // SVG 未生成（breadboard-serve.ts 未実行など）だとここに来る
     statusEl.textContent = `読み込み失敗: ${p.file}（未生成かも）`;
     statusEl.classList.add('err');
   };

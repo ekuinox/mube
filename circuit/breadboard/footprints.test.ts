@@ -3,7 +3,7 @@ import { expect, test } from "bun:test"
 import { FOOTPRINTS } from "./footprints"
 import { RAIL_NETS } from "./config"
 
-test("FOOTPRINTS が smtlk 全12部品を網羅", () => {
+test("FOOTPRINTS が mube 全12部品を網羅", () => {
   const refs = ["U1","M1","Q1","Rg","Rgs","Rled","Rled2","D1","SW1","C1","C2","D2"]
   for (const r of refs) expect(FOOTPRINTS[r], `missing footprint ${r}`).toBeDefined()
 })

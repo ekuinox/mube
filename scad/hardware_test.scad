@@ -1,5 +1,5 @@
-include <../scad/params.scad>
-use <../scad/hardware.scad>
+include <params.scad>
+use <hardware.scad>
 // Instantiate every module so undefined ones fail the compile.
 difference() {
   cube([60, 40, 30], center = true);
