@@ -22,7 +22,7 @@
 | D1 2色LED | 2色LED 赤・黄緑5mm カソードコモン 乳白色 OSRGHC5B32A（10個入） | 秋月 | [I-06314](https://akizukidenshi.com/catalog/g/g106314/) | ¥150 | 10 | 1 | ¥15 |
 | SW1 タクト | タクトスイッチ(黒色) | 秋月 | [P-03647](https://akizukidenshi.com/catalog/g/g103647/) | ¥15 | 1 | 1 | ¥15 |
 | C1 470µF | 電解コンデンサー 470µF16V105℃ ルビコンPX | 秋月 | [P-10273](https://akizukidenshi.com/catalog/g/g110273/) | ¥10 | 1 | 1 | ¥10 |
-| - ユニバーサル基板 | 両面ガラスコンポジット・ユニバーサル基板 72×47mm UP-203GSR（既製の四隅マウント穴が各外辺から4mm内側にある） | eleshop | [MA7128](https://eleshop.jp/shop/g/gMA7128/) | ¥363 | 1 | 1 | ¥363 |
+| - ユニバーサル基板 | 片面ガラスコンポジット・ユニバーサル基板 Cタイプ(72×47mm) めっき仕上げ | 秋月 | [P-03229](https://akizukidenshi.com/catalog/g/g103229/) | ¥130 | 1 | 1 | ¥130 |
 | - 配線材 | 耐熱電子ワイヤー 1m×10色 導体外径0.36mm(AWG28相当) | 秋月 | [P-11640](https://akizukidenshi.com/catalog/g/g111640/) | ¥350 | 10 | 1 | ¥35 |
 | - ピンヘッダ | ピンヘッダー 1×40 (40P) | 秋月 | [C-00167](https://akizukidenshi.com/catalog/g/g100167/) | ¥35 | 1 | 2 | ¥70 |
 | - USB電源 | USB ACアダプター Micro-Bオス直結 5V3A | 秋月 | [M-12001](https://akizukidenshi.com/catalog/g/g112001/) | ¥1,100 | 1 | 1 | ¥1,100 |
@@ -53,7 +53,7 @@
 | 秋月電子通商 | [I-06314](https://akizukidenshi.com/catalog/g/g106314/) | 2色LED 赤・黄緑 5mm カソードコモン 乳白色 OSRGHC5B32A（10個入） |
 | 秋月電子通商 | [P-03647](https://akizukidenshi.com/catalog/g/g103647/) | タクトスイッチ(黒色) |
 | 秋月電子通商 | [P-10273](https://akizukidenshi.com/catalog/g/g110273/) | 電解コンデンサー 470µF16V |
-| eleshop | [UP-203GSR](https://eleshop.jp/shop/g/gMA7128/) | 両面ガラスコンポジット・ユニバーサル基板 72×47mm（既製の四隅マウント穴あり） |
+| 秋月電子通商 | [P-03229](https://akizukidenshi.com/catalog/g/g103229/) | 片面ユニバーサル基板 Cタイプ(72×47mm) めっき仕上げ |
 | 秋月電子通商 | [P-11640](https://akizukidenshi.com/catalog/g/g111640/) | 耐熱電子ワイヤー 1m×10色 AWG28 |
 | 秋月電子通商 | [C-00167](https://akizukidenshi.com/catalog/g/g100167/) | ピンヘッダー 1×40 ×2本 |
 | 秋月電子通商 | [M-12001](https://akizukidenshi.com/catalog/g/g112001/) | USB ACアダプター Micro-Bオス直結 5V3A |
@@ -90,7 +90,7 @@
 
 - Pico WH ヘッダ付き（[M-18086](https://akizukidenshi.com/catalog/g/g118086/) ¥1,375）: ピンヘッダ実装済みのため、ピンヘッダ（[C-00167](https://akizukidenshi.com/catalog/g/g100167/)）の購入が不要になる。
 - 電解コンデンサ 25V 品（[P-17883](https://akizukidenshi.com/catalog/g/g117883/) ¥20）: 耐圧に余裕が欲しい場合の代替。
-- ユニバーサル基板 秋月 Cタイプ（[P-03229](https://akizukidenshi.com/catalog/g/g103229/) ¥130, 片面）: 同じ 72×47mm だが、既製の四隅穴が 66×41 ピッチで現行トレイ(64×39)と合わない。そのままでは使えないので、採用する場合は 64×39 に開け直す必要がある。
+- ユニバーサル基板 eleshop UP-203GSR（[MA7128](https://eleshop.jp/shop/g/gMA7128/) ¥363, 両面, 既製四隅穴ピッチ 64×39）: 一度こちらへ変更したが（#68）、未使用のまま P-03229 に戻した。両面スルーホールが欲しい場合の代替。
 - ユニバーサル基板 72×47.5mm（[P-00517](https://akizukidenshi.com/catalog/g/g100517/) ¥100）: 部品点数が増えた場合の代替。
 
 ### 注意点
@@ -100,7 +100,7 @@
 - USB ACアダプタは 5V/3A 推奨（最低でも 5V/2A 以上）。サーボ失速電流 650-700mA に Pico W(WiFi) 100-200mA と LED を加えると 1A に迫り、5V/1A では突入・失速時に不足する恐れがあるため。
 - Pico W の USB コネクタは Micro-USB B。採用した M-12001 は Micro-B オス直結なので、別途ケーブルなしで直接挿せる。
 - セラミックコンデンサ（C2）は無極性。C1（電解 470µF）に並列で VBUS-GND 間に配置する。C1 に隣接させること（高周波バイパス効果のため）。
-- ユニバーサル基板（UP-203GSR）の既製の四隅マウント穴は各外辺から4mm内側にある → 中心間ピッチ 長辺64mm×短辺39mm。トレイの支柱ピッチをこれに合わせた（`scad/params.scad` の `uboard_mount_span_l`/`uboard_mount_span_w`）。Pico の搭載位置は変えていない。
+- ユニバーサル基板（P-03229）の既製の四隅マウント穴は φ3.2、中心間ピッチ 長辺66mm×短辺41mm。現行トレイはブレッドボード搭載で、この四隅穴は使っていない。
 - ショットキーダイオード（D2, 1N5819）はカソード帯（白帯）を +5V 側（M1.V+）に、アノードを SERVO_RTN 側（M1.GND / Q1.D）に接続する。逆に付けるとサーボ電源が短絡するので極性に注意。
 - M2 ネジ（なべ小ねじ M2×5）はサーボ耳のネジ穴 2 箇所に使用する。3D プリント筐体の 1.8mm パイロットホールにセルフタップで固定する。締めすぎるとボスが割れるので注意。
 
