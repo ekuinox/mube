@@ -21,14 +21,20 @@ export async function startTunnel(
     (async () => {
       const decoder = new TextDecoder();
       let buf = "";
+      let found = false;
       for await (const chunk of proc.stderr as ReadableStream<Uint8Array>) {
-        buf += decoder.decode(chunk);
-        const m = URL_RE.exec(buf);
-        if (m) {
-          clearTimeout(timer);
-          resolve(m[0]);
-          return;
+        if (!found) {
+          buf += decoder.decode(chunk);
+          const m = URL_RE.exec(buf);
+          if (m) {
+            found = true;
+            buf = ""; // URL 確定後はバッファ不要なので解放
+            clearTimeout(timer);
+            resolve(m[0]);
+          }
         }
+        // URL 取得後も読み捨てを続け、cloudflared がパイプ詰まりで
+        // ブロックしないようにする（旧 Python 版の常駐 drain と同等）
       }
       // URL を出さないままストリームが閉じた場合も待ち手を解放する
       clearTimeout(timer);
