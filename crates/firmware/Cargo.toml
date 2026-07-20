@@ -29,3 +29,4 @@ portable-atomic = { version = "1", features = ["critical-section"] }
 embedded-hal-async = "1.0"
 heapless = "0.8"
 fixed = "1"
+picoserve = { version = "0.19.0", features = ["embassy"] }

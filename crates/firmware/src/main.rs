@@ -20,6 +20,7 @@
 #![no_main]
 
 mod config;
+mod http;
 mod servo;
 
 use core::cell::Cell;
