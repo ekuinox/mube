@@ -1,47 +1,93 @@
-//! picoserve による HTTP ルータ。Task 5 で埋め込み SPA アセットと JSON API を配信する。
-//! 本ファイルは互換スパイク（Task 4）の最小スケルトン。ハンドラは Task 5 で
-//! firmware の共有状態（LOCK_STATE / apply_target）を直接叩く形へ差し替える。
+//! picoserve による HTTP ルータ。埋め込み SPA アセットと JSON API を port 80 で配信する。
 //!
-//! === 確定 picoserve API（版 0.19.0 / features = ["embassy"] / embassy-net 0.9 単一解決）===
-//! Task 5 実装者への引き継ぎ。上流 API は下記の形（`cargo tree -i embassy-net` で
-//! embassy-net v0.9.1 単一。picoserve 0.19.0 が同じ 0.9 系を共有するため TcpSocket 型は一致）。
-//!
-//! (a) Router 構築・ルート登録:
-//!     use picoserve::routing::get;   // get/post/put/delete/... は picoserve_derive 生成
-//!     picoserve::Router::new()
-//!         .route("/", get(|| async { "ok" }))          // 2021 edition 形。async || も可
-//!         .route("/api/x", get(handler).post(handler))  // MethodRouter に .post 等を連結
-//!     // 戻り値: picoserve::Router<impl picoserve::routing::PathRouter>
-//!
-//! (b) バイト列＋Content-Type レスポンス:
-//!     use picoserve::response::Response;
-//!     // ハンドラ戻り値が IntoResponse であればよい。素の &str は "text/plain; charset=utf-8"、
-//!     // 素の &[u8] は "application/octet-stream" が自動付与される（Content トレイト実装）。
-//!     // Content-Type を任意指定したい場合（SPA の text/html, application/json 等）:
-//!     Response::ok(body_bytes /* &[u8] または &str */)
-//!         .with_header("Content-Type", "text/html; charset=utf-8")
-//!     // Response::new(StatusCode, content) / Response::ok(content) / Response::empty(status)
-//!     // .with_header(name: &'static str, value: impl Display) / .with_status_code(...)
-//!
-//! (c) listen/serve ループ（ポート 80 / 複数ワーカーソケット）:
-//!     use picoserve::{Config, Timeouts, Server};
-//!     let app = http::make_app();
-//!     let config = Config::new(Timeouts { /* start/read/write: Option<Duration> */ })
-//!         .keep_connection_alive();   // 複数ソケット時のみ推奨（単一だと1クライアント占有）
-//!     // ワーカーごとに #[embassy_executor::task(pool_size = N)] を用意し、各タスクで:
-//!     let mut http_buffer = [0u8; 2048];
-//!     let mut rx = [0u8; 1024];
-//!     let mut tx = [0u8; 1024];
-//!     Server::new(&app, &config, &mut http_buffer)
-//!         .listen_and_serve(task_id, stack, /*port*/ 80u16, &mut rx, &mut tx)
-//!         .await;
-//!     // listen_and_serve(self, task_id: impl LogDisplay, stack: embassy_net::Stack,
-//!     //                  port: u16, tcp_rx_buffer: &mut [u8], tcp_tx_buffer: &mut [u8])
-//!     // は1接続ずつ処理する無限ループ。N 並列にするには同タスクを pool_size=N で spawn する。
+//! === 確定 picoserve API（版 0.19.0 / features = ["embassy"]）===
+//! Task 4 引き継ぎを実装時に検証した結果、下記へ更新した:
+//!  - `Timeouts` のフィールドは `Option<Duration>` ではなく素の `Duration`。
+//!    フィールドは `start_read_request` / `persistent_start_read_request`
+//!    / `read_request` / `write`（Task 4 メモの 3 フィールド・Option は誤り）。
+//!  - `Config` は `pub timeouts` / `pub connection`。`Config::new(Timeouts)` で生成し、
+//!    複数ソケット運用では `.keep_connection_alive()` を付ける。
+//!  - レスポンスの Content-Type は `Content` トレイトの `content_type()` から
+//!    自動付与される（`&[u8]` は application/octet-stream、`&str` は text/plain）。
+//!    そのため `Response::ok(bytes).with_header("Content-Type", ..)` は Content-Type を
+//!    二重に吐く。ここでは独自の `Content` 実装 `StaticAsset` で正しい単一の
+//!    Content-Type を持たせる（`Response::ok(StaticAsset{ .. })`）。
+//!  - listen ループは `Server::new(&app, &config, &mut http_buf)
+//!      .listen_and_serve(task_id, stack, port, &mut rx, &mut tx).await`。
+//!    `Server::new` は shutdown_signal = pending() で構築されるため、そのまま無限 listen。
+//!    1 タスク 1 接続なので、並列化は同タスクを `#[embassy_executor::task(pool_size=N)]`
+//!    で N 本 spawn する（main.rs 側で配線）。
 
-use picoserve::routing::get;
+use mube_core::{state_json, target_for, Action, LockState};
+use picoserve::response::{Content, Response};
+use picoserve::routing::{get, post};
 
-/// スパイク用の最小ルータ（Task 5 で本実装に差し替え）。
+// yew/trunk の出力を埋め込む（build.rs が存在を保証）。`&'static [u8]` はフラッシュに
+// 置かれ、picoserve がそこから直接ソケットへ流すため RAM に丸ごとは載らない。
+const INDEX_HTML: &[u8] = include_bytes!("../../webui/dist/index.html");
+const WEBUI_JS: &[u8] = include_bytes!("../../webui/dist/webui.js");
+const WEBUI_WASM: &[u8] = include_bytes!("../../webui/dist/webui_bg.wasm");
+
+const CT_HTML: &str = "text/html; charset=utf-8";
+const CT_JS: &str = "application/javascript";
+const CT_WASM: &str = "application/wasm";
+const CT_JSON: &str = "application/json";
+
+/// 静的バイト列＋任意の Content-Type を返す `Content` 実装。
+/// これにより Content-Type が正しく単一で付く（`with_header` の二重付与を避ける）。
+struct StaticAsset {
+    body: &'static [u8],
+    content_type: &'static str,
+}
+
+impl Content for StaticAsset {
+    fn content_type(&self) -> &'static str {
+        self.content_type
+    }
+
+    fn content_length(&self) -> usize {
+        self.body.len()
+    }
+
+    async fn write_content<W: picoserve::io::Write>(self, writer: W) -> Result<(), W::Error> {
+        self.body.write_content(writer).await
+    }
+}
+
+/// バイト列＋Content-Type で 200 OK を返す。
+fn asset(body: &'static [u8], content_type: &'static str) -> Response<impl picoserve::response::HeadersIter, impl picoserve::response::Body> {
+    Response::ok(StaticAsset { body, content_type })
+}
+
+/// `&'static str` の JSON を application/json で 200 OK にして返す。
+fn json(body: &'static str) -> Response<impl picoserve::response::HeadersIter, impl picoserve::response::Body> {
+    asset(body.as_bytes(), CT_JSON)
+}
+
+// 共有状態への口。実体は main.rs（LOCK_STATE 参照・apply_target）。
+fn current() -> LockState {
+    crate::current_state()
+}
+
+/// 操作を適用し、結果状態の JSON を返す。Status など駆動不要な操作は現在状態を返す。
+fn drive(action: Action) -> &'static str {
+    let cur = current();
+    if let Some(target) = target_for(action, cur) {
+        crate::apply_target(target);
+        state_json(target)
+    } else {
+        state_json(cur)
+    }
+}
+
+/// ルータを構築する。埋め込みアセット配信と JSON API を登録する。
 pub fn make_app() -> picoserve::Router<impl picoserve::routing::PathRouter> {
-    picoserve::Router::new().route("/", get(|| async { "ok" }))
+    picoserve::Router::new()
+        .route("/", get(|| async { asset(INDEX_HTML, CT_HTML) }))
+        .route("/webui.js", get(|| async { asset(WEBUI_JS, CT_JS) }))
+        .route("/webui_bg.wasm", get(|| async { asset(WEBUI_WASM, CT_WASM) }))
+        .route("/api/status", get(|| async { json(state_json(current())) }))
+        .route("/api/lock", post(|| async { json(drive(Action::Lock)) }))
+        .route("/api/unlock", post(|| async { json(drive(Action::Unlock)) }))
+        .route("/api/toggle", post(|| async { json(drive(Action::Toggle)) }))
 }
