@@ -2,7 +2,7 @@
 //! 「給電 → 目標角のパルス送出 → 整定待ち → 給電断」のワンショットで施錠/解錠する。
 //!
 //! 角度→パルス幅変換とキャリブ定数（SERVO_MIN_US / SERVO_MAX_US / LOCK_DEG / UNLOCK_DEG）は
-//! `smtlk_core::servo_math` にある。実機合わせはそちらを触る。SG90 は個体差が
+//! `mube_core::servo_math` にある。実機合わせはそちらを触る。SG90 は個体差が
 //! 大きい（フルストロークが 500–2500µs に振れる）。まず安全側（狭い MIN/MAX）で
 //! 焼き、唸らない・突き当てない範囲を実測で広げること（サムターン保護のため）。
 //!
@@ -12,8 +12,8 @@ use embassy_rp::gpio::Output;
 use embassy_rp::pwm::{Config as PwmConfig, Pwm};
 use embassy_time::{Duration, Timer};
 use fixed::traits::ToFixed;
-use smtlk_core::servo_math::pulse_us_for;
-use smtlk_core::LockState;
+use mube_core::servo_math::pulse_us_for;
+use mube_core::LockState;
 
 const SETTLE_MS: u64 = 500; // パルス送出後に到達を待つ時間
 

@@ -27,20 +27,20 @@ jobs:
           touch crates/firmware/cyw43-firmware/43439A0_clm.bin
           touch crates/firmware/cyw43-firmware/nvram_rp2040.bin
 
-      - name: cargo check (smtlk-core)
-        run: cargo check -p smtlk-core --locked --target x86_64-unknown-linux-gnu
+      - name: cargo check (mube-core)
+        run: cargo check -p mube-core --locked --target x86_64-unknown-linux-gnu
 
-      - name: cargo check (smtlk-firmware)
-        run: cargo check -p smtlk-firmware --locked --target thumbv6m-none-eabi
+      - name: cargo check (mube-firmware)
+        run: cargo check -p mube-firmware --locked --target thumbv6m-none-eabi
 
-      - name: cargo clippy (smtlk-core)
-        run: cargo clippy -p smtlk-core --locked --target x86_64-unknown-linux-gnu -- -D warnings
+      - name: cargo clippy (mube-core)
+        run: cargo clippy -p mube-core --locked --target x86_64-unknown-linux-gnu -- -D warnings
 
-      - name: cargo clippy (smtlk-firmware)
-        run: cargo clippy -p smtlk-firmware --locked --target thumbv6m-none-eabi -- -D warnings
+      - name: cargo clippy (mube-firmware)
+        run: cargo clippy -p mube-firmware --locked --target thumbv6m-none-eabi -- -D warnings
 
-      - name: cargo test (smtlk-core)
-        run: cargo test -p smtlk-core --locked --target x86_64-unknown-linux-gnu
+      - name: cargo test (mube-core)
+        run: cargo test -p mube-core --locked --target x86_64-unknown-linux-gnu
 
   circuit:
     runs-on: ubuntu-latest

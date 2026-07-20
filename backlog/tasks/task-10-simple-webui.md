@@ -19,7 +19,7 @@ ordinal: 10000
 - ブラウザから施錠/解錠ボタンと現在状態（LockState）が見える最小限の WebUI。
 - 実現方式の検討（Pico W 上で HTTP を直接提供するか、別途 TCP をブリッジする軽量サーバ／ページを用意するか）。まずは最小構成で。
 
-関連: プロトコルは docs/firmware.md、ロジックは `crates/smtlk-core/`。
+関連: プロトコルは docs/firmware.md、ロジックは `crates/mube-core/`。
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

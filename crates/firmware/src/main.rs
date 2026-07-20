@@ -1,7 +1,7 @@
-//! smtlk Pico W ファームウェアの土台。
+//! mube Pico W ファームウェアの土台。
 //!
 //! 現状: CYW43439 を起動し、WPA2 で WiFi に接続して DHCP で IP を取得したうえで、
-//! TCP ポート 6000 を listen し、`smtlk_core::serve_connection` でロックコマンドを捌く。
+//! TCP ポート 6000 を listen し、`mube_core::serve_connection` でロックコマンドを捌く。
 //! SG90 サーボ（GP15 PWM + GP14 電源ゲート）への指令は `SERVO_CMD: Signal` 経由で
 //! `servo_task` が受け取る。オンボード LED は接続中に点灯する
 //!（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっているため、
@@ -43,8 +43,8 @@ use embassy_sync::blocking_mutex::Mutex as BlockingMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use servo::Servo;
-use smtlk_core::serve::serve_connection;
-use smtlk_core::{LockPort, LockState};
+use mube_core::serve::serve_connection;
+use mube_core::{LockPort, LockState};
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -239,7 +239,7 @@ async fn main(spawner: Spawner) {
     }
 
     // 遠隔ロック操作: ポート LOCK_PORT を listen し、1 接続ずつ serve する。
-    // 判断ロジックは smtlk_core::serve_connection（host テスト済み）。ここはアダプタ配線。
+    // 判断ロジックは mube_core::serve_connection（host テスト済み）。ここはアダプタ配線。
     let mut rx_buf = [0u8; 512];
     let mut tx_buf = [0u8; 512];
     let port = FwLockPort;

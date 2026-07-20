@@ -1,9 +1,9 @@
 [package]
-name = "smtlk-core"
+name = "mube-core"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "Hardware-agnostic lock-control logic for smtlk (host-testable)"
+description = "Hardware-agnostic lock-control logic for mube (host-testable)"
 
 [dependencies]
 defmt = { version = "0.3", optional = true }

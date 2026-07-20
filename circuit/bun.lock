@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "smtlk-tscircuit",
+      "name": "mube-circuit",
       "devDependencies": {
         "@tscircuit/cli": "latest",
         "tscircuit": "latest",

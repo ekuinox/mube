@@ -17,10 +17,10 @@ ordinal: 8000
 
 やること:
 - 実機での可動範囲とサムターンの施錠/解錠位置を実測する。
-- 角度→パルス変換のキャリブ定数（`SERVO_MIN_US` / `SERVO_MAX_US` / `LOCK_DEG` / `UNLOCK_DEG`、`crates/smtlk-core/src/servo_math.rs`）を実測に合わせて安全側から調整する。
+- 角度→パルス変換のキャリブ定数（`SERVO_MIN_US` / `SERVO_MAX_US` / `LOCK_DEG` / `UNLOCK_DEG`、`crates/mube-core/src/servo_math.rs`）を実測に合わせて安全側から調整する。
 - 取り付けのシビアさを機構側で吸収できないか（ホーン位置の微調整代、スプライン合わせ、取り付けオフセット）検討する。
 
-関連: `crates/smtlk-core/src/servo_math.rs`、整定待ちは `crates/firmware/src/servo.rs` の `SETTLE_MS`。
+関連: `crates/mube-core/src/servo_math.rs`、整定待ちは `crates/firmware/src/servo.rs` の `SETTLE_MS`。
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

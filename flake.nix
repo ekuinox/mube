@@ -1,5 +1,5 @@
 {
-  description = "smtlk smart lock enclosure dev environment";
+  description = "mube smart lock enclosure dev environment";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -31,7 +31,7 @@
             # 動的に解決するため x86_64 / aarch64 どちらの環境でも同じコマンドで動く。
             (pkgs.writeShellScriptBin "cargo-host-test" ''
               shift  # cargo が外部サブコマンドに渡す先頭引数（"host-test"）を除去する
-              exec cargo test -p smtlk-core --target "$(uname -m)-unknown-linux-gnu" "$@"
+              exec cargo test -p mube-core --target "$(uname -m)-unknown-linux-gnu" "$@"
             '')
           ];
           FONTCONFIG_FILE = let
