@@ -12,11 +12,13 @@ pub enum Action {
     Status,
 }
 
-/// 状態の JSON 表現（API レスポンスボディ）。
-pub fn state_json(state: LockState) -> &'static str {
-    match state {
-        LockState::Locked => "{\"state\":\"LOCKED\"}",
-        LockState::Unlocked => "{\"state\":\"UNLOCKED\"}",
+impl LockState {
+    /// 状態の JSON 表現（API レスポンスボディ）。
+    pub fn as_json(self) -> &'static str {
+        match self {
+            LockState::Locked => "{\"state\":\"LOCKED\"}",
+            LockState::Unlocked => "{\"state\":\"UNLOCKED\"}",
+        }
     }
 }
 
@@ -36,9 +38,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn state_json_maps_both_states() {
-        assert_eq!(state_json(LockState::Locked), "{\"state\":\"LOCKED\"}");
-        assert_eq!(state_json(LockState::Unlocked), "{\"state\":\"UNLOCKED\"}");
+    fn as_json_maps_both_states() {
+        assert_eq!(LockState::Locked.as_json(), "{\"state\":\"LOCKED\"}");
+        assert_eq!(LockState::Unlocked.as_json(), "{\"state\":\"UNLOCKED\"}");
     }
 
     #[test]

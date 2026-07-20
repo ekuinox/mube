@@ -10,8 +10,11 @@
 //   bun lockctl.ts unlock     # 解錠（緑）
 //   bun lockctl.ts status     # 現在状態を問い合わせ（駆動しない）
 
+/** ロック状態。firmware の JSON API が返す 2 値。 */
+export type LockState = "LOCKED" | "UNLOCKED";
+
 /** {"state":"LOCKED"|"UNLOCKED"} から状態文字列を取り出す。想定外は null。 */
-export function parseState(body: string): "LOCKED" | "UNLOCKED" | null {
+export function parseState(body: string): LockState | null {
   try {
     const s = JSON.parse(body)?.state;
     return s === "LOCKED" || s === "UNLOCKED" ? s : null;

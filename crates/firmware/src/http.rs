@@ -18,7 +18,7 @@
 //!    1 タスク 1 接続なので、並列化は同タスクを `#[embassy_executor::task(pool_size=N)]`
 //!    で N 本 spawn する（main.rs 側で配線）。
 
-use mube_core::{state_json, target_for, Action, LockState};
+use mube_core::{target_for, Action, LockState};
 use picoserve::response::{Content, Response};
 use picoserve::routing::{get, post};
 
@@ -76,9 +76,9 @@ fn drive(action: Action) -> &'static str {
     let cur = current();
     if let Some(target) = target_for(action, cur) {
         crate::apply_target(target);
-        state_json(target)
+        target.as_json()
     } else {
-        state_json(cur)
+        cur.as_json()
     }
 }
 
@@ -88,7 +88,7 @@ pub fn make_app() -> picoserve::Router<impl picoserve::routing::PathRouter> {
         .route("/", get(|| async { asset(INDEX_HTML, CT_HTML) }))
         .route("/webui.js", get(|| async { asset(WEBUI_JS, CT_JS) }))
         .route("/webui_bg.wasm", get(|| async { asset(WEBUI_WASM, CT_WASM) }))
-        .route("/api/status", get(|| async { json(state_json(current())) }))
+        .route("/api/status", get(|| async { json(current().as_json()) }))
         .route("/api/lock", post(|| async { json(drive(Action::Lock)) }))
         .route("/api/unlock", post(|| async { json(drive(Action::Unlock)) }))
         .route("/api/toggle", post(|| async { json(drive(Action::Toggle)) }))

@@ -7,4 +7,4 @@ pub mod servo_math;
 pub mod webapi;
 
 pub use lock::LockState;
-pub use webapi::{state_json, target_for, Action};
+pub use webapi::{target_for, Action};

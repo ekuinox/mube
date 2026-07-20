@@ -623,16 +623,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
-name = "mube-webui"
-version = "0.1.0"
-dependencies = [
- "gloo-net 0.6.0",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "yew",
-]
-
-[[package]]
 name = "num_cpus"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1066,6 +1056,16 @@ checksum = "4b572dff8bcf38bad0fa19729c89bb5748b2b9b1d8be70cf90df697e3a8f32aa"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "webui"
+version = "0.1.0"
+dependencies = [
+ "gloo-net 0.6.0",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "yew",
 ]
 
 [[package]]

@@ -2,6 +2,8 @@
 //! 同一オリジンの JSON API を叩く：GET /api/status, POST /api/lock|unlock。
 //! レスポンスは {"state":"LOCKED"|"UNLOCKED"}。
 
+use std::str::FromStr;
+
 use gloo_net::http::Request;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
@@ -13,13 +15,19 @@ enum State {
     Unknown,
 }
 
-fn parse_state(body: &str) -> State {
-    if body.contains("LOCKED") && !body.contains("UNLOCKED") {
-        State::Locked
-    } else if body.contains("UNLOCKED") {
-        State::Unlocked
-    } else {
-        State::Unknown
+impl FromStr for State {
+    type Err = ();
+
+    /// `{"state":"LOCKED"|"UNLOCKED"}` から状態を判定する。
+    /// UNLOCKED は LOCKED を含むので、先に UNLOCKED を判定する。想定外は Err。
+    fn from_str(body: &str) -> Result<Self, Self::Err> {
+        if body.contains("UNLOCKED") {
+            Ok(State::Unlocked)
+        } else if body.contains("LOCKED") {
+            Ok(State::Locked)
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -35,7 +43,7 @@ fn app() -> Html {
             spawn_local(async move {
                 if let Ok(resp) = Request::get("/api/status").send().await {
                     if let Ok(text) = resp.text().await {
-                        state.set(parse_state(&text));
+                        state.set(text.parse().unwrap_or(State::Unknown));
                     }
                 }
             });
@@ -51,7 +59,7 @@ fn app() -> Html {
             spawn_local(async move {
                 if let Ok(resp) = Request::post(path).send().await {
                     if let Ok(text) = resp.text().await {
-                        state.set(parse_state(&text));
+                        state.set(text.parse().unwrap_or(State::Unknown));
                     }
                 }
             });
