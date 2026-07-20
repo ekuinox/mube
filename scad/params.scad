@@ -312,7 +312,7 @@ assert(ped_fix_r - tray_sleeve_od/2 > rosette_d/2 + fit_clearance, "ペデスタ
 assert(ped_lobe_w > tray_sleeve_od, "ローブ幅がスリーブ外径より細い（スリーブがローブから食み出す）");
 assert(ped_flange_t < tray_boss_h, "フランジ厚がボス高以上（ボスがスリーブに届かない）");
 // 受けカーブはペデスタル系で最も +Y に張り出す本体形状。トレイ床前縁が乗り上げた実機不具合
-// (2026-07-17) の再発防止。体積干渉は test/clash.sh でも検出する
+// (2026-07-17) の再発防止。体積干渉は scad/clash.ts でも検出する
 assert(tray_y0 >= ped_curb_ro + ped_curb_tray_gap, "受けカーブがトレイ床に近すぎる（bb_ped_gap か ext_up を見直す）");
 assert(max(plate_rib_ys) + plate_rib_w/2 < tray_y0, "横桟がトレイ床に食い込む");
 assert(max(plate_rib_ys) + plate_rib_w/2 <= ped_fix_r*sin(45) - tray_sleeve_od/2, "横桟がペデスタルスリーブに食い込む");

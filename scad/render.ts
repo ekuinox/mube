@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// 単発レンダリング CLI（旧 test/render.sh と test/render_png.sh の置き換え）。
+// 単発レンダリング CLI。
 // 出力先の拡張子が .png なら PNG 用フラグを自動で付ける。追加フラグはそのまま openscad へ渡す。
 import { basename, join } from "node:path";
 import { PNG_ARGS, renderScad } from "./openscad.ts";

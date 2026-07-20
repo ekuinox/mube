@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // 筐体パーツを STL にレンダリングし、ブラウザビューアを配信して cloudflared quick tunnel で
-// 公開する（旧 viewer/serve.py の置き換え）。NO_TUNNEL=1 でローカル配信のみ。
+// 公開する。NO_TUNNEL=1 でローカル配信のみ。
 import { copyFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { renderScad } from "../scad/openscad.ts";

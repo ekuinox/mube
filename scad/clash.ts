@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// 部品間の体積干渉チェック（旧 test/clash.sh の置き換え）。
+// 部品間の体積干渉チェック。
 // clash_check.scad は干渉体積だけを出力するモデルなので、レンダリング結果が
 // 空（"top level object is empty"）なら干渉なし=PASS、形状が出たら FAIL。
 // 空エクスポートで openscad が警告と非ゼロ終了することがあるため、先に空判定する。

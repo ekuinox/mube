@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // ブレッドボード配線図（全プリセット）を SVG に生成し、ビューアを配信して cloudflared
-// quick tunnel で公開する（旧 breadboard.sh + breadboard-serve.py の置き換え）。
+// quick tunnel で公開する。
 // NO_TUNNEL=1 でローカル配信のみ。ポートは viewer/serve.ts（8765）との衝突を避けて 8766。
 import { copyFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
@@ -13,7 +13,7 @@ const port = Number(process.env.PORT ?? "8766");
 // breadboard-auto.ts が知っているプリセットキーと揃える
 const presets = ["SERVO_DRIVE", "LED_BUTTON", "FULL"];
 
-// tscircuit 依存を lockfile 固定で用意する（旧 breadboard.sh の bun install 相当）
+// tscircuit 依存を lockfile 固定で用意する
 const install = Bun.spawnSync(["bun", "install", "--frozen-lockfile"], {
   cwd: circuitDir, stdout: "inherit", stderr: "inherit",
 });
