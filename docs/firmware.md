@@ -56,15 +56,15 @@ GP17 のタクトスイッチを押すと施錠⇄解錠をトグルできる（
 | STATUS   | LOCKED / UNLOCKED | 現在の状態を返す |
 | （不正）  | ERR    | 無視して次の行へ |
 
-日常の操作はリポジトリ直下の `lockctl.sh` を使う（bash の /dev/tcp のみ使用、nc 不要）。
+日常の操作はリポジトリ直下の `lockctl.ts` を使う。
 接続先 IP は環境変数 `TARGET_IP`（`.envrc.local` で定義 → direnv がロード）。
 
 ```
-./lockctl.sh            # 現在と逆に切り替え（トグル）
-./lockctl.sh toggle     # 同上
-./lockctl.sh lock       # 施錠（赤）
-./lockctl.sh unlock     # 解錠（緑）
-./lockctl.sh status     # 現在状態を問い合わせ（駆動しない）
+bun lockctl.ts            # 現在と逆に切り替え（トグル）
+bun lockctl.ts toggle     # 同上
+bun lockctl.ts lock       # 施錠（赤）
+bun lockctl.ts unlock     # 解錠（緑）
+bun lockctl.ts status     # 現在状態を問い合わせ（駆動しない）
 ```
 
 ## サーボ動作確認とキャリブレーション
