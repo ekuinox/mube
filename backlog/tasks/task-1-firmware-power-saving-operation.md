@@ -1,10 +1,10 @@
 ---
 id: TASK-1
-title: Firmware power-saving operation
+title: 'ファーム: 省電力運用の検討'
 status: To Do
 assignee: []
 created_date: '2026-07-20 09:19'
-updated_date: '2026-07-20 09:47'
+updated_date: '2026-07-20 09:57'
 labels:
   - firmware
 dependencies: []

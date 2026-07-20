@@ -1,10 +1,10 @@
 ---
 id: TASK-3
-title: Detect thumbturn position with a magnetic sensor
+title: サムターンの向き（施錠/解錠）を磁気センサーで取得する
 status: To Do
 assignee: []
 created_date: '2026-07-20 09:44'
-updated_date: '2026-07-20 09:47'
+updated_date: '2026-07-20 09:58'
 labels:
   - firmware
   - circuit
