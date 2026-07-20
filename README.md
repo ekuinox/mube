@@ -45,8 +45,3 @@ GPIO 割り当てはファームと一致:
 
 セットアップから書き込み、キャリブレーション、TCP プロトコルまでの詳細は [docs/firmware.md](docs/firmware.md) を参照。
 日常の遠隔操作は `./lockctl.sh lock|unlock|toggle|status`。
-
-## 未確定（積み残し）
-
-- 筐体: ドア固定の突っ張り先（mount_plate で隔離）。サムターン実寸の最終合わせ（socket パラメータで隔離）。
-- ファーム: 省電力運用 / 手回し後の状態再同期。
