@@ -5,6 +5,7 @@
 use std::str::FromStr;
 
 use gloo_net::http::Request;
+use serde::Deserialize;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 
@@ -15,15 +16,22 @@ enum State {
     Unknown,
 }
 
+/// API レスポンス `{"state":"..."}` の形。JSON をパースして state を取り出す。
+#[derive(Deserialize)]
+struct StatusResponse<'a> {
+    state: &'a str,
+}
+
 impl FromStr for State {
     type Err = ();
 
-    /// API レスポンス（`{"state":"LOCKED"|"UNLOCKED"}`）を厳密一致で判定する。
-    /// firmware が返す文字列そのものに match し、揺れは許容しない。想定外は Err。
+    /// API レスポンス（`{"state":"LOCKED"|"UNLOCKED"}`）を JSON としてパースし、
+    /// state の値で判定する（空白等のフォーマット揺れには寛容、値は厳密）。想定外は Err。
     fn from_str(body: &str) -> Result<Self, Self::Err> {
-        match body {
-            r#"{"state":"LOCKED"}"# => Ok(State::Locked),
-            r#"{"state":"UNLOCKED"}"# => Ok(State::Unlocked),
+        let (resp, _) = serde_json_core::from_str::<StatusResponse>(body).map_err(|_| ())?;
+        match resp.state {
+            "LOCKED" => Ok(State::Locked),
+            "UNLOCKED" => Ok(State::Unlocked),
             _ => Err(()),
         }
     }

@@ -15,6 +15,9 @@ description = "Browser WebUI (yew/WASM) for the mube smart lock"
 yew = { version = "0.21", features = ["csr"] }
 gloo-net = "0.6"
 wasm-bindgen-futures = "0.4"
+# API レスポンスの JSON パース。no-alloc・軽量で、将来 firmware(no_std) 側とも共有しやすい。
+serde = { version = "1", default-features = false, features = ["derive"] }
+serde-json-core = "0.6"
 
 # wasm-bindgen をシステム提供の wasm-bindgen-cli (0.2.121) に固定する。
 # trunk はバージョン不一致時にネット取得を試みて失敗するため、CLI と揃える。
