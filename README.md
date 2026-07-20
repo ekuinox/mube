@@ -1,4 +1,4 @@
-# mube — スマートロック
+# mube
 
 既存ドアのサムターンに後付けする SG90 サーボ式スマートロック。
 筐体（OpenSCAD）＋ 回路（tscircuit / TS）＋ Pico W ファーム（Rust / Embassy）の monorepo。
