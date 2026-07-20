@@ -18,15 +18,13 @@ enum State {
 impl FromStr for State {
     type Err = ();
 
-    /// `{"state":"LOCKED"|"UNLOCKED"}` から状態を判定する。
-    /// UNLOCKED は LOCKED を含むので、先に UNLOCKED を判定する。想定外は Err。
+    /// API レスポンス（`{"state":"LOCKED"|"UNLOCKED"}`）を厳密一致で判定する。
+    /// firmware が返す文字列そのものに match し、揺れは許容しない。想定外は Err。
     fn from_str(body: &str) -> Result<Self, Self::Err> {
-        if body.contains("UNLOCKED") {
-            Ok(State::Unlocked)
-        } else if body.contains("LOCKED") {
-            Ok(State::Locked)
-        } else {
-            Err(())
+        match body {
+            r#"{"state":"LOCKED"}"# => Ok(State::Locked),
+            r#"{"state":"UNLOCKED"}"# => Ok(State::Unlocked),
+            _ => Err(()),
         }
     }
 }
