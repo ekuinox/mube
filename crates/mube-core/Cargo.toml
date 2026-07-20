@@ -2,7 +2,8 @@
 name = "mube-core"
 version.workspace = true
 edition.workspace = true
-license = "MIT OR Apache-2.0"
+rust-version.workspace = true
+license.workspace = true
 description = "Hardware-agnostic lock-control logic for mube (host-testable)"
 
 [dependencies]
