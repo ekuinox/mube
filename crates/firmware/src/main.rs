@@ -1,15 +1,14 @@
 //! mube Pico W ファームウェアの土台。
 //!
 //! 現状: CYW43439 を起動し、WPA2 で WiFi に接続して DHCP で IP を取得したうえで、
-//! TCP ポート 6000 を listen し、`mube_core::serve_connection` でロックコマンドを捌く。
+//! picoserve で HTTP ポート 80 を listen し、埋め込み yew SPA と JSON API を配信する。
 //! SG90 サーボ（GP15 PWM + GP14 電源ゲート）への指令は `SERVO_CMD: Signal` 経由で
-//! `servo_task` が受け取る。オンボード LED は接続中に点灯する
-//!（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっているため、
+//! `servo_task` が受け取る（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっているため、
 //! 制御にも WiFi チップの初期化が要る）。
 //!
-//! ロック状態は単一ソース `LOCK_STATE` に集約し、TCP コマンド・GP17 ボタン（トグル）・
+//! ロック状態は単一ソース `LOCK_STATE` に集約し、HTTP API・GP17 ボタン（トグル）・
 //! 二色ステータス LED（GP16=赤=施錠 / GP18=黄緑=解錠）が同じ状態を参照する。
-//! オンボード LED（CYW43）は TCP 接続状態の表示。ボタンは内部プルアップ（アクティブ Low）。
+//! ボタンは内部プルアップ（アクティブ Low）。
 //!
 //! ここから先（スマートロック本体）の積み残し:
 //!   - 手回し後の状態再同期・省電力運用
@@ -20,6 +19,7 @@
 #![no_main]
 
 mod config;
+mod http;
 mod servo;
 
 use core::cell::Cell;
@@ -29,7 +29,6 @@ use cyw43::SpiBus;
 use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_net::tcp::TcpSocket;
 use embassy_net::{Config as NetConfig, StackResources};
 use embassy_rp::bind_interrupts;
 use embassy_rp::clocks::RoscRng;
@@ -43,8 +42,7 @@ use embassy_sync::blocking_mutex::Mutex as BlockingMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use servo::Servo;
-use mube_core::serve::serve_connection;
-use mube_core::{LockPort, LockState};
+use mube_core::LockState;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -53,10 +51,23 @@ bind_interrupts!(struct Irqs {
     DMA_IRQ_0 => DmaInterruptHandler<DMA_CH0>;
 });
 
-/// 遠隔ロック操作を受ける TCP ポート。
-const LOCK_PORT: u16 = 6000;
+/// HTTP WebUI を配信するポート。
+const HTTP_PORT: u16 = 80;
 
-/// 無通信で切断するまでの秒数。シングル接続サーバーでの占有を防ぐ。
+/// port 80 の HTTP 設定を 'static に固定して全 worker で共有する。
+/// ルータ（`http::make_app()`）は `Router<impl PathRouter>` で具体型を名前で書けない
+/// （stable Rust に type_alias_impl_trait が無い）ため StaticCell では共有せず、
+/// 各 worker タスク内でローカルに構築する。ルータはハンドラ（クロージャ＝実質 ZST）と
+/// `&'static` アセットだけを保持するので複製コストは無視できる。
+static CONFIG: StaticCell<picoserve::Config> = StaticCell::new();
+
+/// picoserve の worker（同時接続）数。各 worker が自前の TcpSocket とバッファを持つ。
+/// keep-alive を無効化し各レスポンス後に接続を閉じるため、worker は毎回すぐ解放される。
+/// ブラウザはページ読込で複数接続を並列に張る（HTML/JS/WASM）ので、その並列度＋CLI の
+/// 同時利用を捌けるよう 4 本にしている（`StackResources` も本数＋DHCP 分の余裕を持たせる）。
+const HTTP_WORKERS: usize = 4;
+
+/// 無通信で切断するまでの秒数。1 クライアントによる占有を防ぐ。
 const IDLE_TIMEOUT_SECS: u64 = 30;
 
 /// サーボへの施錠/解錠指令。`apply_target` が叩く。
@@ -69,21 +80,15 @@ static LOCK_STATE: BlockingMutex<CriticalSectionRawMutex, Cell<LockState>> =
     BlockingMutex::new(Cell::new(LockState::Locked));
 
 /// 目標状態を適用する: 現在状態を即時更新し、サーボタスクへ駆動指令を送る。
-/// TCP コマンドもボタンも必ずこれを通すことで状態が一意になる。
-fn apply_target(target: LockState) {
+/// HTTP API もボタンも必ずこれを通すことで状態が一意になる。
+pub(crate) fn apply_target(target: LockState) {
     LOCK_STATE.lock(|c| c.set(target));
     SERVO_CMD.signal(target);
 }
 
-/// firmware 側 `LockPort`: 現在状態は LOCK_STATE、適用は apply_target。
-struct FwLockPort;
-impl LockPort for FwLockPort {
-    fn current(&self) -> LockState {
-        LOCK_STATE.lock(|c| c.get())
-    }
-    fn apply(&self, target: LockState) {
-        apply_target(target);
-    }
+/// http.rs から現在のロック状態を読むための口。
+pub(crate) fn current_state() -> LockState {
+    LOCK_STATE.lock(|c| c.get())
 }
 
 /// 二色ステータス LED を状態に合わせて点灯する（施錠=赤 / 解錠=黄緑、同時点灯はしない）。
@@ -203,7 +208,7 @@ async fn main(spawner: Spawner) {
     // ネットワークスタック（DHCPv4）。
     let net_config = NetConfig::dhcpv4(Default::default());
     let seed = RoscRng.next_u64();
-    static RESOURCES: StaticCell<StackResources<5>> = StaticCell::new();
+    static RESOURCES: StaticCell<StackResources<8>> = StaticCell::new();
     let (stack, net_runner) = embassy_net::new(
         net_device,
         net_config,
@@ -238,25 +243,47 @@ async fn main(spawner: Spawner) {
         info!("DHCP up: IP = {}", cfg.address);
     }
 
-    // 遠隔ロック操作: ポート LOCK_PORT を listen し、1 接続ずつ serve する。
-    // 判断ロジックは mube_core::serve_connection（host テスト済み）。ここはアダプタ配線。
-    let mut rx_buf = [0u8; 512];
-    let mut tx_buf = [0u8; 512];
-    let port = FwLockPort;
+    // 接続表示はここでは常時消灯（状態は二色 LED が担う）。
+    control.gpio_set(0, false).await;
 
-    loop {
-        let mut socket = TcpSocket::new(stack, &mut rx_buf, &mut tx_buf);
-        control.gpio_set(0, false).await; // 待受中: オンボード LED 消灯
-        if let Err(e) = socket.accept(LOCK_PORT).await {
-            warn!("accept failed: {:?}", e);
-            continue;
-        }
-        info!("client connected on :{}", LOCK_PORT);
-        control.gpio_set(0, true).await; // 接続中: オンボード LED 点灯
-        socket.set_timeout(Some(Duration::from_secs(IDLE_TIMEOUT_SECS)));
-        if let Err(e) = serve_connection(&mut socket, &port).await {
-            warn!("serve error: {:?}", e);
-        }
-        info!("client disconnected");
+    // HTTP WebUI: port 80 で SPA＋JSON API を配信する。設定だけ 'static 共有。
+    let config = CONFIG.init(
+        picoserve::Config::new(picoserve::Timeouts {
+            start_read_request: Duration::from_secs(IDLE_TIMEOUT_SECS),
+            persistent_start_read_request: Duration::from_secs(IDLE_TIMEOUT_SECS),
+            read_request: Duration::from_secs(IDLE_TIMEOUT_SECS),
+            write: Duration::from_secs(IDLE_TIMEOUT_SECS),
+        }),
+        // keep-alive は無効（既定）。各レスポンス後に接続を閉じ、worker を即解放する。
+        // これによりブラウザが idle 接続を掴み続けて worker を枯渇させる問題を避ける
+        // （keep-alive 有効＋worker 2 本だと、開いたタブが最大 IDLE_TIMEOUT_SECS 秒 CLI を弾いた）。
+    );
+
+    // worker を HTTP_WORKERS 本 spawn。各 worker が自前の TcpSocket＋バッファ＋ルータで port 80 を捌く。
+    for id in 0..HTTP_WORKERS {
+        spawner.spawn(http_worker(id, stack, config).unwrap());
     }
+}
+
+/// port 80 の HTTP を 1 本の worker として捌くタスク。pool_size 分だけ並列に立てる。
+/// 各 worker が独立した受信/送信バッファ・HTTP バッファ・ルータを持つ（RAM を圧迫しないサイズ）。
+#[embassy_executor::task(pool_size = HTTP_WORKERS)]
+async fn http_worker(
+    id: usize,
+    stack: embassy_net::Stack<'static>,
+    config: &'static picoserve::Config,
+) {
+    // ルータの具体型は名前で書けない（impl PathRouter）ため、ここでローカルに構築する。
+    // `listen_and_serve` は shutdown_signal=Pending で永久に await するため実際には返らない
+    // （戻り型は NoGracefulShutdown だが到達しない）。ローカル app もタスク生存中ずっと生きる。
+    let app = http::make_app();
+    let mut http_buffer = [0u8; 2048];
+    let mut rx = [0u8; 2048];
+    // tx（TCP 送信バッファ）は「未 ACK のまま送出中に置けるデータ量」＝実効ウィンドウ。
+    // ダウンロードのスループット ≒ tx サイズ / RTT なので、128KB の wasm を高 RTT の
+    // WiFi 経路でも素早く配るには広めが要る（1KB だと高 RTT 経路でストップ＆ウェイト化して数秒かかる）。
+    let mut tx = [0u8; 8192];
+    picoserve::Server::new(&app, config, &mut http_buffer)
+        .listen_and_serve(id, stack, HTTP_PORT, &mut rx, &mut tx)
+        .await;
 }

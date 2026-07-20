@@ -1,9 +1,10 @@
 ---
 id: TASK-10
 title: 簡単な WebUI から施錠/解錠と状態確認をしたい
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-07-20 10:46'
+updated_date: '2026-07-20 13:48'
 labels:
   - firmware
 dependencies: []

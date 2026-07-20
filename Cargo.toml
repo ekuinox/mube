@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["crates/firmware", "crates/mube-core"]
+exclude = ["crates/webui"]
 
 # 各クレートで共有する package メタデータ。member 側は `version.workspace = true` /
 # `edition.workspace = true` で参照する。

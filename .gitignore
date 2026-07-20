@@ -19,3 +19,7 @@ circuit/node_modules/
 circuit/dist/
 circuit/.tscircuit/
 .superpowers/
+
+# yew(WASM) WebUI の派生物
+/crates/webui/dist/
+/crates/webui/target/
