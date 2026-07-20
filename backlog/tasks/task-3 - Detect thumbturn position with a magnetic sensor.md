@@ -1,9 +1,10 @@
 ---
 id: TASK-3
-title: サムターンの向き（施錠/解錠）を磁気センサーで取得する
+title: Detect thumbturn position with a magnetic sensor
 status: To Do
 assignee: []
 created_date: '2026-07-20 09:44'
+updated_date: '2026-07-20 09:47'
 labels:
   - firmware
   - circuit
@@ -75,3 +76,9 @@ ordinal: 3000
 - [ ] #3 手動操作の検知とサーボ到達の確認が意図通り動く
 - [ ] #4 ラッチ式採用時、中間状態を出せない件が運用上問題ないことを確認
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+TASK-2（手回し操作後の施錠状態の再同期）を統合。位置センサーで実位置を取得できれば、手回し検知と内部状態の再同期はこのタスクの目的そのもの。
+<!-- SECTION:NOTES:END -->
