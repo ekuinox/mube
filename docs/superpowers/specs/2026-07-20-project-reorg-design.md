@@ -1,7 +1,6 @@
-# プロジェクト整理（komorebi 流ツーリング統一＋ドキュメント再編）設計
+# プロジェクト整理（bun ツーリング統一＋ドキュメント再編）設計
 
 日付: 2026-07-20
-参考: [ekuinox/komorebi](https://github.com/ekuinox/komorebi)（同スタックの姉妹プロジェクト。bun TS ツーリングに統一済み）
 
 ## 背景と目的
 
@@ -10,9 +9,8 @@ smtlk のドキュメントには陳腐化・矛盾が蓄積している。READM
 ツーリングが bash（`build.sh`, `test/*.sh`）と Python/uv（`viewer/serve.py`,
 `circuit/breadboard-serve.py`）と bun（`circuit/`）に分散している。
 
-komorebi は同じ構成要素（scad + circuit + crates + viewer + Nix）を bun TS スクリプトに
-統一し、テストを各サブシステムに同居させ、README を 50 行弱に収めている。本整理では
-smtlk を同じ形に寄せる。
+本整理では、ツーリングを bun TS スクリプトに統一し、テストを各サブシステムに同居させ、
+README をスリムな形に整える。
 
 ### 確認済みの陳腐化・矛盾（修正対象）
 
@@ -30,7 +28,7 @@ smtlk を同じ形に寄せる。
 やること:
 
 1. ツーリングを bun TS に統一し、`test/` ディレクトリと bash/Python スクリプトを解体する。
-2. README を komorebi 並（±60 行）にスリム化し、詳細は `docs/` の専用文書へ退避する。
+2. README を ±60 行にスリム化し、詳細は `docs/` の専用文書へ退避する。
 3. 上記の陳腐化・矛盾を修正する。
 
 やらないこと:
@@ -57,12 +55,12 @@ build.sh    廃止（→ nix develop -c bun scad/build.ts）
 lockctl.sh  存続（README に記載を追加）
 ```
 
-STL 出力先は komorebi と同じ `scad/build/` とし、トップレベル `build/` を廃止する。
+STL 出力先は `scad/build/` とし、トップレベル `build/` を廃止する。
 `.gitignore` を追随させる。
 
 ## ツーリング移行の詳細
 
-- `scad/openscad.ts`: komorebi の実装をベースに移植。CLI 引数組み立て（`-D key="value"`）、
+- `scad/openscad.ts`: CLI 引数組み立て（`-D key="value"`）、
   終了コードと WARNING/ERROR ログ検査での fail、出力先ディレクトリの自動作成。
 - `scad/build.ts`: body / pedestal / socket / tray ＋ asm プレビューを一括レンダリング
   （現行 `build.sh` と同じ成果物を `scad/build/` に出す）。
@@ -70,12 +68,12 @@ STL 出力先は komorebi と同じ `scad/build/` とし、トップレベル `b
   `test/render.sh` と `test/render_png.sh` の両方を置き換える。
 - `scad/clash.ts`: `clash_check.scad` を openscad で評価する現行 `test/clash.sh` の
   ロジックを TS 移植。
-- `viewer/serve.ts`: komorebi の serve.ts をベースに、smtlk の複数パーツレンダリングと
-  cloudflared quick tunnel（公開 URL 表示）・`NO_TUNNEL=1` でのローカル配信を移植。
+- `viewer/serve.ts`: 複数パーツレンダリングと cloudflared quick tunnel（公開 URL 表示）、
+  `NO_TUNNEL=1` でのローカル配信。
 - `circuit/breadboard-serve.ts`: SVG 生成（既存 `breadboard-auto.ts`）→配信→tunnel を
   bun に一本化し、`breadboard.sh` と `breadboard-serve.py` を廃止。
 - `flake.nix`: devShell から `uv` を外す（openscad / bun / cloudflared は残す）。
-- 「`.sh` が自動で nix develop に再突入する」利便は廃止し、komorebi と同じく
+- 「`.sh` が自動で nix develop に再突入する」利便は廃止し、
   `nix develop -c bun <script>` を正式コマンドとする。
 
 ## ドキュメント再編の詳細

@@ -1,10 +1,10 @@
-# プロジェクト整理（komorebi 流ツーリング統一＋ドキュメント再編）実装計画
+# プロジェクト整理（bun ツーリング統一＋ドキュメント再編）実装計画
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** bash/Python に分散したツーリングを bun TS に統一して `test/`・`build.sh`・uv を廃し、README を約 60 行にスリム化して詳細を `docs/firmware.md` に退避し、ドキュメントの陳腐化・矛盾を修正する。
 
-**Architecture:** 姉妹プロジェクト [ekuinox/komorebi](https://github.com/ekuinox/komorebi) と同じ形に寄せる。openscad 呼び出しを `scad/openscad.ts` に集約し、build/render/clash の各 CLI と viewer/breadboard の配信スクリプトがそれを共有する。cloudflared トンネルと静的配信は `viewer/tunnel.ts` / `viewer/static.ts` に共通化する。
+**Architecture:** openscad 呼び出しを `scad/openscad.ts` に集約し、build/render/clash の各 CLI と viewer/breadboard の配信スクリプトがそれを共有する。cloudflared トンネルと静的配信は `viewer/tunnel.ts` / `viewer/static.ts` に共通化する。
 
 **Tech Stack:** bun（TS スクリプト＋ bun test）、OpenSCAD（Manifold バックエンド）、cloudflared、Nix devShell、Rust/cargo（変更なし・回帰確認のみ）。
 
@@ -26,7 +26,7 @@
 
 ### Task 1: scad/openscad.ts ヘルパ（bun 単体テスト付き）
 
-openscad 呼び出しの共通ヘルパ。komorebi の `scad/openscad.ts` をベースに、PNG レンダリング用の追加引数と、clash 判定用に exit コード＋ログを生で返す `runOpenscad` を加える。
+openscad 呼び出しの共通ヘルパ。CLI 引数組み立てとログ判定に加えて、PNG レンダリング用の追加引数と、clash 判定用に exit コード＋ログを生で返す `runOpenscad` を持つ。
 
 **Files:**
 - Create: `scad/openscad.ts`
@@ -194,7 +194,7 @@ Expected: PASS（10 tests）
 
 ```bash
 git add scad/openscad.ts scad/openscad.test.ts
-git commit -m "feat(scad): openscad 呼び出しの bun 共通ヘルパを追加（komorebi 移植＋PNG/clash 対応）"
+git commit -m "feat(scad): openscad 呼び出しの bun 共通ヘルパを追加（PNG/clash 対応）"
 ```
 
 ---
