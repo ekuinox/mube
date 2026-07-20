@@ -70,6 +70,8 @@ fn current() -> LockState {
 }
 
 /// 操作を適用し、結果状態の JSON を返す。Status など駆動不要な操作は現在状態を返す。
+/// 注: Toggle の read-modify-write は非アトミック。HTTP_WORKERS 並列下で同時 toggle が
+/// 来ると片方が失われうる（last-writer-wins）。物理ボタンと同じく LAN 単一利用前提で許容する。
 fn drive(action: Action) -> &'static str {
     let cur = current();
     if let Some(target) = target_for(action, cur) {
