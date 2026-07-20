@@ -1,6 +1,14 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = ["crates/firmware", "crates/mube-core"]
+
+# 各クレートで共有する package メタデータ。member 側は `version.workspace = true` /
+# `edition.workspace = true` で参照する。
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+license = "MIT OR Apache-2.0"
 
 # サイズ優先。embedded ではデバッグビルドでも opt-level を上げないと体感が重い。
 [profile.dev]
