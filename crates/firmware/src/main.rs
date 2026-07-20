@@ -278,8 +278,11 @@ async fn http_worker(
     // （戻り型は NoGracefulShutdown だが到達しない）。ローカル app もタスク生存中ずっと生きる。
     let app = http::make_app();
     let mut http_buffer = [0u8; 2048];
-    let mut rx = [0u8; 1024];
-    let mut tx = [0u8; 1024];
+    let mut rx = [0u8; 2048];
+    // tx（TCP 送信バッファ）は「未 ACK のまま送出中に置けるデータ量」＝実効ウィンドウ。
+    // ダウンロードのスループット ≒ tx サイズ / RTT なので、128KB の wasm を高 RTT の
+    // WiFi 経路でも素早く配るには広めが要る（1KB だと高 RTT 経路でストップ＆ウェイト化して数秒かかる）。
+    let mut tx = [0u8; 8192];
     picoserve::Server::new(&app, config, &mut http_buffer)
         .listen_and_serve(id, stack, HTTP_PORT, &mut rx, &mut tx)
         .await;
