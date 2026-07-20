@@ -12,7 +12,7 @@ const name = arg in PRESETS ? arg.toLowerCase() : "custom"
 
 const layout = autoLayout(refs)
 const svg = renderBreadboardSvg(layout)
-const out = join(import.meta.dir, "..", "build", "breadboard-" + name + ".svg")
+const out = join(import.meta.dir, "build", "breadboard-" + name + ".svg")
 mkdirSync(dirname(out), { recursive: true })
 writeFileSync(out, svg)
 console.log(`wrote ${out} (crossings=${layout.stats.crossings}, lanes=${layout.stats.tracksUsed}, cols=${layout.stats.cols})`)
