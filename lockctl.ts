@@ -4,9 +4,8 @@
 //
 // 接続先は環境変数 TARGET_IP（.envrc.local で定義 → direnv がロード）。ポートは 80 既定（PORT env で上書き可）。
 //
-// 使い方:
-//   bun lockctl.ts            # トグル（引数なし）
-//   bun lockctl.ts toggle     # 同上
+// 使い方（サブコマンド必須。引数なしは usage を表示して終了）:
+//   bun lockctl.ts toggle     # 現在と逆に切り替え
 //   bun lockctl.ts lock       # 施錠（赤）
 //   bun lockctl.ts unlock     # 解錠（緑）
 //   bun lockctl.ts status     # 現在状態を問い合わせ（駆動しない）
@@ -51,13 +50,14 @@ export async function runLockctl(
   return msg;
 }
 
-const USAGE = "usage: bun lockctl.ts [toggle|lock|unlock|status]";
+const USAGE = "usage: bun lockctl.ts <toggle|lock|unlock|status>";
 
 if (import.meta.main) {
-  const cmd = process.argv[2] ?? "toggle";
+  // 引数なしでは何もしない（誤って施錠状態を変えるのを防ぐため、サブコマンド必須）。
+  const cmd = process.argv[2];
   if (cmd === "-h" || cmd === "--help" || cmd === "help") {
     console.log(USAGE);
-    console.log("  toggle  現在と逆に切り替え（引数なしと同じ）");
+    console.log("  toggle  現在と逆に切り替え");
     console.log("  lock    施錠（赤）");
     console.log("  unlock  解錠（緑）");
     console.log("  status  現在状態を問い合わせ（駆動しない）");
