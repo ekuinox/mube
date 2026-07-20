@@ -62,7 +62,10 @@ const HTTP_PORT: u16 = 80;
 static CONFIG: StaticCell<picoserve::Config> = StaticCell::new();
 
 /// picoserve の worker（同時接続）数。各 worker が自前の TcpSocket とバッファを持つ。
-const HTTP_WORKERS: usize = 2;
+/// keep-alive を無効化し各レスポンス後に接続を閉じるため、worker は毎回すぐ解放される。
+/// ブラウザはページ読込で複数接続を並列に張る（HTML/JS/WASM）ので、その並列度＋CLI の
+/// 同時利用を捌けるよう 4 本にしている（`StackResources` も本数＋DHCP 分の余裕を持たせる）。
+const HTTP_WORKERS: usize = 4;
 
 /// 無通信で切断するまでの秒数。1 クライアントによる占有を防ぐ。
 const IDLE_TIMEOUT_SECS: u64 = 30;
@@ -205,7 +208,7 @@ async fn main(spawner: Spawner) {
     // ネットワークスタック（DHCPv4）。
     let net_config = NetConfig::dhcpv4(Default::default());
     let seed = RoscRng.next_u64();
-    static RESOURCES: StaticCell<StackResources<5>> = StaticCell::new();
+    static RESOURCES: StaticCell<StackResources<8>> = StaticCell::new();
     let (stack, net_runner) = embassy_net::new(
         net_device,
         net_config,
@@ -250,9 +253,10 @@ async fn main(spawner: Spawner) {
             persistent_start_read_request: Duration::from_secs(IDLE_TIMEOUT_SECS),
             read_request: Duration::from_secs(IDLE_TIMEOUT_SECS),
             write: Duration::from_secs(IDLE_TIMEOUT_SECS),
-        })
-        // 複数ソケットで捌くので keep-alive 可（1 クライアント占有を避けるための前提）。
-        .keep_connection_alive(),
+        }),
+        // keep-alive は無効（既定）。各レスポンス後に接続を閉じ、worker を即解放する。
+        // これによりブラウザが idle 接続を掴み続けて worker を枯渇させる問題を避ける
+        // （keep-alive 有効＋worker 2 本だと、開いたタブが最大 IDLE_TIMEOUT_SECS 秒 CLI を弾いた）。
     );
 
     // worker を HTTP_WORKERS 本 spawn。各 worker が自前の TcpSocket＋バッファ＋ルータで port 80 を捌く。
