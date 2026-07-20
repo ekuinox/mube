@@ -1,8 +1,9 @@
 [package]
 name = "mube-firmware"
-version = "0.1.0"
-edition = "2021"
-license = "MIT OR Apache-2.0"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
 description = "Pico W (RP2040) firmware for the mube smart lock — Embassy async + CYW43 WiFi"
 
 # embassy は crates.io 公開版に固定（再現性は版指定＋Cargo.lock で担保）。
