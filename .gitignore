@@ -22,4 +22,3 @@ circuit/.tscircuit/
 
 # yew(WASM) WebUI の派生物
 /crates/webui/dist/
-/crates/webui/target/

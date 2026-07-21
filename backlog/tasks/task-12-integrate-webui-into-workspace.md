@@ -1,9 +1,10 @@
 ---
 id: TASK-12
 title: webui クレートを workspace メンバに統合し crates/* を一律扱いにする
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-07-20 15:25'
+updated_date: '2026-07-21 10:17'
 labels:
   - firmware
 dependencies: []
@@ -26,8 +27,20 @@ PR #83（TASK-10 WebUI）のレビューからの follow-up。
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 crates/webui をルート workspace のメンバとして扱い、exclude と webui 側の空 [workspace] を撤去（または同等に不要化）する
-- [ ] #2 ルートの cargo build（thumbv6m 既定）が webui の wasm32 クレートで壊れない（ターゲット分離等で解決）
-- [ ] #3 trunk build --release が git worktree（.claude/worktrees/ ネスト）でも成功する
-- [ ] #4 firmware への dist 埋め込み（include_bytes）と CI が引き続きグリーン
+- [x] #1 crates/webui をルート workspace のメンバとして扱い、exclude と webui 側の空 [workspace] を撤去（または同等に不要化）する
+- [x] #2 ルートの cargo build（thumbv6m 既定）が webui の wasm32 クレートで壊れない（ターゲット分離等で解決）
+- [x] #3 trunk build --release が git worktree（.claude/worktrees/ ネスト）でも成功する
+- [x] #4 firmware への dist 埋め込み（include_bytes）と CI が引き続きグリーン
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+crates/* を一律 workspace メンバ化して解決した。
+
+- ルート Cargo.toml: members = ["crates/*"] + default-members = ["crates/firmware", "crates/mube-core"]。cargo は 1 起動 1 ターゲットなので、wasm32 専用の webui は素の cargo build（thumbv6m 既定）から外し、trunk が --target wasm32-unknown-unknown を明示してビルドする。
+- webui の空 [workspace] と exclude を撤去。メンバ化により worktree でも root workspace が正しく解決され、trunk build --release が通ることを確認済み。
+- webui の [profile.release] はルートへ移設（[profile.release.package.webui] opt-level="z", debug=false。lto はルートの fat が適用、wasm32 は panic=abort 相当）。
+- webui/Cargo.lock を削除しルートの Cargo.lock に統合。
+- 検証: trunk build --release（worktree 内）/ cargo build（dev・release、実 dist + 実 CYW43 ブロブ）/ cargo host-test（7 passed）/ CI 相当の clippy -D warnings（mube-core・mube-firmware、--locked）すべて成功。
+<!-- SECTION:NOTES:END -->

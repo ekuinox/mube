@@ -1,7 +1,11 @@
 [workspace]
 resolver = "3"
-members = ["crates/firmware", "crates/mube-core"]
-exclude = ["crates/webui"]
+members = ["crates/*"]
+# cargo は 1 回の起動で全パッケージを同一ターゲットでビルドする（per-package target は
+# unstable）。webui は wasm32-unknown-unknown 専用なので、thumbv6m 既定
+# （.cargo/config.toml）の素の `cargo build` からは外す。webui のビルドは trunk が
+# `--target wasm32-unknown-unknown` を明示して行う（cd crates/webui && trunk build）。
+default-members = ["crates/firmware", "crates/mube-core"]
 
 # 各クレートで共有する package メタデータ。member 側は `version.workspace = true` /
 # `edition.workspace = true` で参照する。
@@ -22,3 +26,11 @@ opt-level = "s"
 debug = 2
 lto = "fat"
 codegen-units = 1
+
+# webui(wasm) は firmware のフラッシュに埋め込むためサイズ最優先。debug 情報は
+# wasm-bindgen が最終 wasm から strip するが、ビルド時間節約のため付けない。
+# lto / panic はパッケージ別に指定できない（lto は上の fat が効く。wasm32 は
+# panic=abort 相当で unwind コードは元々出ない）。
+[profile.release.package.webui]
+opt-level = "z"
+debug = false

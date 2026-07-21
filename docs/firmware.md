@@ -5,7 +5,9 @@
 
 ## セットアップ
 
-rustup があれば rust-toolchain.toml が stable + thumbv6m を自動導入する（`nix develop` でも揃う）。
+rustup があれば rust-toolchain.toml が stable + thumbv6m/wasm32 を自動導入する。
+`nix develop` は rust-overlay 経由で同じ rust-toolchain.toml から実バイナリのツールチェーンを供給する
+（rustup のシムを介さないため、外部環境の `RUSTUP_TOOLCHAIN` に影響されない）。
 ほかに手動の準備が 2 つある。
 
 - CYW43 ファームウェアブロブを取得する。ライセンス物のため未コミット。詳細は `crates/firmware/cyw43-firmware/README.md`。
