@@ -26,16 +26,9 @@ erc:
 webui:
     cd crates/mube-webui && trunk build --release
 
-# CYW43 ブロブを取得（3 ファイル揃ってなければ fetch.sh）
+# CYW43 ブロブを取得（3 ファイル揃っていなければ取得）
 blobs:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    dir=crates/mube-firmware/cyw43-firmware
-    if [ -f "$dir/43439A0.bin" ] && [ -f "$dir/43439A0_clm.bin" ] && [ -f "$dir/nvram_rp2040.bin" ]; then
-      echo "cyw43 blobs already present"
-    else
-      "$dir/fetch.sh"
-    fi
+    bun scripts/fetch-cyw43.ts
 
 # ファームビルド一発（blob 取得 → WebUI → cargo build）。clone 後これだけでOK
 firmware: blobs webui
