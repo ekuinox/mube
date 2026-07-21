@@ -19,7 +19,15 @@
 - 家庭回線は**固定 IP ではない**。インバウンドのポート開放・ポートフォワードは避けたい。
 - ネットワークそのものを公開したくない（HTTP サーバーを直接インターネットに晒さない）。
 - VPN 常用（Tailscale/WireGuard の端末側設定）は運用が煩わしいので避けたい。
-- Cloudflare に載せられる自分のドメインを保有している。
+- Cloudflare に載せられる自分のドメイン（`ekuinox.dev`）を保有している。
+
+### 確定値
+
+- 公開ホスト名: `door-lock.private.ekuinox.dev`
+- Pico W の LAN アドレス: `172.20.10.13`（自宅ルータ配下。DHCP 予約はせず**可変運用**とし、変わったら `config.yml` を更新する）
+- Access 許可メール: `lm0xlemon@gmail.com` のみ
+- ログイン方式: Google
+- 中継役: この開発機（Raspberry Pi）。`cloudflared` は導入済み（nix、v2026.6.0）
 
 ## 検討した方式
 
@@ -55,25 +63,27 @@ Pico W（ファーム変更なし）:80  →  サーボ / LED / 状態
 
 ### 中継役（Raspberry Pi）
 
-1. `cloudflared` を導入する。
-2. `cloudflared tunnel login`（ブラウザで Cloudflare にログイン。ユーザー操作）。
-3. named tunnel を作成し、認証情報（credentials JSON）を配置する。
-4. トンネル設定ファイル（`config.yml`）で公開ホスト名 → `http://<pico-ip>:80` を割り当てる。
+1. `cloudflared` は導入済み（nix、v2026.6.0）。
+2. `cloudflared tunnel login`（ブラウザで `ekuinox.dev` を認可。ユーザー操作。`~/.cloudflared/cert.pem` が入る）。
+3. named tunnel を作成し、認証情報（credentials JSON）を `~/.cloudflared/` に配置する。
+4. トンネル設定ファイル（`config.yml`）で `door-lock.private.ekuinox.dev` → `http://172.20.10.13:80` を割り当てる。
+   Pico の IP はこの1箇所で管理し、変わったら書き換えて `cloudflared` を再読込する。
 5. systemd サービス化して常駐・自動再起動させる。
 
 ### Cloudflare ダッシュボード（ユーザー操作）
 
-1. 公開ホスト名（例 `lock.<自分のドメイン>`）→ トンネル → Pico W へルート。
-2. Access アプリケーションを1個作成。ポリシーは「許可メール = 自分の Gmail」だけ。
+1. 公開ホスト名 `door-lock.private.ekuinox.dev` → トンネル → Pico W へルート（`cloudflared tunnel route dns` で CLI からも可）。
+2. Access アプリケーションを1個作成。ポリシーは「許可メール = `lm0xlemon@gmail.com`」だけ。
    身内を足すときはメールを追加するだけ。
-3. ログイン方式は Google もしくはメール OTP。
+3. ログイン方式は Google。
 
 ## セキュリティ / 運用上の勘所
 
 - **URL は公開前提で設計する。** バレても未認証は Cloudflare で遮断され、届くのはログイン画面のみ。
   URL の秘匿には依存しない（隠すことによるセキュリティを使わない）。
-- **Pico の IP を安定させる**: ルータで DHCP 予約（または mDNS 名）にして、トンネルの
-  向き先がズレないようにする。
+- **Pico の IP は `config.yml` の1箇所で管理（可変運用）**: 変わったら書き換えて `cloudflared` を
+  再読込する。**外出中に IP が変わると開けられなくなる**リスクがあるため、安定させたくなったら
+  自宅ルータで DHCP 予約にすれば set-and-forget にできる（今回は採らない）。
 - **cloudflared はサービス化**して、中継役の再起動後も自動復帰する。
 - **失効が容易**: 端末紛失時は Access のセッション無効化、または許可メールを外せば即遮断。
 - Pico 側は Access が付与する認証情報を検証しない。**未認証リクエストがそもそも到達しない**ため問題なし。
