@@ -25,7 +25,7 @@ nix develop -c backlog task create "<タイトル>" -d "<本文>" -l "<ラベル
 - 長い本文は一時ファイルに書き、`DESC="$(cat /tmp/desc.md)"` を経由して `-d "$DESC"` で渡す（本文のバッククォートを bash に評価させないため）。
 - 決まった書き方に迷ったら公式ガイド: `nix develop -c backlog instructions task-creation`
 
-3. リネーム: 作成直後にファイル名を `task-N-<英語のkebab-case>.md` へ `mv` する（小文字・ハイフン区切り。スペースと非 ASCII を排除。作成直後は未コミットなので `git mv` は使えない）。ツールは frontmatter の id でタスクを解決し、既存ファイル名は編集後も保持されるので、リネームしても壊れない。
+3. リネーム: 作成直後にファイル名を `task-N - <英語のkebab-case>.md` へ `mv` する（例: `task-14 - servo-torque-check.md`。後半は小文字ハイフン区切りで非 ASCII を排除。作成直後は未コミットなので `git mv` は使えない）。**`task-N - ` 接頭辞（スペース・ハイフン・スペース）は必ず残す**: view/edit は frontmatter の id で解決するが、`task complete` だけは `task-N - *.md` のファイル名パターンで対象を探すため、接頭辞を崩すと "Failed to complete task" で失敗する（v1.48.0 で最小再現により確認。2026-07-21）。
 4. 検証: `nix develop -c backlog task list --plain` に新タスクが出ることを確認する。
 5. `backlog/` の変更はコミット対象（派生物ではない）。
 
@@ -37,4 +37,4 @@ nix develop -c backlog task create "<タイトル>" -d "<本文>" -l "<ラベル
 ## クローズ・統合
 
 - 完了は `backlog task edit <id> -s Done`。重複や統合で消すときは `--notes` で統合先を書いてから `backlog task archive <id>`（`backlog/archive/tasks/` へ移る）。
-- Done タスクの `backlog/completed/` への片付けは、本来 `backlog task complete <id>`。ただし complete は view/edit と違い **`task-N - <タイトル>.md` というファイル名パターンで対象を探す**ため、このリポジトリの kebab-case リネーム規約（`task-N-<kebab>.md`、`task-N - ` 接頭辞が無い）だと "Failed to complete task" で失敗する（v1.48.0、素の命名なら成功・kebab リネーム後は失敗・`task-N - 別名.md` なら成功を最小再現で確認。2026-07-21）。このリポジトリでは代わりに `git mv backlog/tasks/<file> backlog/completed/` で直接移す（complete の移動先と同一。一覧・集計は正しく扱われる）。completed/archive のタスクは `backlog task view <id>` で解決できなくなる点に注意（ファイルは残る）。
+- Done タスクの `backlog/completed/` への片付けは `backlog task complete <id>`（手順 3 の `task-N - ` 接頭辞が保たれていれば動く）。completed/archive のタスクは `backlog task view <id>` で解決できなくなる点に注意（ファイルは残る。集計・一覧は正常）。
