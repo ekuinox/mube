@@ -5,10 +5,11 @@
 use std::str::FromStr;
 
 use gloo_net::http::Request;
-use serde::Deserialize;
+use mube_core::{LockState, StatusResponse};
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 
+/// 画面表示用の状態。API の LockState に「未取得」を足したもの。
 #[derive(Clone, Copy, PartialEq)]
 enum State {
     Locked,
@@ -16,24 +17,18 @@ enum State {
     Unknown,
 }
 
-/// API レスポンス `{"state":"..."}` の形。JSON をパースして state を取り出す。
-#[derive(Deserialize)]
-struct StatusResponse<'a> {
-    state: &'a str,
-}
-
 impl FromStr for State {
     type Err = ();
 
-    /// API レスポンス（`{"state":"LOCKED"|"UNLOCKED"}`）を JSON としてパースし、
-    /// state の値で判定する（空白等のフォーマット揺れには寛容、値は厳密）。想定外は Err。
+    /// API レスポンス（`{"state":"LOCKED"|"UNLOCKED"}`）を firmware と共有する
+    /// mube-core の JSON 契約型でパースする（空白等のフォーマット揺れには寛容、
+    /// 値は厳密）。想定外は Err。
     fn from_str(body: &str) -> Result<Self, Self::Err> {
         let (resp, _) = serde_json_core::from_str::<StatusResponse>(body).map_err(|_| ())?;
-        match resp.state {
-            "LOCKED" => Ok(State::Locked),
-            "UNLOCKED" => Ok(State::Unlocked),
-            _ => Err(()),
-        }
+        Ok(match resp.state {
+            LockState::Locked => State::Locked,
+            LockState::Unlocked => State::Unlocked,
+        })
     }
 }
 

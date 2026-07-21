@@ -39,19 +39,19 @@ jobs:
           touch crates/mube-webui/dist/mube-webui_bg.wasm
 
       - name: cargo check (mube-core)
-        run: cargo check -p mube-core --locked --target x86_64-unknown-linux-gnu
+        run: cargo check -p mube-core --locked --all-features --target x86_64-unknown-linux-gnu
 
       - name: cargo check (mube-firmware)
         run: cargo check -p mube-firmware --locked --target thumbv6m-none-eabi
 
       - name: cargo clippy (mube-core)
-        run: cargo clippy -p mube-core --locked --target x86_64-unknown-linux-gnu -- -D warnings
+        run: cargo clippy -p mube-core --locked --all-features --target x86_64-unknown-linux-gnu -- -D warnings
 
       - name: cargo clippy (mube-firmware)
         run: cargo clippy -p mube-firmware --locked --target thumbv6m-none-eabi -- -D warnings
 
       - name: cargo test (mube-core)
-        run: cargo test -p mube-core --locked --target x86_64-unknown-linux-gnu
+        run: cargo test -p mube-core --locked --all-features --target x86_64-unknown-linux-gnu
 
   circuit:
     runs-on: ubuntu-latest

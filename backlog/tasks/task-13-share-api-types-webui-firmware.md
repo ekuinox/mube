@@ -1,9 +1,10 @@
 ---
 id: TASK-13
 title: webui と firmware で API 型(JSON 契約)を共有する
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-07-20 15:38'
+updated_date: '2026-07-21 11:03'
 labels:
   - firmware
 dependencies: []
@@ -30,8 +31,20 @@ PR #83（TASK-10 WebUI）レビューからの follow-up。「型を webui と f
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 ロック状態/レスポンスの型を mube-core に一本化し、webui と firmware が同じ定義を使う
-- [ ] #2 mube-core の serde は optional feature（firmware の no_std/no-alloc を壊さない）
-- [ ] #3 webui は共有型で JSON をデシリアライズし、独自の StatusResponse を廃する
-- [ ] #4 firmware の as_json 手書き const を共有シリアライズに置換できるか検討する（serde-json-core 等）
+- [x] #1 ロック状態/レスポンスの型を mube-core に一本化し、webui と firmware が同じ定義を使う
+- [x] #2 mube-core の serde は optional feature（firmware の no_std/no-alloc を壊さない）
+- [x] #3 webui は共有型で JSON をデシリアライズし、独自の StatusResponse を廃する
+- [x] #4 firmware の as_json 手書き const を共有シリアライズに置換できるか検討する（serde-json-core 等）
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+mube-core に JSON 契約を一本化した。
+
+- mube-core に optional な serde feature を追加（default-features 無しの derive のみ。no_std/no-alloc 維持）。LockState に cfg_attr で Serialize/Deserialize + rename_all = "SCREAMING_SNAKE_CASE"（"LOCKED"/"UNLOCKED"）を付与し、契約型 StatusResponse { state: LockState } を webapi.rs に追加。
+- webui は独自 StatusResponse を廃止し、mube-core = { features = ["serde"] } の共有型で serde-json-core パースに置換。webui の直接 serde 依存も削除。
+- as_json() の手書き const は置換せず残した（AC#4 の検討結果）。理由: 取りうる値が 2 つだけで &'static str ならフラッシュ直置き・バッファ管理不要。代わりに契約テスト as_json_matches_serde_contract で serde 直列化・デシリアライズとの一致を担保（片方だけ変えるとテストが落ちる）。
+- cargo host-test（flake の cargo-host-test）と CI の mube-core 各ステップに --all-features を追加し、契約テストが常に回るようにした。
+- 検証: cargo host-test 8 passed（契約テスト含む）/ trunk build --release 成功（wasm 132,731 bytes、+1KB は enum デシリアライズ分）/ cargo build（firmware）/ clippy -D warnings（mube-core --all-features・mube-firmware、--locked）すべて成功。
+<!-- SECTION:NOTES:END -->

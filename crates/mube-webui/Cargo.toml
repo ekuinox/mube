@@ -7,11 +7,12 @@ license.workspace = true
 description = "Browser WebUI (yew/WASM) for the mube smart lock"
 
 [dependencies]
+# API の JSON 契約（LockState / StatusResponse）を firmware と共有する。
+mube-core = { path = "../mube-core", features = ["serde"] }
 yew = { version = "0.21", features = ["csr"] }
 gloo-net = "0.6"
 wasm-bindgen-futures = "0.4"
-# API レスポンスの JSON パース。no-alloc・軽量で、将来 firmware(no_std) 側とも共有しやすい。
-serde = { version = "1", default-features = false, features = ["derive"] }
+# API レスポンスの JSON パース。no-alloc・軽量で firmware(no_std) 側とも揃う。
 serde-json-core = "0.6"
 
 # wasm-bindgen をシステム提供の wasm-bindgen-cli (0.2.121) に固定する。
@@ -19,5 +20,6 @@ serde-json-core = "0.6"
 [dependencies.wasm-bindgen]
 version = "=0.2.121"
 
-# release プロファイルはワークスペースルート（[profile.release.package.webui]）で
-# 指定する。メンバクレート側の [profile] は cargo に無視されるため、ここには書かない。
+# release プロファイルはワークスペースルートの [profile.wasm-release] で指定し、
+# Trunk.toml の cargo_profile が選ぶ。メンバクレート側の [profile] は cargo に
+# 無視されるため、ここには書かない。

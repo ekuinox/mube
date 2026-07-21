@@ -8,6 +8,14 @@ description = "Hardware-agnostic lock-control logic for mube (host-testable)"
 
 [dependencies]
 defmt = { version = "0.3", optional = true }
+# API の JSON 契約（LockState / StatusResponse）を webui と共有するための直列化。
+# no_std / no-alloc を保つため default-features は切る。
+serde = { version = "1", default-features = false, features = ["derive"], optional = true }
+
+[dev-dependencies]
+# 契約テスト用（as_json と serde 直列化の一致確認）。webui のパーサと同じ実装を使う。
+serde-json-core = "0.6"
 
 [features]
 defmt = ["dep:defmt"]
+serde = ["dep:serde"]

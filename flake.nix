@@ -51,7 +51,8 @@
             # 動的に解決するため x86_64 / aarch64 どちらの環境でも同じコマンドで動く。
             (pkgs.writeShellScriptBin "cargo-host-test" ''
               shift  # cargo が外部サブコマンドに渡す先頭引数（"host-test"）を除去する
-              exec cargo test -p mube-core --target "$(uname -m)-unknown-linux-gnu" "$@"
+              # --all-features: serde 契約テスト（JSON 契約と as_json の一致）も常に回す
+              exec cargo test -p mube-core --all-features --target "$(uname -m)-unknown-linux-gnu" "$@"
             '')
           ];
           FONTCONFIG_FILE = let
