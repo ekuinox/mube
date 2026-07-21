@@ -65,17 +65,17 @@ GP17 のタクトスイッチを押すと施錠⇄解錠をトグルできる（
 
 ### lockctl.ts（CLI）
 
-日常の操作はリポジトリ直下の `lockctl.ts` を使う。
+日常の操作はトップレベルの `scripts/lockctl.ts` を使う（`just lockctl <sub>` で起動）。
 接続先 IP は環境変数 `TARGET_IP`（`.envrc.local` で定義 → direnv がロード）。
 ポートは既定 80、環境変数 `PORT` で上書き可能。
 
 サブコマンドは必須（引数なしは usage を表示して何もしない。誤操作で施錠状態を変えないため）。
 
 ```
-bun lockctl.ts toggle     # 現在と逆に切り替え
-bun lockctl.ts lock       # 施錠（赤）
-bun lockctl.ts unlock     # 解錠（緑）
-bun lockctl.ts status     # 現在状態を問い合わせ（駆動しない）
+bun scripts/lockctl.ts toggle     # 現在と逆に切り替え
+bun scripts/lockctl.ts lock       # 施錠（赤）
+bun scripts/lockctl.ts unlock     # 解錠（緑）
+bun scripts/lockctl.ts status     # 現在状態を問い合わせ（駆動しない）
 ```
 
 ### セキュリティ注意事項
