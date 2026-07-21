@@ -54,6 +54,6 @@ URL は openscad レンダリング完了後に出るので、全パーツ揃う
 - **`enclosure/build/` は派生物**: STL はコミットしない（.gitignore 済み）。
 - **cloudflared のバイナリ**: pip 版 cloudflared は aarch64 非対応。この環境では
   nix devShell のバイナリを使う。
-- **`NO_TUNNEL=1`**: トンネルなしでローカルのみ配信したい場合は `NO_TUNNEL=1 nix develop -c bun viewer/serve.ts` で起動する。
+- **`NO_TUNNEL=1`**: トンネルなしでローカルのみ配信したい場合は `NO_TUNNEL=1 nix develop -c just viewer` で起動する。
 - **part="assembly"**: `smartlock.scad` は未知の part 名を「全体アセンブリ」として描く
   ので、serve.ts の PARTS に `assembly` があっても落ちない。

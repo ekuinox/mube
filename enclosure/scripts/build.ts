@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// 全プリント部品を scad/build/ にレンダリングする（旧 build.sh の置き換え）。
+// 全プリント部品を enclosure/build/ にレンダリングする（旧 build.sh の置き換え）。
 // smartlock.scad の part 切り替え部品と、単体 scad のゲージ類の 2 系統を回す。
 import { dirname, join } from "node:path";
 import { renderScad } from "./openscad.ts";

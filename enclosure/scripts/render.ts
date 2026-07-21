@@ -6,7 +6,7 @@ import { PNG_ARGS, renderScad } from "./openscad.ts";
 
 const [scad, outArg, ...extra] = process.argv.slice(2);
 if (!scad) {
-  console.error("usage: bun scad/render.ts <scad> [out] [extra openscad flags...]");
+  console.error("usage: bun enclosure/scripts/render.ts <scad> [out] [extra openscad flags...]");
   process.exit(1);
 }
 const out = outArg ?? join("/tmp", `${basename(scad, ".scad")}.stl`);
