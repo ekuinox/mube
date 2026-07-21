@@ -4,10 +4,10 @@ members = ["crates/*"]
 # cargo は 1 回の起動で全パッケージを同一ターゲットでビルドする（per-package target は
 # unstable）。webui は wasm32-unknown-unknown 専用なので、thumbv6m 既定
 # （.cargo/config.toml）の素の `cargo build` からは外す。webui のビルドは trunk が
-# `--target wasm32-unknown-unknown` を明示して行う（cd crates/webui && trunk build）。
+# `--target wasm32-unknown-unknown` を明示して行う（cd crates/mube-webui && trunk build）。
 # 同じ理由で `--workspace` / `--all-targets` 付きの cargo 実行は webui が thumbv6m に
 # 乗って失敗する。全体を対象にしたいときは `-p` で分けるか trunk 側と分離すること。
-default-members = ["crates/firmware", "crates/mube-core"]
+default-members = ["crates/mube-firmware", "crates/mube-core"]
 
 # 各クレートで共有する package メタデータ。member 側は `version.workspace = true` /
 # `edition.workspace = true` で参照する。

@@ -32,7 +32,7 @@
             # 最新 stable に解決される（更新は `nix flake update rust-overlay`）。
             (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
             pkgs.bun          # tscircuit/ の TS 回路記述を実行（tsci は bun 管理の npm パッケージ）
-            pkgs.trunk            # yew(WASM) を dist へビルド（crates/webui）
+            pkgs.trunk            # yew(WASM) を dist へビルド（crates/mube-webui）
             pkgs.wasm-bindgen-cli # trunk が使う wasm-bindgen を Nix から供給（trunk のネット取得を避ける）
             pkgs.binaryen         # wasm-opt（release 最適化）
             # Backlog.md（backlog/ の残タスク管理 CLI）。nixpkgs 未収載で、GitHub リリースの

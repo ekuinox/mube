@@ -24,9 +24,9 @@ use picoserve::routing::{get, post};
 
 // yew/trunk の出力を埋め込む（build.rs が存在を保証）。`&'static [u8]` はフラッシュに
 // 置かれ、picoserve がそこから直接ソケットへ流すため RAM に丸ごとは載らない。
-const INDEX_HTML: &[u8] = include_bytes!("../../webui/dist/index.html");
-const WEBUI_JS: &[u8] = include_bytes!("../../webui/dist/webui.js");
-const WEBUI_WASM: &[u8] = include_bytes!("../../webui/dist/webui_bg.wasm");
+const INDEX_HTML: &[u8] = include_bytes!("../../mube-webui/dist/index.html");
+const WEBUI_JS: &[u8] = include_bytes!("../../mube-webui/dist/mube-webui.js");
+const WEBUI_WASM: &[u8] = include_bytes!("../../mube-webui/dist/mube-webui_bg.wasm");
 
 const CT_HTML: &str = "text/html; charset=utf-8";
 const CT_JS: &str = "application/javascript";
@@ -86,8 +86,8 @@ fn drive(action: Action) -> &'static str {
 pub fn make_app() -> picoserve::Router<impl picoserve::routing::PathRouter> {
     picoserve::Router::new()
         .route("/", get(|| async { asset(INDEX_HTML, CT_HTML) }))
-        .route("/webui.js", get(|| async { asset(WEBUI_JS, CT_JS) }))
-        .route("/webui_bg.wasm", get(|| async { asset(WEBUI_WASM, CT_WASM) }))
+        .route("/mube-webui.js", get(|| async { asset(WEBUI_JS, CT_JS) }))
+        .route("/mube-webui_bg.wasm", get(|| async { asset(WEBUI_WASM, CT_WASM) }))
         .route("/api/status", get(|| async { json(current().as_json()) }))
         .route("/api/lock", post(|| async { json(drive(Action::Lock)) }))
         .route("/api/unlock", post(|| async { json(drive(Action::Unlock)) }))
