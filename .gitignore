@@ -14,6 +14,7 @@ __pycache__/
 /target
 # CYW43 ファームウェアブロブはライセンス物。各自で取得（crates/mube-firmware/cyw43-firmware/README.md 参照）。
 /crates/mube-firmware/cyw43-firmware/*.bin
+/crates/mube-firmware/cyw43-firmware/*.tmp
 
 circuit/node_modules/
 circuit/dist/

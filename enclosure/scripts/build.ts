@@ -1,12 +1,14 @@
 #!/usr/bin/env bun
-// 全プリント部品を scad/build/ にレンダリングする（旧 build.sh の置き換え）。
+// 全プリント部品を enclosure/build/ にレンダリングする（旧 build.sh の置き換え）。
 // smartlock.scad の part 切り替え部品と、単体 scad のゲージ類の 2 系統を回す。
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { renderScad } from "./openscad.ts";
 
-const scadDir = import.meta.dir;
-const buildDir = join(scadDir, "build");
-const smartlock = join(scadDir, "smartlock.scad");
+const scriptsDir = import.meta.dir;
+const enclosureRoot = dirname(scriptsDir);
+const modelsDir = join(enclosureRoot, "models");
+const buildDir = join(enclosureRoot, "build");
+const smartlock = join(modelsDir, "smartlock.scad");
 
 // smartlock.scad から -D part= で切り出す部品（asm_* は組立プレビュー）
 const parts = [
@@ -28,10 +30,10 @@ for (const p of parts) {
 for (const g of gauges) {
   console.log(`== building ${g} ==`);
   try {
-    await renderScad(join(scadDir, `${g}.scad`), join(buildDir, `${g}.stl`));
+    await renderScad(join(modelsDir, `${g}.scad`), join(buildDir, `${g}.stl`));
   } catch (err) {
     console.error(`FAIL: ${g} — ${err instanceof Error ? err.message : err}`);
     process.exit(1);
   }
 }
-console.log("All parts built to scad/build/");
+console.log("All parts built to enclosure/build/");

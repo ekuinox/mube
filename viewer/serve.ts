@@ -3,14 +3,14 @@
 // 公開する。NO_TUNNEL=1 でローカル配信のみ。
 import { copyFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { renderScad } from "../scad/openscad.ts";
+import { renderScad } from "../enclosure/scripts/openscad.ts";
 import { serveDir } from "./static.ts";
 import { startTunnel } from "./tunnel.ts";
 
 const root = dirname(import.meta.dir); // viewer/ の親 = リポジトリルート
-const scadDir = join(root, "scad");
-const buildDir = join(scadDir, "build");
-const smartlock = join(scadDir, "smartlock.scad");
+const modelsDir = join(root, "enclosure", "models");
+const buildDir = join(root, "enclosure", "build");
+const smartlock = join(modelsDir, "smartlock.scad");
 const port = Number(process.env.PORT ?? "8765");
 // assembly は smartlock.scad が未知の part 名を全体アセンブリとして描く仕様を利用している
 const parts = [
@@ -19,7 +19,7 @@ const parts = [
 ];
 
 for (const part of parts) {
-  console.log(`rendering ${part} -> scad/build/${part}.stl`);
+  console.log(`rendering ${part} -> enclosure/build/${part}.stl`);
   try {
     await renderScad(smartlock, join(buildDir, `${part}.stl`), { part });
   } catch (err) {
@@ -30,7 +30,7 @@ for (const part of parts) {
 await copyFile(join(root, "viewer", "index.html"), join(buildDir, "index.html"));
 
 const server = serveDir(buildDir, port);
-console.log(`serving scad/build/ at http://127.0.0.1:${port}`);
+console.log(`serving enclosure/build/ at http://127.0.0.1:${port}`);
 
 let tunnelProc: ReturnType<typeof Bun.spawn> | null = null;
 let url = `http://127.0.0.1:${port}`;

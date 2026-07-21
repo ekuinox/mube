@@ -5,10 +5,10 @@
 // 接続先は環境変数 TARGET_IP（.envrc.local で定義 → direnv がロード）。ポートは 80 既定（PORT env で上書き可）。
 //
 // 使い方（サブコマンド必須。引数なしは usage を表示して終了）:
-//   bun lockctl.ts toggle     # 現在と逆に切り替え
-//   bun lockctl.ts lock       # 施錠（赤）
-//   bun lockctl.ts unlock     # 解錠（緑）
-//   bun lockctl.ts status     # 現在状態を問い合わせ（駆動しない）
+//   bun scripts/lockctl.ts toggle     # 現在と逆に切り替え
+//   bun scripts/lockctl.ts lock       # 施錠（赤）
+//   bun scripts/lockctl.ts unlock     # 解錠（緑）
+//   bun scripts/lockctl.ts status     # 現在状態を問い合わせ（駆動しない）
 
 /** ロック状態。firmware の JSON API が返す 2 値。 */
 export type LockState = "LOCKED" | "UNLOCKED";
@@ -53,7 +53,7 @@ export async function runLockctl(
   return msg;
 }
 
-const USAGE = "usage: bun lockctl.ts <toggle|lock|unlock|status>";
+const USAGE = "usage: bun scripts/lockctl.ts <toggle|lock|unlock|status>";
 
 if (import.meta.main) {
   // 引数なしでは何もしない（誤って施錠状態を変えるのを防ぐため、サブコマンド必須）。

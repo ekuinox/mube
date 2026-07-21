@@ -10,8 +10,10 @@ cyw43 0.7.0 では **3 つとも必須**:
 
 NVRAM を渡さない／CLM で代用すると、起動が `waiting for HT clock` で止まる。
 
-ビルド前に embassy リポジトリから取得してこのディレクトリに置くこと。**crate と同じ rev**
-（`cyw43-v0.7.0` タグ）から取ってバージョンを揃える:
+ビルド前にこのディレクトリへ配置する。推奨はリポジトリルートで `just blobs`（内部で
+`bun scripts/fetch-cyw43.ts` を実行し、欠けているブロブだけを取得する）。
+
+手動で取る場合は **crate と同じ rev**（`cyw43-v0.7.0` タグ）から取ってバージョンを揃える:
 
     BASE=https://raw.githubusercontent.com/embassy-rs/embassy/cyw43-v0.7.0/cyw43-firmware
     curl -fL -o 43439A0.bin       "$BASE/43439A0.bin"
