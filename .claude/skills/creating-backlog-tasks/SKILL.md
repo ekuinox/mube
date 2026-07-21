@@ -37,4 +37,4 @@ nix develop -c backlog task create "<タイトル>" -d "<本文>" -l "<ラベル
 ## クローズ・統合
 
 - 完了は `backlog task edit <id> -s Done`。重複や統合で消すときは `--notes` で統合先を書いてから `backlog task archive <id>`（`backlog/archive/tasks/` へ移る）。
-- Done タスクの `backlog/completed/` への片付けは、本来 `backlog task complete <id>` だが **v1.48.0 では "Failed to complete task" で常に失敗する**（クリーンな clone・latest でも再現。2026-07-21 確認）。代替: `backlog cleanup` は対話式かつ「1日より古い Done」しか対象にできないので、`git mv backlog/tasks/<file> backlog/completed/` で直接移してよい（cleanup の移動先と同一。ツールは一覧・集計を正しく扱う）。completed/archive のタスクは `backlog task view <id>` で解決できなくなる点に注意（ファイルは残る）。
+- Done タスクの `backlog/completed/` への片付けは、本来 `backlog task complete <id>`。ただし complete は view/edit と違い **`task-N - <タイトル>.md` というファイル名パターンで対象を探す**ため、このリポジトリの kebab-case リネーム規約（`task-N-<kebab>.md`、`task-N - ` 接頭辞が無い）だと "Failed to complete task" で失敗する（v1.48.0、素の命名なら成功・kebab リネーム後は失敗・`task-N - 別名.md` なら成功を最小再現で確認。2026-07-21）。このリポジトリでは代わりに `git mv backlog/tasks/<file> backlog/completed/` で直接移す（complete の移動先と同一。一覧・集計は正しく扱われる）。completed/archive のタスクは `backlog task view <id>` で解決できなくなる点に注意（ファイルは残る）。
