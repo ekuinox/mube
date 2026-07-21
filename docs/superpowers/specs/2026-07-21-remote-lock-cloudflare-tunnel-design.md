@@ -71,7 +71,12 @@ Pico W（ファーム変更なし）:80  →  サーボ / LED / 状態
 3. named tunnel を作成し、認証情報（credentials JSON）を `~/.cloudflared/` に配置する。
 4. トンネル設定ファイル（`config.yml`）で `door-lock-private.ekuinox.dev` → `http://172.20.10.13:80` を割り当てる。
    Pico の IP はこの1箇所で管理し、変わったら書き換えて `cloudflared` を再読込する。
-5. systemd サービス化して常駐・自動再起動させる。
+5. systemd サービス化して常駐・自動再起動させる（`/etc/systemd/system/cloudflared-door-lock.service`、
+   `User=ekuinox`、`ExecStart=… tunnel run`）。
+6. **`config.yml` に `protocol: http2` を指定すること。** このネットワークは cloudflared 既定の
+   QUIC(UDP 7844) が塞がれており、既定のままだとサービスは `active` でもエッジに接続できず
+   `cloudflared tunnel info` が "does not have any active connection"、ブラウザは Cloudflare
+   error 1033 になる。`http2`(TCP) に固定すると `Registered tunnel connection` が張れる。
 
 ### Cloudflare ダッシュボード（ユーザー操作）
 
