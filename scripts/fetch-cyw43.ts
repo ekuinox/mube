@@ -17,6 +17,9 @@ export const BLOBS: { name: string; minBytes: number }[] = [
   { name: "nvram_rp2040.bin", minBytes: 100 }, // 基板 NVRAM（実測 ~0.6KB）
 ];
 
+/** サイズ sanity check 失敗。リトライしても無駄なので即失敗させるための型付きエラー。 */
+class BlobTooSmallError extends Error {}
+
 /** ブロブの保存先ディレクトリ（リポジトリルート基準で cwd 非依存）。 */
 export function blobDir(): string {
   const repoRoot = dirname(import.meta.dir); // scripts/ の親 = リポジトリルート
@@ -48,7 +51,7 @@ async function fetchBlob(dir: string, name: string, minBytes: number): Promise<n
       const buf = new Uint8Array(await res.arrayBuffer());
       if (!isValidSize(buf.byteLength, minBytes)) {
         // サイズ不正はリトライしても無駄なので即失敗
-        throw new Error(`${name} が小さすぎる (${buf.byteLength} < ${minBytes} bytes)。URL/タグを確認して`);
+        throw new BlobTooSmallError(`${name} が小さすぎる (${buf.byteLength} < ${minBytes} bytes)。URL/タグを確認して`);
       }
       const out = join(dir, name);
       const tmp = `${out}.tmp`;
@@ -57,8 +60,9 @@ async function fetchBlob(dir: string, name: string, minBytes: number): Promise<n
       return buf.byteLength;
     } catch (err) {
       lastErr = err;
-      if (err instanceof Error && err.message.includes("小さすぎる")) throw err;
+      if (err instanceof BlobTooSmallError) throw err;
       // HTTP・ネットワークエラーは最大 3 回までリトライ
+      if (attempt < 3) await Bun.sleep(2000);
     }
   }
   throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
