@@ -30,6 +30,11 @@
 - `firmware` レシピの依存関係（`firmware: blobs webui`）の変更。
 - CI の変更（CI は実ブロブを取得せず `touch` でダミーを置くため無関係）。
 - WiFi 認証や他クレートの変更。
+- `flake.nix` の `writeShellScriptBin`（`backlog` / `cargo-host-test`）と CI の
+  インライン `bash -c` ステップの bun 化。これらは Nix devShell のツール提供と GitHub
+  Actions のオーケストレーション層に適した形であり、bun 化は複雑化を招く（`cargo-host-test`
+  は PATH 上の実行ファイルであることが cargo 外部サブコマンドの条件、CI ステップは本質的に
+  shell）。今回は対象外とし、shell の排除は `fetch.sh` と Justfile の `blobs` レシピに限る。
 
 ## 新規スクリプト `scripts/fetch-cyw43.ts`
 
