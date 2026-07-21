@@ -1,21 +1,38 @@
 {
   description = "mube smart lock enclosure dev environment";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # rustup の代わりに素の Rust ツールチェーンバイナリを供給する（TASK-9 対策）。
+    # rustup のシム経由だと環境変数 RUSTUP_TOOLCHAIN が rust-toolchain.toml より
+    # 優先され、外部環境の値でビルドが壊れる。rust-overlay の cargo/rustc は
+    # 実バイナリなので RUSTUP_TOOLCHAIN の影響を受けない。
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, rust-overlay }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
-      forAll = f: nixpkgs.lib.genAttrs systems (s: f nixpkgs.legacyPackages.${s});
+      forAll = f: nixpkgs.lib.genAttrs systems (s: f (import nixpkgs {
+        system = s;
+        overlays = [ rust-overlay.overlays.default ];
+      }));
     in {
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
           packages = [
             pkgs.openscad-unstable  # 3D render with Manifold backend (headless via Mesa EGL)
             pkgs.cloudflared  # quick tunnel binary (pip's pycloudflared lacks aarch64)
-            pkgs.rustup       # Pico W firmware toolchain; rust-toolchain.toml が stable + thumbv6m を自動導入
+            # Pico W firmware toolchain。rust-toolchain.toml（stable + thumbv6m/wasm32 +
+            # rust-src/llvm-tools）をそのまま解釈して同等のツールチェーンを提供する。
+            # channel = "stable" は flake.lock の rust-overlay スナップショット時点の
+            # 最新 stable に解決される（更新は `nix flake update rust-overlay`）。
+            (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
             pkgs.bun          # tscircuit/ の TS 回路記述を実行（tsci は bun 管理の npm パッケージ）
-            pkgs.trunk            # yew(WASM) を dist へビルド（crates/webui）
+            pkgs.trunk            # yew(WASM) を dist へビルド（crates/mube-webui）
             pkgs.wasm-bindgen-cli # trunk が使う wasm-bindgen を Nix から供給（trunk のネット取得を避ける）
             pkgs.binaryen         # wasm-opt（release 最適化）
             # Backlog.md（backlog/ の残タスク管理 CLI）。nixpkgs 未収載で、GitHub リリースの
@@ -34,7 +51,8 @@
             # 動的に解決するため x86_64 / aarch64 どちらの環境でも同じコマンドで動く。
             (pkgs.writeShellScriptBin "cargo-host-test" ''
               shift  # cargo が外部サブコマンドに渡す先頭引数（"host-test"）を除去する
-              exec cargo test -p mube-core --target "$(uname -m)-unknown-linux-gnu" "$@"
+              # --all-features: serde 契約テスト（JSON 契約と as_json の一致）も常に回す
+              exec cargo test -p mube-core --all-features --target "$(uname -m)-unknown-linux-gnu" "$@"
             '')
           ];
           FONTCONFIG_FILE = let

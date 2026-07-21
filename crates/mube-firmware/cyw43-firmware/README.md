@@ -20,7 +20,7 @@ NVRAM を渡さない／CLM で代用すると、起動が `waiting for HT clock
 
 置いた後のレイアウト:
 
-    crates/firmware/cyw43-firmware/
+    crates/mube-firmware/cyw43-firmware/
       ├── 43439A0.bin       # WiFi ファームウェア
       ├── 43439A0_clm.bin   # 国別 CLM
       ├── nvram_rp2040.bin  # 基板 NVRAM（クロック・電源設定）

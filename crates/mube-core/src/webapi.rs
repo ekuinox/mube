@@ -12,8 +12,20 @@ pub enum Action {
     Status,
 }
 
+/// API レスポンス `{"state":"LOCKED"|"UNLOCKED"}` の JSON 契約。
+/// webui はこれを serde-json-core でデシリアライズする。firmware は同じ契約の
+/// 固定文字列 `as_json()` を返す（両者の一致は下の契約テストで担保）。
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct StatusResponse {
+    pub state: LockState,
+}
+
 impl LockState {
     /// 状態の JSON 表現（API レスポンスボディ）。
+    /// 実行時シリアライズにしない理由: 取りうる値が 2 つしかなく、&'static str なら
+    /// フラッシュ直置きでバッファ管理も不要。`StatusResponse` の serde 直列化との
+    /// 一致は契約テスト（as_json_matches_serde_contract）が保証する。
     pub fn as_json(self) -> &'static str {
         match self {
             LockState::Locked => "{\"state\":\"LOCKED\"}",
@@ -41,6 +53,19 @@ mod tests {
     fn as_json_maps_both_states() {
         assert_eq!(LockState::Locked.as_json(), "{\"state\":\"LOCKED\"}");
         assert_eq!(LockState::Unlocked.as_json(), "{\"state\":\"UNLOCKED\"}");
+    }
+
+    /// as_json の固定文字列と StatusResponse の serde 直列化が同一であること
+    /// （firmware が返す JSON を webui が必ずパースできること）の契約テスト。
+    #[cfg(feature = "serde")]
+    #[test]
+    fn as_json_matches_serde_contract() {
+        for state in [LockState::Locked, LockState::Unlocked] {
+            let json = serde_json_core::to_string::<_, 32>(&StatusResponse { state }).unwrap();
+            assert_eq!(json.as_str(), state.as_json());
+            let (parsed, _) = serde_json_core::from_str::<StatusResponse>(state.as_json()).unwrap();
+            assert_eq!(parsed.state, state);
+        }
     }
 
     #[test]
