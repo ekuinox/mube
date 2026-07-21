@@ -1,3 +1,7 @@
 [build]
 dist = "dist"
 filehash = false
+# ワークスペースルートの [profile.wasm-release]（opt-level=z）でビルドする。
+# 既定の release プロファイルは firmware 向け（opt-level=s）のため、依存込みで
+# サイズ最適化するにはプロファイルを分ける必要がある。
+cargo_profile = "wasm-release"

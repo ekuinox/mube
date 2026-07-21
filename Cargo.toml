@@ -5,6 +5,8 @@ members = ["crates/*"]
 # unstable）。webui は wasm32-unknown-unknown 専用なので、thumbv6m 既定
 # （.cargo/config.toml）の素の `cargo build` からは外す。webui のビルドは trunk が
 # `--target wasm32-unknown-unknown` を明示して行う（cd crates/webui && trunk build）。
+# 同じ理由で `--workspace` / `--all-targets` 付きの cargo 実行は webui が thumbv6m に
+# 乗って失敗する。全体を対象にしたいときは `-p` で分けるか trunk 側と分離すること。
 default-members = ["crates/firmware", "crates/mube-core"]
 
 # 各クレートで共有する package メタデータ。member 側は `version.workspace = true` /
@@ -27,10 +29,11 @@ debug = 2
 lto = "fat"
 codegen-units = 1
 
-# webui(wasm) は firmware のフラッシュに埋め込むためサイズ最優先。debug 情報は
-# wasm-bindgen が最終 wasm から strip するが、ビルド時間節約のため付けない。
-# lto / panic はパッケージ別に指定できない（lto は上の fat が効く。wasm32 は
-# panic=abort 相当で unwind コードは元々出ない）。
-[profile.release.package.webui]
+# webui(wasm) 用プロファイル。firmware のフラッシュに埋め込むためサイズ最優先で、
+# 依存グラフ全体（yew/gloo/web-sys 等）に opt-level=z を効かせる。
+# [profile.release.package.webui] だと webui 本体にしか効かず wasm が ~9% 太る。
+# trunk が Trunk.toml の cargo_profile 指定でこのプロファイルを使う。
+[profile.wasm-release]
+inherits = "release"
 opt-level = "z"
 debug = false
