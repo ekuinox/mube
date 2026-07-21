@@ -23,7 +23,10 @@
 
 ### 確定値
 
-- 公開ホスト名: `door-lock.private.ekuinox.dev`
+- 公開ホスト名: `door-lock-private.ekuinox.dev`
+  （**1段のサブドメインにすること**。Cloudflare 無料の Universal SSL は `ekuinox.dev` と `*.ekuinox.dev`
+  の1段しかカバーせず、`door-lock.private.ekuinox.dev` のような2段は証明書が無く
+  `ERR_SSL_VERSION_OR_CIPHER_MISMATCH` になる。2段にしたいなら有料の ACM が要る。）
 - Pico W の LAN アドレス: `172.20.10.13`（自宅ルータ配下。DHCP 予約はせず**可変運用**とし、変わったら `config.yml` を更新する）
 - Access 許可メール: `lm0xlemon@gmail.com` のみ
 - ログイン方式: Google
@@ -66,13 +69,13 @@ Pico W（ファーム変更なし）:80  →  サーボ / LED / 状態
 1. `cloudflared` は導入済み（nix、v2026.6.0）。
 2. `cloudflared tunnel login`（ブラウザで `ekuinox.dev` を認可。ユーザー操作。`~/.cloudflared/cert.pem` が入る）。
 3. named tunnel を作成し、認証情報（credentials JSON）を `~/.cloudflared/` に配置する。
-4. トンネル設定ファイル（`config.yml`）で `door-lock.private.ekuinox.dev` → `http://172.20.10.13:80` を割り当てる。
+4. トンネル設定ファイル（`config.yml`）で `door-lock-private.ekuinox.dev` → `http://172.20.10.13:80` を割り当てる。
    Pico の IP はこの1箇所で管理し、変わったら書き換えて `cloudflared` を再読込する。
 5. systemd サービス化して常駐・自動再起動させる。
 
 ### Cloudflare ダッシュボード（ユーザー操作）
 
-1. 公開ホスト名 `door-lock.private.ekuinox.dev` → トンネル → Pico W へルート（`cloudflared tunnel route dns` で CLI からも可）。
+1. 公開ホスト名 `door-lock-private.ekuinox.dev` → トンネル → Pico W へルート（`cloudflared tunnel route dns` で CLI からも可）。
 2. Access アプリケーションを1個作成。ポリシーは「許可メール = `lm0xlemon@gmail.com`」だけ。
    身内を足すときはメールを追加するだけ。
 3. ログイン方式は Google。
