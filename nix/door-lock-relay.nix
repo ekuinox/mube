@@ -1,5 +1,6 @@
 # door-lock 中継一式（Caddy ヘッダ削ぎプロキシ + cloudflared named tunnel）の
-# home-manager モジュール。利用側は import して services.mube-door-lock.enable = true にするだけ。
+# home-manager モジュール。利用側は import して enable し、マシン固有の必須オプション
+# （hostname / tunnelId / picoOrigin）を設定する。
 # 前提: lingering 有効（loginctl enable-linger <user>）。
 # 秘密物（~/.cloudflared/cert.pem とトンネル資格情報 <tunnel-id>.json）は含まない。手動配置。
 { config, lib, pkgs, ... }:
@@ -8,7 +9,7 @@ let
 
   # なぜサイトアドレスが「http://:<port>」+ default_bind なのか（Host 照合の罠）:
   # 「127.0.0.1:<port>」をサイトアドレスにすると Caddy はそれを Host 名として照合し、
-  # cloudflared からのリクエスト（Host: door-lock-private.ekuinox.dev）にマッチせず
+  # cloudflared からのリクエスト（Host: <公開ホスト名>）にマッチせず
   # 空の 200 を返す（2026-07-22 に踏んだ）。Host 不問の「:<port>」で受け、
   # 待受アドレスの限定は default_bind 127.0.0.1 で行う。
   caddyfile = pkgs.writeText "door-lock-Caddyfile" ''
@@ -46,7 +47,7 @@ let
   cloudflaredConfig = pkgs.writeText "door-lock-cloudflared.yml" ''
     tunnel: ${cfg.tunnelId}
     credentials-file: ${cfg.credentialsFile}
-    protocol: ${cfg.protocol}
+    ${lib.optionalString (cfg.protocol != null) "protocol: ${cfg.protocol}"}
     ingress:
       - hostname: ${cfg.hostname}
         service: http://127.0.0.1:${toString cfg.proxyPort}
@@ -59,20 +60,20 @@ in
 
     hostname = lib.mkOption {
       type = lib.types.str;
-      default = "door-lock-private.ekuinox.dev";
-      description = "Cloudflare Tunnel の公開ホスト名";
+      example = "door-lock.example.com";
+      description = "Cloudflare Tunnel の公開ホスト名（必須）";
     };
 
     tunnelId = lib.mkOption {
       type = lib.types.str;
-      default = "b45a50d5-24f6-4732-9568-7971f9772504";
-      description = "cloudflared named tunnel の ID";
+      example = "00000000-0000-0000-0000-000000000000";
+      description = "cloudflared named tunnel の ID（必須。cloudflared tunnel create で発行）";
     };
 
     picoOrigin = lib.mkOption {
       type = lib.types.str;
-      default = "http://172.20.10.13:80";
-      description = "転送先の Pico W オリジン";
+      example = "http://192.168.1.50:80";
+      description = "転送先の Pico W オリジン（必須。IP が変わったらここを更新して switch）";
     };
 
     proxyPort = lib.mkOption {
@@ -82,9 +83,10 @@ in
     };
 
     protocol = lib.mkOption {
-      type = lib.types.str;
-      default = "http2";
-      description = "cloudflared のトンネルプロトコル（この環境は QUIC が塞がれているため http2）";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "http2";
+      description = "cloudflared のトンネルプロトコル。null なら cloudflared の既定（auto）。QUIC(UDP 7844) が塞がれた回線では \"http2\" を指定する";
     };
 
     credentialsFile = lib.mkOption {

@@ -27,14 +27,16 @@ home-manager flake）は `github:ekuinox/mube` を input に足して `enable = 
 | オプション | 型 | 既定値 |
 | --- | --- | --- |
 | `enable` | bool | `false` |
-| `hostname` | str | `door-lock-private.ekuinox.dev` |
-| `tunnelId` | str | `b45a50d5-24f6-4732-9568-7971f9772504` |
-| `picoOrigin` | str | `http://172.20.10.13:80` |
+| `hostname` | str | なし（必須） |
+| `tunnelId` | str | なし（必須） |
+| `picoOrigin` | str | なし（必須） |
 | `proxyPort` | port | `8080` |
-| `protocol` | str | `http2` |
+| `protocol` | nullOr str | `null`（cloudflared の既定。QUIC 塞がれ回線では `"http2"` を指定） |
 | `credentialsFile` | str | `${home}/.cloudflared/<tunnelId>.json` |
 
-既定値は実環境の値（個人プロジェクトのため。ホスト名・トンネル ID は資格情報が無ければ悪用できない）。
+マシン固有の値（hostname / tunnelId / picoOrigin）は既定値を持たせず利用側に必ず設定させる
+（当初は実環境の値を既定にする案だったが、作者個人環境への依存を避けるためレビューで必須化に変更。
+2026-07-22）。汎用的に妥当な proxyPort / credentialsFile のみ既定値を持つ。
 
 - 生成物（すべて Nix ストア産）:
   1. **Caddyfile**: サイトは `http://:<proxyPort>`（Host 不問）+ グローバル `default_bind 127.0.0.1`。
@@ -59,7 +61,13 @@ home-manager flake）は `github:ekuinox/mube` を input に足して `enable = 
 inputs.mube.url = "github:ekuinox/mube";        # マージ前は github:ekuinox/mube/<branch>
 # home.nix:
 imports = [ inputs.mube.homeManagerModules.default ];
-services.mube-door-lock.enable = true;
+services.mube-door-lock = {
+  enable = true;
+  hostname = "...";      # 必須3点はマシン固有値
+  tunnelId = "...";
+  picoOrigin = "http://...";
+  protocol = "http2";    # QUIC 塞がれ回線のみ
+};
 ```
 
 ## 移行手順（実機で1回だけ）
