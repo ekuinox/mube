@@ -21,6 +21,13 @@
         overlays = [ rust-overlay.overlays.default ];
       }));
     in {
+      # door-lock 中継一式（Caddy + cloudflared）の home-manager モジュール。
+      # 利用側の書き方・移行手順は docs/remote-relay.md 参照。
+      homeManagerModules = {
+        door-lock-relay = import ./nix/door-lock-relay.nix;
+        default = self.homeManagerModules.door-lock-relay;
+      };
+
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
           packages = [
