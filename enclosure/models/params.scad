@@ -78,6 +78,48 @@ socket_oh         = knob_engage + socket_wall + 6;   // socket total height (18)
 pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 48.4（ローカル 46）
 pedestal_wall_t   = 2.5;    // pedestal wall thickness
 
+// --- TASK-7 ギア伝達＋ロストモーション・フォーク（全値暫定。クーポン・実機で確定） ---
+// サーボを -30° 方向へオフセットし、駆動ギア(大)→リングギア(小)の外歯 1 段で増速伝達。
+// リングギア下面のフォーク爪がノブ根元だけを押し、爪間の回廊が手動 90° の遊びを作る。
+gear_module   = 1.5;   // 歯車モジュール（0.4 ノズル FDM の実績帯）
+gear_pa       = 20;    // 圧力角[deg]
+gear_z_ring   = 28;    // 従動（リング）歯数 → ピッチ径 42
+gear_z_drive  = 42;    // 駆動歯数 → ピッチ径 63、増速比 1.5
+gear_backlash = 0.15;  // 歯厚の弧長を片歯車あたりこの分だけ痩せさせる（印刷嵌合、クーポンで確定）
+gear_t        = 5;     // 歯幅（Z）
+gear_axis_dist = gear_module * (gear_z_ring + gear_z_drive) / 2;  // 軸間距離 52.5
+gear_dir_deg  = -30;   // オフセット方向。+X 純方向は BB ポケット/ジャンパと干渉、-45° はハンドルクリアランス超過
+gear_axis_pos = [gear_axis_dist * cos(gear_dir_deg), gear_axis_dist * sin(gear_dir_deg)];  // ≈ (45.5, -26.3)
+gear_ratio    = gear_z_drive / gear_z_ring;  // 1.5
+
+// リングギア（従動）
+ring_bore_d   = 29;    // 中央開口。ノブ回転包絡 2*sqrt((knob_w_base/2)^2+(knob_t/2)^2) ≈ 28.1 + すき間
+ring_z0       = 10;    // 歯付き盤の下面（プレート座標）
+ring_skirt_od = 36;    // 下向きベアリングスカート外径（歯底 38.25 の内側）
+ring_skirt_wt = 1.6;   // スカート壁厚
+gear_bearing_fit = 0.3; // スカート内面 ⇔ 受けカラー外面の径すき間（クーポンで確定）
+
+// フォーク爪（リングギア下面）
+fork_z0        = 4;    // 爪下端（プレート座標。ロゼットの出っ張りと要実機確認）
+fork_engage    = 8;    // ノブ根元への掛かり深さ
+fork_claw_ang  = 60;   // 爪 1 本の角幅[deg]（対向 2 本。回廊 = 180 - fork_claw_ang）
+fork_claw_ri   = 9;    // 爪の内半径（ノブ半幅 13.9 と重なって接触面を作る）
+fork_margin    = 15;   // 手動 90° に上乗せする退避マージン[deg]
+knob_env_r     = sqrt(pow(knob_w_base/2, 2) + pow(knob_t/2, 2));  // ノブ回転包絡半径 ≈ 14.05
+knob_ang       = 2 * asin((knob_t/2 + fit_clearance) / (ring_bore_d/2));  // 接触半径でのノブ角幅 ≈ 15
+fork_corridor  = 180 - fork_claw_ang;                 // 爪間の回廊角 120
+fork_free_play = fork_corridor - knob_ang;            // 手動の自由角 ≈ 105
+fork_range     = 90 + fork_free_play;                 // フォーク必要可動域 ≈ 195
+
+// 受けカラー（ペデスタル側・下受け）
+collar_or     = ring_skirt_od/2 - ring_skirt_wt - gear_bearing_fit/2;  // カラー外半径 ≈ 16.25
+collar_z0     = 6.4;   // カラー下端（棚フランジ上面）
+collar_z1     = ring_z0 + 1;  // カラー上端（盤下面へ 1mm 差し込み、スカートの倒れを防ぐ）
+
+// 駆動ギア・サーボ位置（Z は既存のホーンスタック定数から逆算）
+drive_top_z    = ring_z0 + gear_t;                    // 駆動ギア上面 15（ホーンポケットはここに彫る）
+servo_ears_z   = drive_top_z + horn_h;                // サーボ耳の載る面 ≈ 25.4
+
 // --- ソケット キャプチャ壁（v2: ホーンバーの軸方向掛かりの鈍感化） ---
 // バー両脇（Y 方向）の壁をポケット口からサーボ側へ延長し、バーが数 mm 浮いても
 // 壁内に留まるようにする。中央はギアヘッドのドーム逃げで開ける。壁上端は 45° の
@@ -316,3 +358,16 @@ assert(ped_flange_t < tray_boss_h, "フランジ厚がボス高以上（ボス�
 assert(tray_y0 >= ped_curb_ro + ped_curb_tray_gap, "受けカーブがトレイ床に近すぎる（bb_ped_gap か ext_up を見直す）");
 assert(max(plate_rib_ys) + plate_rib_w/2 < tray_y0, "横桟がトレイ床に食い込む");
 assert(max(plate_rib_ys) + plate_rib_w/2 <= ped_fix_r*sin(45) - tray_sleeve_od/2, "横桟がペデスタルスリーブに食い込む");
+
+// --- TASK-7 ギア・フォーク整合チェック ---
+assert(fork_free_play >= 90 + fork_margin, "フォーク回廊の遊びが手動 90°+マージンに足りない");
+// サーボ実効可動域の想定 140°（1000µs メカ端〜2400µs、実測前の安全側仮定）で押し切れること
+assert(fork_range <= 140 * gear_ratio, "フォーク必要可動域がギア比で賄えない（比を上げるか実測可動域で見直す）");
+assert(ring_bore_d/2 > knob_env_r + 0.5, "リング開口がノブ回転包絡と干渉");
+assert((gear_module * gear_z_ring / 2 - 1.25 * gear_module) - ring_bore_d/2 >= 1.5, "リング歯底とボアのリム肉厚 >= 1.5mm");
+assert(fork_claw_ri < knob_w_base/2, "爪の内半径がノブ半幅の外（押せない）");
+assert(collar_or - rosette_d/2 > -8, "カラーがロゼット開口の真上に張り出しすぎない目安");
+assert(gear_axis_dist * sin(-gear_dir_deg) + (gear_module * gear_z_drive / 2 + gear_module) <= clear_down, "駆動ギアがドアハンドルクリアランスを超える");
+assert(gear_axis_dist * cos(gear_dir_deg) + (gear_module * gear_z_drive / 2 + gear_module) <= ext_right + 10, "駆動ギアが +X に張り出しすぎ");
+assert(drive_top_z + horn_h == servo_ears_z, "サーボ耳面はホーンスタックから逆算した値");
+assert(knob_h - mount_pad_t - drive_top_z >= 8, "ノブ先端の露出（掴み代）>= 8mm");
