@@ -13,10 +13,9 @@ include <params.scad>
 //   involute 補正   = inv(pa) [rad→deg]
 //   バックラッシュ  = (bl/2)/rp [rad→deg]
 //
-// ミラー側フランク: involute(t) のミラーは (x, -y) なので、
-//   これを +half 回転すると左フランクになる:
+// ミラー側フランク: involute(t) の y を反転（x, -y）してから角度 +half 回転:
 //   x' =  x·cos(half) + y·sin(half)
-//   y' = -x·sin(half) + y·cos(half)
+//   y' =  x·sin(half) - y·cos(half)
 
 // ----- 基本寸法関数 -----
 
@@ -43,9 +42,9 @@ function _t_at(rb, r) = sqrt(max((r / rb) * (r / rb) - 1, 0)) * 180 / PI;
 function _rot(p, a) = [p[0]*cos(a) - p[1]*sin(a),
                        p[0]*sin(a) + p[1]*cos(a)];
 
-// 点 p を角度 a [deg] 回転（CCW）、y を反転（ミラー用）
+// y を反転してから角度 a [deg] 回転（CCW）（ミラーフランク用）
 function _rot_mir(p, a) = [ p[0]*cos(a) + p[1]*sin(a),
-                            -p[0]*sin(a) + p[1]*cos(a)];
+                             p[0]*sin(a) - p[1]*cos(a)];
 
 // ----- 2D 歯車モジュール -----
 
@@ -63,7 +62,7 @@ module spur_gear_2d(m, z, pa = gear_pa, bl = gear_backlash) {
        + _inv_rad(pa) * 180 / PI
        - (bl / 2) / rp * (180 / PI);
 
-  n_pts = 16;  // フランク分割数
+  n_pts = 16;  // フランク分割数（16 区間 / 17 点）
 
   // 右フランク点列（基礎円/歯底円 → 歯先）
   fl = [for (i = [0:n_pts])
