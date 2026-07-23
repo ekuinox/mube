@@ -1,0 +1,105 @@
+include <params.scad>
+
+// ===== インボリュート平歯車（標準・転位なし） =====
+//
+// 座標系: 歯 1 本の中心が +X 軸方向。
+//
+// インボリュート曲線の式（展開角 t は度）:
+//   P(t) = rb * [ cos(t) + (πt/180)·sin(t),
+//                 sin(t) - (πt/180)·cos(t) ]
+//
+// 歯厚の半角 (half):
+//   ピッチ点での歯厚 = πm/2 [弧長] → 角度 = 90/z [deg]
+//   involute 補正   = inv(pa) [rad→deg]
+//   バックラッシュ  = (bl/2)/rp [rad→deg]
+//
+// ミラー側フランク: involute(t) のミラーは (x, -y) なので、
+//   これを +half 回転すると左フランクになる:
+//   x' =  x·cos(half) + y·sin(half)
+//   y' = -x·sin(half) + y·cos(half)
+
+// ----- 基本寸法関数 -----
+
+function gear_rp(m, z)     = m * z / 2;
+function gear_rb(m, z, pa) = gear_rp(m, z) * cos(pa);
+function gear_ra(m, z)     = gear_rp(m, z) + m;
+function gear_rr(m, z)     = gear_rp(m, z) - 1.25 * m;
+
+// ----- 内部ヘルパ -----
+
+// inv(pa) をラジアンで返す
+function _inv_rad(pa) = tan(pa) - pa * PI / 180;
+
+// 展開角 t [deg] でのインボリュート点
+function _inv_pt(rb, t) =
+  let(tr = t * PI / 180)
+  [rb * (cos(t) + tr * sin(t)),
+   rb * (sin(t) - tr * cos(t))];
+
+// 半径 r における展開角 [deg]（r < rb なら 0）
+function _t_at(rb, r) = sqrt(max((r / rb) * (r / rb) - 1, 0)) * 180 / PI;
+
+// 点 p を角度 a [deg] 回転（CCW）
+function _rot(p, a) = [p[0]*cos(a) - p[1]*sin(a),
+                       p[0]*sin(a) + p[1]*cos(a)];
+
+// 点 p を角度 a [deg] 回転（CCW）、y を反転（ミラー用）
+function _rot_mir(p, a) = [ p[0]*cos(a) + p[1]*sin(a),
+                            -p[0]*sin(a) + p[1]*cos(a)];
+
+// ----- 2D 歯車モジュール -----
+
+module spur_gear_2d(m, z, pa = gear_pa, bl = gear_backlash) {
+  rp = gear_rp(m, z);
+  rb = gear_rb(m, z, pa);
+  ra = gear_ra(m, z);
+  rr = gear_rr(m, z);
+
+  // フランクの開始半径（基礎円 > 歯底円のとき rb から、そうでなければ rr から）
+  r0 = max(rr, rb);
+
+  // 歯中心（+X）から片フランクまでの半角 [deg]
+  half = 90 / z
+       + _inv_rad(pa) * 180 / PI
+       - (bl / 2) / rp * (180 / PI);
+
+  n_pts = 16;  // フランク分割数
+
+  // 右フランク点列（基礎円/歯底円 → 歯先）
+  fl = [for (i = [0:n_pts])
+    _inv_pt(rb, _t_at(rb, r0 + (ra - r0) * i / n_pts))];
+
+  // 歯先端での位相角（フランク端点の極座標角）
+  fl_tip_ang = atan2(fl[n_pts][1], fl[n_pts][0]);
+
+  // 歯先円弧の角度範囲
+  ang_r = fl_tip_ang - half;     // 右フランク端を -half 回転した角度
+  ang_l = half - fl_tip_ang;     // 左フランク端（ミラー対称）
+
+  n_tip = 6;  // 歯先弧の分割数
+
+  union() {
+    // 歯底円（全歯のベース）
+    circle(r = rr, $fn = max(120, z * 4));
+
+    // 各歯を回転配置
+    for (k = [0:z - 1]) rotate(360 * k / z) {
+      polygon(concat(
+        // 根元閉じ点: polygon が歯底円内部で閉じるよう、
+        // 歯底円上の中央付近の内点を加える（歯底 polygon と circle の重なりで実体化）
+        [[rr * cos(0) * 0.5, 0]],
+
+        // 右フランク（-half 方向に回転）
+        [for (p = fl) _rot(p, -half)],
+
+        // 歯先円弧（右フランク端 → 左フランク端）
+        [for (i = [0:n_tip])
+          [ra * cos(ang_r + (ang_l - ang_r) * i / n_tip),
+           ra * sin(ang_r + (ang_l - ang_r) * i / n_tip)]],
+
+        // 左フランク（+half 方向に回転、y を反転してミラー）
+        [for (i = [n_pts:-1:0]) _rot_mir(fl[i], half)]
+      ));
+    }
+  }
+}

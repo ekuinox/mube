@@ -104,7 +104,7 @@ fork_z0        = 4;    // 爪下端（プレート座標。ロゼットの出っ
 fork_engage    = 8;    // ノブ根元への掛かり深さ
 fork_claw_ang  = 60;   // 爪 1 本の角幅[deg]（対向 2 本。回廊 = 180 - fork_claw_ang）
 fork_claw_ri   = 9;    // 爪の内半径（ノブ半幅 13.9 と重なって接触面を作る）
-fork_margin    = 15;   // 手動 90° に上乗せする退避マージン[deg]
+fork_margin    = 14;   // 手動 90° に上乗せする退避マージン[deg]（knob_ang ≈ 15.5° のため 15 だと fork_free_play ≈ 104.5 で僅かに不足）
 knob_env_r     = sqrt(pow(knob_w_base/2, 2) + pow(knob_t/2, 2));  // ノブ回転包絡半径 ≈ 14.05
 knob_ang       = 2 * asin((knob_t/2 + fit_clearance) / (ring_bore_d/2));  // 接触半径でのノブ角幅 ≈ 15
 fork_corridor  = 180 - fork_claw_ang;                 // 爪間の回廊角 120
