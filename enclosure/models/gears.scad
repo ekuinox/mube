@@ -105,7 +105,12 @@ module spur_gear_2d(m, z, pa = gear_pa, bl = gear_backlash) {
 }
 
 // 駆動ギア。サーボホーン（一文字バー）を上面ポケットへ嵌合し、押さえ爪でクリップする。
-// ローカル座標: 盤下面 z=0、上面 z=gear_t。ホーンポケット開口は上面（+Z 側）。
+// ローカル座標: 盤下面 z=0、上面 z=gear_t、ハブボス下面 z=−drive_hub_h。
+// 組み立て時はローカル z=0 をワールド ring_z0 に合わせるため、
+// ハブボスはワールド z = ring_z0−drive_hub_h..ring_z0 に相当する（例: 4..10）。
+// ホーンポケット開口は上面（+Z 側）。爪梁の根元（ローカル z≈−6..−5）は
+// ハブボスの実体に埋まり宙吊りにならない。印刷は上面ダウン＋サポート、
+// またはクーポンステージ向け姿勢変換を要検討。
 //
 // horn_pocket_* のローカル系: ポケット底 z=0、バー面が -Z 側。
 // rotate([180,0,0]) + translate([0,0,gear_t]) でポケット底を gear_t 面に合わせ、
@@ -116,6 +121,7 @@ module spur_gear_2d(m, z, pa = gear_pa, bl = gear_backlash) {
 // そこで horn_pocket_cuts() の効果を z <= gear_t に限定（intersection で打ち切り）し、
 // バー+ハブポケットは disk 内部（z=3..5 付近）に彫り込みつつ、
 // gear_t 上方に立つ爪（sock_claw）は削り取られないようにする。
+// 爪逃がし溝（sock_claw_slots）はハブボスも貫くため根元 z≈−6..−5 の浮きは残らない。
 module drive_gear() {
   difference() {
     union() {
@@ -123,9 +129,12 @@ module drive_gear() {
         spur_gear_2d(gear_module, gear_z_drive);
       // スタブ・爪の加算形状: 反転して上面へ。爪は gear_t より上に立つ。
       translate([0, 0, gear_t]) rotate([180, 0, 0]) horn_pocket_adds();
+      // ハブボス（下面）: 爪梁の根元（z≈−6..−5）を実体に埋めるため下側に張り出す
+      translate([0, 0, -drive_hub_h]) cylinder(d = drive_hub_d, h = drive_hub_h + 0.1);
     }
     // ポケット彫り込み: z <= gear_t に限定して爪加算形状を削り取らないようにする。
     // （sock_claw_slots は爪と同 footprint のため、制限しないと爪ごと切除される）
+    // sock_claw_slots はハブボス内部にも延伸してバーポケット周囲の爪逃がし溝を形成する。
     intersection() {
       translate([0, 0, gear_t]) rotate([180, 0, 0]) horn_pocket_cuts();
       translate([-200, -200, -200]) cube([400, 400, 200 + gear_t + 0.2]);
