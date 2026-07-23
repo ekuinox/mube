@@ -1,4 +1,5 @@
 include <params.scad>
+use <hardware.scad>
 
 // ===== インボリュート平歯車（標準・転位なし） =====
 //
@@ -99,6 +100,35 @@ module spur_gear_2d(m, z, pa = gear_pa, bl = gear_backlash) {
         // 左フランク（+half 方向に回転、y を反転してミラー）
         [for (i = [n_pts:-1:0]) _rot_mir(fl[i], half)]
       ));
+    }
+  }
+}
+
+// 駆動ギア。サーボホーン（一文字バー）を上面ポケットへ嵌合し、押さえ爪でクリップする。
+// ローカル座標: 盤下面 z=0、上面 z=gear_t。ホーンポケット開口は上面（+Z 側）。
+//
+// horn_pocket_* のローカル系: ポケット底 z=0、バー面が -Z 側。
+// rotate([180,0,0]) + translate([0,0,gear_t]) でポケット底を gear_t 面に合わせ、
+// バー面（-Z 方向）を gear_t より上（+Z 方向）に向ける。
+//
+// horn_pocket_cuts() に含まれる sock_claw_slots は爪よりも広い footprint を持ち、
+// そのまま適用すると gear_t 上方の爪加算形状まで削り取ってしまう。
+// そこで horn_pocket_cuts() の効果を z <= gear_t に限定（intersection で打ち切り）し、
+// バー+ハブポケットは disk 内部（z=3..5 付近）に彫り込みつつ、
+// gear_t 上方に立つ爪（sock_claw）は削り取られないようにする。
+module drive_gear() {
+  difference() {
+    union() {
+      linear_extrude(height = gear_t)
+        spur_gear_2d(gear_module, gear_z_drive);
+      // スタブ・爪の加算形状: 反転して上面へ。爪は gear_t より上に立つ。
+      translate([0, 0, gear_t]) rotate([180, 0, 0]) horn_pocket_adds();
+    }
+    // ポケット彫り込み: z <= gear_t に限定して爪加算形状を削り取らないようにする。
+    // （sock_claw_slots は爪と同 footprint のため、制限しないと爪ごと切除される）
+    intersection() {
+      translate([0, 0, gear_t]) rotate([180, 0, 0]) horn_pocket_cuts();
+      translate([-200, -200, -200]) cube([400, 400, 200 + gear_t + 0.2]);
     }
   }
 }

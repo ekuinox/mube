@@ -19,3 +19,4 @@ render() {
 }
 linear_extrude(height = 1) spur_gear_2d(gear_module, gear_z_ring);
 echo("gears_test ok");
+translate([0, -70, 0]) drive_gear();  // 駆動ギア（ホーン嵌合付き）
