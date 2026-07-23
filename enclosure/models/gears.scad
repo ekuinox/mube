@@ -104,6 +104,55 @@ module spur_gear_2d(m, z, pa = gear_pa, bl = gear_backlash) {
   }
 }
 
+// フォーク付きリングギア（従動）。中央開口をノブが貫通し、下面の対向 2 爪が
+// ノブ根元を押す。下向きスカートがペデスタルの受けカラーに被さって軸受けになる。
+// 回廊（爪間の空き）が手動 90° の遊び。ニュートラルで爪は ±(fork_corridor/2) に立つ。
+//
+// WORLD Z 定義:
+//   歯付き盤: z = ring_z0 .. ring_z0 + gear_t
+//   ベアリングスカート: z = collar_z0 .. ring_z0
+//   フォーク爪: z = fork_z0 .. ring_z0 （盤下面まで伸ばして融合）
+// XY 原点 = サムターン軸
+module ring_gear() {
+  // セクター（扇形）2D ヘルパ: +X 中心、半角 half_ang、外半径 ro、内半径 ri
+  // 多角近似（$fn で制御）で円弧を作る
+  module _sector_annulus(ri, ro, half_ang, n = 32) {
+    // 外弧 (ro)、内弧 (ri) の点列を生成して polygon 化
+    n_arc = max(4, round(n * (2 * half_ang) / 360));
+    outer_pts = [for (i = [0:n_arc])
+      let(a = -half_ang + 2 * half_ang * i / n_arc)
+      [ro * cos(a), ro * sin(a)]];
+    inner_pts = [for (i = [0:n_arc])
+      let(a = half_ang - 2 * half_ang * i / n_arc)
+      [ri * cos(a), ri * sin(a)]];
+    polygon(concat(outer_pts, inner_pts));
+  }
+
+  // 歯付き盤（ボア抜き）
+  translate([0, 0, ring_z0])
+    linear_extrude(height = gear_t)
+      difference() {
+        spur_gear_2d(gear_module, gear_z_ring);
+        circle(d = ring_bore_d);
+      }
+
+  // ベアリングスカート（盤下面から受けカラーへ被さる）
+  translate([0, 0, collar_z0])
+    linear_extrude(height = ring_z0 - collar_z0 + 0.1)
+      difference() {
+        circle(d = ring_skirt_od);
+        circle(d = ring_skirt_od - 2 * ring_skirt_wt);
+      }
+
+  // フォーク爪（対向 2 本のセクター柱。回廊中心を ±Y に置く＝爪中心が ±X）
+  // 爪外半径: ボア縁（ring_bore_d/2）に 2.4mm 被せて盤と繋ぐ
+  _claw_ro = ring_bore_d / 2 + 2.4;
+  for (k = [0, 1]) rotate(180 * k)
+    translate([0, 0, fork_z0])
+      linear_extrude(height = ring_z0 - fork_z0 + 0.1)
+        _sector_annulus(fork_claw_ri, _claw_ro, fork_claw_ang / 2);
+}
+
 // 駆動ギア。サーボホーン（一文字バー）を上面ポケットへ嵌合し、押さえ爪でクリップする。
 // ローカル座標: 盤下面 z=0、上面 z=gear_t、ハブボス下面 z=−drive_hub_h。
 // 組み立て時はローカル z=0 をワールド ring_z0 に合わせるため、

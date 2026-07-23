@@ -5,6 +5,8 @@ assert(gear_rr(gear_module, gear_z_ring) < gear_rp(gear_module, gear_z_ring), "r
 assert(gear_rp(gear_module, gear_z_ring) < gear_ra(gear_module, gear_z_ring), "rp < ra");
 // リング歯底の内側にボア用のリムが残る
 assert(gear_rr(gear_module, gear_z_ring) - ring_bore_d/2 >= 1.5, "ring rim >= 1.5");
+// 爪がノブ側面を押せる重なりを持つ（半径方向）
+assert(fork_claw_ri < knob_w_base/2 - 1, "claw overlaps knob");
 // 噛み合い確認: 軸間距離に置いた 2 枚（位相合わせ済み）が重ならない
 render() {
   difference() {
@@ -20,3 +22,4 @@ render() {
 linear_extrude(height = 1) spur_gear_2d(gear_module, gear_z_ring);
 echo("gears_test ok");
 translate([0, -70, 0]) drive_gear();  // 駆動ギア（ホーン嵌合付き）
+ring_gear();  // フォーク付きリングギア
