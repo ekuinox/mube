@@ -9,10 +9,12 @@ export async function startTunnel(
   let proc: ReturnType<typeof Bun.spawn>;
   try {
     proc = Bun.spawn(
-      // この開発機のネットワークは QUIC が塞がれており、既定プロトコルだと
-      // URL 発行だけ成功してエッジ接続 0 本（error 1033）になる。http2 を明示する。
-      ["cloudflared", "tunnel", "--no-autoupdate", "--protocol", "http2",
-       "--url", `http://127.0.0.1:${port}`],
+      // --config /dev/null: ~/.cloudflared/config.yml（door-lock 常設トンネルの設定）が
+      // 存在すると quick tunnel でもその ingress が優先され、--url が無視されて全リクエストが
+      // フォールバックの http_status:404 に落ちる（2026-07-24 実害）。既定 config を読ませない。
+      // --protocol http2: このネットワークは QUIC が不安定なことがあるため TCP に固定。
+      ["cloudflared", "tunnel", "--config", "/dev/null", "--no-autoupdate",
+       "--protocol", "http2", "--url", `http://127.0.0.1:${port}`],
       { stdout: "ignore", stderr: "pipe" },
     );
   } catch {
