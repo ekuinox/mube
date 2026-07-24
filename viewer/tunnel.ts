@@ -9,7 +9,10 @@ export async function startTunnel(
   let proc: ReturnType<typeof Bun.spawn>;
   try {
     proc = Bun.spawn(
-      ["cloudflared", "tunnel", "--no-autoupdate", "--url", `http://127.0.0.1:${port}`],
+      // この開発機のネットワークは QUIC が塞がれており、既定プロトコルだと
+      // URL 発行だけ成功してエッジ接続 0 本（error 1033）になる。http2 を明示する。
+      ["cloudflared", "tunnel", "--no-autoupdate", "--protocol", "http2",
+       "--url", `http://127.0.0.1:${port}`],
       { stdout: "ignore", stderr: "pipe" },
     );
   } catch {
