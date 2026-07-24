@@ -116,6 +116,46 @@ collar_or     = ring_skirt_od/2 - ring_skirt_wt - gear_bearing_fit/2;  // カラ
 collar_z0     = 6.4;   // カラー下端（棚フランジ上面）
 collar_z1     = ring_z0 + 1;  // カラー上端（盤下面へ 1mm 差し込み、スカートの倒れを防ぐ）
 
+// ペデスタル v3（ギアデッキ）
+ped_cyl_ri     = 23.2;  // 筒内半径（リング歯先 22.5 + 0.7 逃げ）
+ped_cyl_ro     = 25.6;  // 筒外半径
+// 受けカラーは「スカート外周を抱く外側軸受け」に変更（下記 DEVIATION 参照）。
+//   ブリーフ/TASK-7 の当初案は内側カラー（collar_or≈16.25 がスカート内径 16.4 に潜り込む）
+//   だったが、フォーク爪の外半径 _claw_ro = ring_bore_d/2 + 2.4 = 16.9 が r14.5..16.9 の
+//   全周（回転）を占有し、内側カラー（r14.74..16.25）と体積干渉する（clash 実測で確認）。
+//   gears.scad は不変が制約なので、爪の掃引（r<=16.9, z 4..10）と歯付き盤（z10..15）を
+//   両方避けられる唯一の固定軸受け位置＝スカート外周（r18）の外側に受けカラーを置く。
+//   スカート外面 r18 が固定リング内面（ped_collar_ri）を摺動し、棚がスカート下端を軸支する。
+ped_bearing_gap = gear_bearing_fit / 2;              // 片側径すき間 0.15（スカート外⇔カラー内）
+ped_collar_ri  = ring_skirt_od/2 + ped_bearing_gap;  // 受けカラー内半径 ≈ 18.15（スカート外 18 + 逃げ）
+ped_collar_ro  = ped_collar_ri + 1.6;                // 受けカラー外半径 ≈ 19.75（< 筒内 23.2、肉厚 1.6）
+ped_collar_z1  = ring_z0 - 0.2;                      // カラー上端（歯付き盤下面 z=10 の 0.2mm 下で盤を避ける）
+ped_axial_gap  = 0.2;                                // スカート下端と棚上面の軸方向すき間（摺動＋coplanar 回避）
+ped_shelf_z1   = collar_z0 - ped_axial_gap;          // 棚上面（ワールド 6.2 = スカート下端 6.4 の 0.2 下）
+ped_shelf_z0   = 2;     // 内フランジ棚（スカート下端の軸受け床）の下面（ローカル）。棚上面はカラー下端
+                        //   collar_z0−wall=4.0 に合わせるので、下面はそれより下（棚高 2mm）。ブリーフの 4 は
+                        //   collar_z0−wall と一致し棚高 0 になっていた。
+ped_shelf_ri   = (ring_bore_d/2 + 2.4) + 0.3;        // 棚内半径 ≈ 17.2 = フォーク爪外半径 16.9 + 0.3 逃げ。
+                        //   フォーク爪は r9..16.9・z4..10 の全高に立つので、棚（z2..4 だが爪の掃引域に触れる
+                        //   のを避けるため）内半径を爪外半径より外に置く。スカート壁 r16.4..18 のうち外側
+                        //   r17.2..18 を軸支する（下受け床は狭いが軸方向荷重は軽い）。
+ped_window_ang = 55;    // 噛み合い窓の半角[deg]（gear_dir_deg 中心。駆動歯の通過幅から）
+ped_window_z0  = 9 - wall;   // 窓下端（ローカル）。ワールド 9（歯帯 10..15 の下 1mm）
+ped_window_z1  = 16 - wall;  // 窓上端（ローカル）。ワールド 16（歯帯の上 1mm）
+ped_arm_w      = 18;    // サーボ天板への持ち出し梁の幅
+ped_plate_r    = 20;    // サーボ天板の半径（オフセット位置の円板）
+assert(ped_cyl_ri >= gear_module * gear_z_ring / 2 + gear_module + 0.5, "筒内面がリング歯先に触れる");
+fork_claw_ro   = ring_bore_d/2 + 2.4;  // フォーク爪の外半径 16.9（gears.scad の _claw_ro と同式）
+assert(ped_collar_ri >= ring_skirt_od/2 + 0.1, "受けカラー内面がスカート外周に食い込む");
+assert(ped_collar_ri > fork_claw_ro, "受けカラー内面がフォーク爪外半径に食い込む");
+assert(ped_collar_ro < ped_cyl_ri, "受けカラーが筒内壁を超える");
+assert(ped_collar_z1 <= ring_z0, "受けカラー上端が歯付き盤下面を超える");
+assert(ped_shelf_ri < ped_collar_ri, "棚内半径が受けカラー内半径以上（棚がスカートを受けられない）");
+assert((ped_shelf_z1 - wall) - ped_shelf_z0 >= 1, "内フランジ棚の高さが不足");
+assert(ped_shelf_z1 < collar_z0, "棚上面がスカート下端に軸方向すき間を残していない");
+// 梁下面（ワールド）が駆動ギア上面の爪先（ワールド 17.15）に触れない
+assert((servo_ears_z - wall - servo_plate_t - 4) + wall >= 17.15 + 0.3, "持ち出し梁の下面が駆動ギア爪先に迫る（すき間 >= 0.3mm）");
+
 // 駆動ギア・サーボ位置（Z は既存のホーンスタック定数から逆算）
 drive_hub_d    = 38;   // 駆動ギア下面ハブボス径（ホーンバー全長 33.3 + 壁を内包し爪梁の根元を実体に埋める）
 drive_hub_h    = 6;    // ハブボス高（爪梁の根元 z=-6..-5 を覆う）
