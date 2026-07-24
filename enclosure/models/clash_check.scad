@@ -12,6 +12,7 @@ include <params.scad>
 use <body.scad>
 use <tray.scad>
 use <pedestal.scad>
+use <servo_tower.scad>
 use <gears.scad>
 
 clash_eps = 0.05;
@@ -59,6 +60,34 @@ intersection() {
     rotate(gear_drive_phase) drive_gear();
 }
 
+// ── サーボ塔（body ボルト留めの別部品。組立位置 z=wall + 浮かせ、トレイと同じ扱い） ──
+// servo_tower × body（ボス⇔スリーブは横嵌めすき間で非接触。床上の他要素と干渉しないこと）
+intersection() {
+  body();
+  translate([0, 0, wall + clash_eps]) servo_tower();
+}
+// servo_tower × tray（同一床上の別部品。相対位置は組立通りなので浮かせ不要）
+intersection() {
+  translate([0, 0, wall]) tray();
+  translate([0, 0, wall]) servo_tower();
+}
+// servo_tower × pedestal（同一床上。相対位置は組立通り）
+intersection() {
+  translate([0, 0, wall]) pedestal();
+  translate([0, 0, wall]) servo_tower();
+}
+// servo_tower × drive_gear（コラム・ブリッジ・天板が駆動ギア掃引体に触れないこと。噛み合い位相）
+intersection() {
+  translate([0, 0, wall]) servo_tower();
+  translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0 + clash_eps])
+    rotate(gear_drive_phase) drive_gear();
+}
+// servo_tower × ring_gear（塔がリングギア掃引体に触れないこと）
+intersection() {
+  translate([0, 0, wall]) servo_tower();
+  translate([0, 0, clash_eps]) ring_gear();
+}
+
 // ノブ包絡（TASK-7 回帰ガード）。サムターンノブは軸(原点)まわりに回転しながら
 // プレート床上面(ワールド z≈0)からノブ先端(ワールド z = knob_h - mount_pad_t = 24)まで
 // 突き出し、掴み代として露出し続けねばならない。回転包絡半径 knob_env_r に 0.5 の
@@ -76,6 +105,11 @@ intersection() {
 intersection() {
   translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0])
     rotate(gear_drive_phase) drive_gear();
+  knob_envelope();
+}
+// knob_envelope × servo_tower（塔のコラム・ブリッジ・天板がノブ上空を横切らないこと）
+intersection() {
+  translate([0, 0, wall]) servo_tower();
   knob_envelope();
 }
 // 注記: ring_gear は意図的に除外する。リングギア下面のフォーク爪はノブ根元を押す

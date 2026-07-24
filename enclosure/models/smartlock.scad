@@ -1,6 +1,7 @@
 include <params.scad>
 use <body.scad>
 use <pedestal.scad>
+use <servo_tower.scad>
 use <gears.scad>
 use <tray.scad>
 
@@ -14,6 +15,8 @@ exp = exploded ? 1 : 0;
 if (part == "body") body();
 else if (part == "tray") tray();
 else if (part == "pedestal") pedestal();
+// サーボ塔（body ボルト留め）。印刷向き: スリーブ下面（ローカル z=0）をベッドに接地する基部下向き。
+else if (part == "servo_tower") servo_tower();
 // リングギア（従動）。印刷向き: 歯付き盤の上面（ワールド z=15）をベッドに伏せ、
 // スカート・フォーク爪を上向きに立てる（盤下面から爪先まで平坦面が無いためこの向きが安定）。
 else if (part == "gear_ring")
@@ -108,12 +111,19 @@ else if (part == "asm_tray")
 else if (part == "asm_pedestal")
   color("Khaki")
     translate([0, 0, wall + exp * 8]) pedestal();
+// サーボ塔（組立位置 z=wall。分解ビューは +Z へ退避）
+else if (part == "asm_servo_tower")
+  color("MediumSeaGreen")
+    translate([0, 0, wall + exp * 16]) servo_tower();
 else {
   // full assembly
   color("SteelBlue") body();
 
   color("Khaki")
     translate([0, 0, wall + exp * 8]) pedestal();
+
+  color("MediumSeaGreen")
+    translate([0, 0, wall + exp * 16]) servo_tower();
 
   // リングギア（ワールド座標）＋駆動ギア（軸オフセット位置・z=ring_z0・噛み合い位相）
   color("SandyBrown")

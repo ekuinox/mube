@@ -165,3 +165,9 @@ module ped_mount_bosses() {
   for (p = ped_fix_pts)
     translate([p[0], p[1], wall]) m2_boss();
 }
+
+// サーボ塔をプレート天面から留めるための本体側ボス。tower_fix_pts（3点）に床上面から立てる。
+module tower_mount_bosses() {
+  for (p = tower_fix_pts)
+    translate([p[0], p[1], wall]) m2_boss();
+}

@@ -17,9 +17,10 @@ module body() {
       plate_ribs();
       // ペデスタル受けカーブ（ローブ通過の切り欠き＝回り止め）
       pedestal_curb();
-      // 固定ボス（トレイ4＋ペデスタル4、天面 M2 留め）
+      // 固定ボス（トレイ4＋ペデスタル4＋サーボ塔3、天面 M2 留め）
       tray_mount_bosses();
       ped_mount_bosses();
+      tower_mount_bosses();
     }
     // 中央ロゼット開口（ドア側のサムターン座金を通す）
     translate([0, 0, -0.1])
@@ -54,6 +55,10 @@ module plate_ribs() {
         }
         // 受けカーブ・スリーブ・中央開口まわりの逃げ
         circle(r = ped_curb_ro + 1);
+        // サーボ塔スリーブまわりの逃げ（塔スリーブは別部品なので横桟と重なると干渉する。
+        // 該当点の横桟をスリーブ外径 + すき間で丸く抜く）。P2 が横桟 y=14 に被るため必須。
+        for (p = tower_fix_pts)
+          translate([p[0], p[1]]) circle(r = tray_sleeve_od/2 + boss_fit + 0.6);
       }
 }
 

@@ -117,10 +117,9 @@ collar_or     = ring_skirt_od/2 - ring_skirt_wt - gear_bearing_fit/2;  // カラ
 collar_z0     = 6.4;   // カラー下端（棚フランジ上面）
 collar_z1     = ring_z0 + 1;  // カラー上端（盤下面へ 1mm 差し込み、スカートの倒れを防ぐ）
 
-// ペデスタル v3（ギアデッキ）
-ped_cyl_ri     = 23.2;  // 筒内半径（リング歯先 22.5 + 0.7 逃げ）
-ped_cyl_ro     = 25.6;  // 筒外半径
-// 受けカラーは「スカート外周を抱く外側軸受け」に変更（下記 DEVIATION 参照）。
+// ペデスタル v4（ロー・ベアリング支持）。v3 の筒・噛み合い窓・持ち出し梁・サーボ天板は撤去し、
+// サーボは servo_tower.scad（body ボルト留めの別部品）へ分離した。ここに残るのは受けカラー系のみ。
+// 受けカラーは「スカート外周を抱く外側軸受け」（下記 DEVIATION 参照）。
 //   ブリーフ/TASK-7 の当初案は内側カラー（collar_or≈16.25 がスカート内径 16.4 に潜り込む）
 //   だったが、フォーク爪の外半径 _claw_ro = ring_bore_d/2 + 2.4 = 16.9 が r14.5..16.9 の
 //   全周（回転）を占有し、内側カラー（r14.74..16.25）と体積干渉する（clash 実測で確認）。
@@ -129,33 +128,33 @@ ped_cyl_ro     = 25.6;  // 筒外半径
 //   スカート外面 r18 が固定リング内面（ped_collar_ri）を摺動し、棚がスカート下端を軸支する。
 ped_bearing_gap = gear_bearing_fit / 2;              // 片側径すき間 0.15（スカート外⇔カラー内）
 ped_collar_ri  = ring_skirt_od/2 + ped_bearing_gap;  // 受けカラー内半径 ≈ 18.15（スカート外 18 + 逃げ）
-ped_collar_ro  = ped_collar_ri + 1.6;                // 受けカラー外半径 ≈ 19.75（< 筒内 23.2、肉厚 1.6）
+ped_collar_ro  = ped_collar_ri + 1.6;                // 受けカラー外半径 ≈ 19.75（肉厚 1.6）
 ped_collar_z1  = ring_z0 - 0.2;                      // カラー上端（歯付き盤下面 z=10 の 0.2mm 下で盤を避ける）
 ped_axial_gap  = 0.2;                                // スカート下端と棚上面の軸方向すき間（摺動＋coplanar 回避）
 ped_shelf_z1   = collar_z0 - ped_axial_gap;          // 棚上面（ワールド 6.2 = スカート下端 6.4 の 0.2 下）
-ped_shelf_z0   = 2;     // 内フランジ棚（スカート下端の軸受け床）の下面（ローカル）。棚上面はカラー下端
-                        //   collar_z0−wall=4.0 に合わせるので、下面はそれより下（棚高 2mm）。ブリーフの 4 は
-                        //   collar_z0−wall と一致し棚高 0 になっていた。
+ped_shelf_z0   = 2;     // 内フランジ棚（スカート下端の軸受け床）の下面（ローカル）。棚下面 z=2 は
+                        //   フランジ厚 2.4 に食い込みフランジ実体へ融合する（筒を撤去したため棚は
+                        //   フランジに直接根付く）。棚上面はカラー下端 collar_z0−wall=4.0。
 ped_shelf_ri   = (ring_bore_d/2 + 2.4) + 0.3;        // 棚内半径 ≈ 17.2 = フォーク爪外半径 16.9 + 0.3 逃げ。
                         //   フォーク爪は r9..16.9・z4..10 の全高に立つので、棚（z2..4 だが爪の掃引域に触れる
                         //   のを避けるため）内半径を爪外半径より外に置く。スカート壁 r16.4..18 のうち外側
                         //   r17.2..18 を軸支する（下受け床は狭いが軸方向荷重は軽い）。
-ped_window_ang = 55;    // 噛み合い窓の半角[deg]（gear_dir_deg 中心。駆動歯の通過幅から）
-ped_window_z0  = 9 - wall;   // 窓下端（ローカル）。ワールド 9（歯帯 10..15 の下 1mm）
-ped_window_z1  = 16 - wall;  // 窓上端（ローカル）。ワールド 16（歯帯の上 1mm）
-ped_arm_w      = 18;    // サーボ天板への持ち出し梁の幅
-ped_plate_r    = 20;    // サーボ天板の半径（オフセット位置の円板）
-assert(ped_cyl_ri >= gear_module * gear_z_ring / 2 + gear_module + 0.5, "筒内面がリング歯先に触れる");
+ped_shelf_ro   = ped_collar_ro + 0.6;                // 棚外半径。筒が無くなったのでカラー外周へ寄せる
+                        //   （棚がカラー直下のフランジ実体に根付く土台リングとなる）。
 fork_claw_ro   = ring_bore_d/2 + 2.4;  // フォーク爪の外半径 16.9（gears.scad の _claw_ro と同式）
 assert(ped_collar_ri >= ring_skirt_od/2 + 0.1, "受けカラー内面がスカート外周に食い込む");
 assert(ped_collar_ri > fork_claw_ro, "受けカラー内面がフォーク爪外半径に食い込む");
-assert(ped_collar_ro < ped_cyl_ri, "受けカラーが筒内壁を超える");
 assert(ped_collar_z1 <= ring_z0, "受けカラー上端が歯付き盤下面を超える");
 assert(ped_shelf_ri < ped_collar_ri, "棚内半径が受けカラー内半径以上（棚がスカートを受けられない）");
+assert(ped_shelf_ro > ped_collar_ro, "棚外半径が受けカラー外半径以下（棚がカラー直下を支えられない）");
 assert((ped_shelf_z1 - wall) - ped_shelf_z0 >= 1, "内フランジ棚の高さが不足");
+assert(ped_shelf_z0 < ped_flange_t, "棚下面がフランジ厚に食い込まない（宙吊りになる）");
 assert(ped_shelf_z1 < collar_z0, "棚上面がスカート下端に軸方向すき間を残していない");
-// 梁下面（ワールド）が駆動ギア上面の爪先（ワールド 17.15）に触れない
-assert((servo_ears_z - wall - servo_plate_t - 4) + wall >= 17.15 + 0.3, "持ち出し梁の下面が駆動ギア爪先に迫る（すき間 >= 0.3mm）");
+// v4: ペデスタルは受けカラー上端（ワールド ped_collar_z1 = 9.8）より上に材料を出さない
+assert(ped_collar_z1 <= servo_ears_z - wall + 0.001, "ペデスタル最上端が想定 (受けカラー上端) を超える");
+assert(ped_collar_ro < knob_env_r + 30, "受けカラー外半径のサニティ上限");
+// ノブ包絡（r < knob_env_r）はペデスタルのどの要素にも侵されない（受けカラー内半径 > 包絡半径）
+assert(ped_collar_ri > knob_env_r + 0.5, "受けカラー内面がノブ回転包絡に食い込む");
 
 // 駆動ギア・サーボ位置（Z は既存のホーンスタック定数から逆算）
 drive_hub_d    = 38;   // 駆動ギア下面ハブボス径（ホーンバー全長 33.3 + 壁を内包し爪梁の根元を実体に埋める）
@@ -310,6 +309,48 @@ ped_curb_tray_gap = 1.0; // 受けカーブ外周 → トレイ床下端に要�
 plate_rib_h  = 4;            // リブ高（床上面から）
 plate_rib_w  = 2;            // リブ幅
 plate_rib_ys = [-14, 14];    // 横桟の y（ワールド y＝ロゼット軸基準。プレート中心基準ではない）（受けカーブとの交差は差し引きで自動処理）
+
+// --- サーボ塔（servo_tower.scad）: body ボルト留めの別部品。ペデスタル v4 で筒を撤去したため、
+//     オフセットサーボはこの塔が担う。トレイ/ペデスタルと同じ本体ボス＋スリーブ構造で床天面留め。
+//     ローカル座標: z=0 がプレート床上面（ワールド z=wall）。組立時は translate([0,0,wall]) で置く
+//     （トレイと同じ）。塔天板の上面（ローカル tower_top_local）＝サーボ耳面 servo_ears_z。
+tower_top_local = servo_ears_z - wall;   // 塔天板上面（ローカル ≈ 23.0）＝ワールド servo_ears_z
+// 固定ボス3点（ワールド座標。ロゼット軸基準）。駆動ギア掃引円（軸 gear_axis_pos・歯先 33 + 1）と
+// リング歯（原点・22.5 + 1）の両外側、かつプレート内・BB ポケット/トレイ床の外に落とす。
+// 3点で三角形を成し、サーボ反力トルクに対する塔基部の回り止めとする（P2 は横桟 y=14 に一部被るが
+// 同一 body 実体との union なので干渉しない＝リブは塔ボス基部へ融合する）。
+tower_fix_pts = [
+  [77.798,  -4.441],   // P1: +X 側（BB ポケット右外・トレイ床下）
+  [45.466,  12.750],   // P2: +perp 側（原点寄り。横桟 y=14 と一部重なるが body union で融合）
+  [68.983,   7.335],   // P3: +X 中間（三角形の底辺を広げる控え）
+];
+tower_col_d      = 8.0;    // 塔コラム径（鉛直プリズム。スリーブ外径 7.8 を内包）
+tower_plate_r    = 20;     // サーボ天板の半径（gear_axis_pos 中心の円板。旧 ped_plate_r 相当）
+tower_sleeve_top = tray_boss_h + tray_cap_t;   // スリーブ上端ローカル z = 9.8（ワールド 12.2）
+tower_gear_swept_r = gear_module * gear_z_drive / 2 + gear_module;  // 駆動ギア歯先 33.0
+tower_plate_bot_world = servo_ears_z - servo_plate_t;  // サーボ天板下面ワールド ≈ 21.9
+tower_col_top    = tower_top_local - servo_plate_t;    // コラム頂＝天板下面ローカル ≈ 19.5（ワールド 21.9）
+tower_bridge_z0  = tower_col_top - 2.4;                // ブリッジ下面ローカル ≈ 17.1（ワールド 19.5 = ギア上面 15 を +4.5 クリア）
+// ブリッジ帯（ローカル tower_bridge_z0..tower_col_top）はギア上面ワールド 15 より上（>= 19.5）に
+// あるので、コラム頂（r39 の外周）から天板（gear_axis 中心 r20）へ内側に張り出してもギア掃引体を
+// またぐだけで触れない。コラム自体は鉛直プリズムでギア掃引円（r34）の外に立つ。
+// 塔ボスのクリアランス・アサート
+for (p = tower_fix_pts) {
+  rG = sqrt(pow(p[0]-gear_axis_pos[0],2) + pow(p[1]-gear_axis_pos[1],2));
+  rO = sqrt(pow(p[0],2) + pow(p[1],2));
+  assert(rG - tray_sleeve_od/2 >= tower_gear_swept_r + 1 - 0.001, "塔スリーブが駆動ギア掃引円 +1 に食い込む");
+  assert(rO - tray_sleeve_od/2 >= gear_module*gear_z_ring/2 + gear_module + 1 - 0.001, "塔スリーブがリング歯先 +1 に食い込む");
+  assert(p[0] + tray_sleeve_od/2 <= ext_right, "塔スリーブがプレート右端 (+X) を超える");
+  assert(p[1] - tray_sleeve_od/2 >= -(ext_down + wall), "塔スリーブがプレート下端 (-Y footprint) を超える");
+  // BB ポケット回避: y が BB ポケット下端より下 or x が BB ポケット右外
+  assert((p[1] + tray_sleeve_od/2 < pocket_outer_bottom) || (p[0] - tray_sleeve_od/2 > pocket_outer_right),
+         "塔スリーブが BB ポケットに食い込む");
+  assert(p[1] + tray_sleeve_od/2 < tray_y0, "塔スリーブがトレイ床に食い込む");
+}
+assert(tower_sleeve_top < tower_col_top, "塔コラムの高さが非正（スリーブ上端がコラム頂を超える）");
+assert(tower_plate_bot_world >= 19.5, "サーボ天板下面がギア上を 19.5mm 以上でクリアしない");
+assert(tower_bridge_z0 + wall >= 15 + 4, "ブリッジ下面がギア上面 (world 15) を 4mm 以上クリアしない");
+assert(tower_top_local == servo_ears_z - wall, "塔天板上面がサーボ耳面と不一致");
 
 // --- Sanity / clearance checks ---
 assert(wall > 0, "wall must be positive");
