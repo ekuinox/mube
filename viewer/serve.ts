@@ -14,8 +14,9 @@ const smartlock = join(modelsDir, "smartlock.scad");
 const port = Number(process.env.PORT ?? "8765");
 // assembly は smartlock.scad が未知の part 名を全体アセンブリとして描く仕様を利用している
 const parts = [
-  "body", "pedestal", "socket", "tray", "assembly",
-  "asm_body", "asm_pedestal", "asm_socket", "asm_tray",
+  "body", "pedestal", "gear_ring", "gear_drive", "tray", "assembly",
+  "asm_body", "asm_pedestal", "asm_gear_ring", "asm_gear_drive", "asm_tray",
+  "gear_mesh_coupon",
 ];
 
 for (const part of parts) {
