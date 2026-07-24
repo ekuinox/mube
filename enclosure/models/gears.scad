@@ -105,13 +105,17 @@ module spur_gear_2d(m, z, pa = gear_pa, bl = gear_backlash) {
 }
 
 // フォーク付きリングギア（従動）。中央開口をノブが貫通し、下面の対向 2 爪が
-// ノブ根元を押す。下向きスカートがペデスタルの受けカラーに被さって軸受けになる。
+// ノブ根元を押す。ボア（ring_bore_d）がノブ本体を軸受けとして自己芯出しする
+// （2026-07-24 のレビューでベアリングスカートとペデスタル受けカラーを廃止。
+// リングギアはノブ自体を軸とする＝模倣元デザインと同方式）。
 // 回廊（爪間の空き）が手動 90° の遊び。ニュートラルで爪は ±(fork_corridor/2) に立つ。
 //
+// 軸方向保持: 現状は意図的に無し（ユーザー承認済み）。爪の掛かり 8mm・歯帯 5mm が
+// 軸方向のフロートを許容する。実機確認でフロートが過大なら床パッド 3 点の要否を判断する。
+//
 // WORLD Z 定義:
-//   歯付き盤: z = ring_z0 .. ring_z0 + gear_t
-//   ベアリングスカート: z = collar_z0 .. ring_z0
-//   フォーク爪: z = fork_z0 .. ring_z0 （盤下面まで伸ばして融合）
+//   歯付き盤: z = ring_z0 .. ring_z0 + gear_t （= 10 .. 15）
+//   フォーク爪: z = fork_z0 .. ring_z0 （= 4 .. 10。盤下面まで伸ばして融合）
 // XY 原点 = サムターン軸
 module ring_gear() {
   // セクター（扇形）2D ヘルパ: +X 中心、半角 half_ang、外半径 ro、内半径 ri
@@ -134,14 +138,6 @@ module ring_gear() {
       difference() {
         spur_gear_2d(gear_module, gear_z_ring);
         circle(d = ring_bore_d);
-      }
-
-  // ベアリングスカート（盤下面から受けカラーへ被さる）
-  translate([0, 0, collar_z0])
-    linear_extrude(height = ring_z0 - collar_z0 + 0.1)
-      difference() {
-        circle(d = ring_skirt_od);
-        circle(d = ring_skirt_od - 2 * ring_skirt_wt);
       }
 
   // フォーク爪（対向 2 本のセクター柱。回廊中心を ±Y に置く＝爪中心が ±X）

@@ -94,67 +94,20 @@ gear_ratio    = gear_z_drive / gear_z_ring;  // 1.5
 gear_drive_phase = 180/gear_z_drive + gear_dir_deg * (1 + gear_z_ring/gear_z_drive);
 
 // リングギア（従動）
-ring_bore_d   = 29;    // 中央開口。ノブ回転包絡 2*sqrt((knob_w_base/2)^2+(knob_t/2)^2) ≈ 28.1 + すき間
+ring_bore_d   = 28.5;  // 中央開口。ノブ回転包絡 28.1 + 0.4 のすべり軸受けはめあい。暫定、クーポンで詰める。ボアがノブを軸として自己芯出しする
 ring_z0       = 10;    // 歯付き盤の下面（プレート座標）
-ring_skirt_od = 36;    // 下向きベアリングスカート外径（歯底 38.25 の内側）
-ring_skirt_wt = 1.6;   // スカート壁厚
-gear_bearing_fit = 0.3; // スカート内面 ⇔ 受けカラー外面の径すき間（クーポンで確定）
 
 // フォーク爪（リングギア下面）
 fork_z0        = 4;    // 爪下端（プレート座標。ロゼットの出っ張りと要実機確認）
 fork_engage    = 8;    // ノブ根元への掛かり深さ
-fork_claw_ang  = 60;   // 爪 1 本の角幅[deg]（対向 2 本。回廊 = 180 - fork_claw_ang）
+fork_claw_ang  = 58;   // 爪 1 本の角幅[deg]（対向 2 本。回廊 = 180 - fork_claw_ang）。ring_bore_d を 28.5 へ絞った結果 knob_ang ≈ 15.73° に増え、爪 60° だと fork_free_play ≈ 104.27 で margin ≈ 0.27° と過小。fork_margin を削らず爪を 58° に狭めて回廊を +2° 広げ margin ≈ 2.27° を確保（爪弧幅 58° は依然 30° 以上の接触面を持ち強度は十分）
 fork_claw_ri   = 9;    // 爪の内半径（ノブ半幅 13.9 と重なって接触面を作る）
-fork_margin    = 14;   // 手動 90° に上乗せする退避マージン[deg]（knob_ang ≈ 15.5° のため 15 だと fork_free_play ≈ 104.5 で僅かに不足）
+fork_margin    = 14;   // 手動 90° に上乗せする退避マージン[deg]
 knob_env_r     = sqrt(pow(knob_w_base/2, 2) + pow(knob_t/2, 2));  // ノブ回転包絡半径 ≈ 14.05
 knob_ang       = 2 * asin((knob_t/2 + fit_clearance) / (ring_bore_d/2));  // 接触半径でのノブ角幅 ≈ 15
 fork_corridor  = 180 - fork_claw_ang;                 // 爪間の回廊角 120
 fork_free_play = fork_corridor - knob_ang;            // 手動の自由角 ≈ 105
 fork_range     = 90 + fork_free_play;                 // フォーク必要可動域 ≈ 195
-
-// 受けカラー（ペデスタル側・下受け）
-collar_or     = ring_skirt_od/2 - ring_skirt_wt - gear_bearing_fit/2;  // カラー外半径 ≈ 16.25
-collar_z0     = 6.4;   // カラー下端（棚フランジ上面）
-collar_z1     = ring_z0 + 1;  // カラー上端（盤下面へ 1mm 差し込み、スカートの倒れを防ぐ）
-
-// ペデスタル v4（ロー・ベアリング支持）。v3 の筒・噛み合い窓・持ち出し梁・サーボ天板は撤去し、
-// サーボは servo_tower.scad（body ボルト留めの別部品）へ分離した。ここに残るのは受けカラー系のみ。
-// 受けカラーは「スカート外周を抱く外側軸受け」（下記 DEVIATION 参照）。
-//   ブリーフ/TASK-7 の当初案は内側カラー（collar_or≈16.25 がスカート内径 16.4 に潜り込む）
-//   だったが、フォーク爪の外半径 _claw_ro = ring_bore_d/2 + 2.4 = 16.9 が r14.5..16.9 の
-//   全周（回転）を占有し、内側カラー（r14.74..16.25）と体積干渉する（clash 実測で確認）。
-//   gears.scad は不変が制約なので、爪の掃引（r<=16.9, z 4..10）と歯付き盤（z10..15）を
-//   両方避けられる唯一の固定軸受け位置＝スカート外周（r18）の外側に受けカラーを置く。
-//   スカート外面 r18 が固定リング内面（ped_collar_ri）を摺動し、棚がスカート下端を軸支する。
-ped_bearing_gap = gear_bearing_fit / 2;              // 片側径すき間 0.15（スカート外⇔カラー内）
-ped_collar_ri  = ring_skirt_od/2 + ped_bearing_gap;  // 受けカラー内半径 ≈ 18.15（スカート外 18 + 逃げ）
-ped_collar_ro  = ped_collar_ri + 1.6;                // 受けカラー外半径 ≈ 19.75（肉厚 1.6）
-ped_collar_z1  = ring_z0 - 0.2;                      // カラー上端（歯付き盤下面 z=10 の 0.2mm 下で盤を避ける）
-ped_axial_gap  = 0.2;                                // スカート下端と棚上面の軸方向すき間（摺動＋coplanar 回避）
-ped_shelf_z1   = collar_z0 - ped_axial_gap;          // 棚上面（ワールド 6.2 = スカート下端 6.4 の 0.2 下）
-ped_shelf_z0   = 2;     // 内フランジ棚（スカート下端の軸受け床）の下面（ローカル）。棚下面 z=2 は
-                        //   フランジ厚 2.4 に食い込みフランジ実体へ融合する（筒を撤去したため棚は
-                        //   フランジに直接根付く）。棚上面はカラー下端 collar_z0−wall=4.0。
-ped_shelf_ri   = (ring_bore_d/2 + 2.4) + 0.3;        // 棚内半径 ≈ 17.2 = フォーク爪外半径 16.9 + 0.3 逃げ。
-                        //   フォーク爪は r9..16.9・z4..10 の全高に立つので、棚（z2..4 だが爪の掃引域に触れる
-                        //   のを避けるため）内半径を爪外半径より外に置く。スカート壁 r16.4..18 のうち外側
-                        //   r17.2..18 を軸支する（下受け床は狭いが軸方向荷重は軽い）。
-ped_shelf_ro   = ped_collar_ro + 0.6;                // 棚外半径。筒が無くなったのでカラー外周へ寄せる
-                        //   （棚がカラー直下のフランジ実体に根付く土台リングとなる）。
-fork_claw_ro   = ring_bore_d/2 + 2.4;  // フォーク爪の外半径 16.9（gears.scad の _claw_ro と同式）
-assert(ped_collar_ri >= ring_skirt_od/2 + 0.1, "受けカラー内面がスカート外周に食い込む");
-assert(ped_collar_ri > fork_claw_ro, "受けカラー内面がフォーク爪外半径に食い込む");
-assert(ped_collar_z1 <= ring_z0, "受けカラー上端が歯付き盤下面を超える");
-assert(ped_shelf_ri < ped_collar_ri, "棚内半径が受けカラー内半径以上（棚がスカートを受けられない）");
-assert(ped_shelf_ro > ped_collar_ro, "棚外半径が受けカラー外半径以下（棚がカラー直下を支えられない）");
-assert((ped_shelf_z1 - wall) - ped_shelf_z0 >= 1, "内フランジ棚の高さが不足");
-assert(ped_shelf_z0 < ped_flange_t, "棚下面がフランジ厚に食い込まない（宙吊りになる）");
-assert(ped_shelf_z1 < collar_z0, "棚上面がスカート下端に軸方向すき間を残していない");
-// v4: ペデスタルは受けカラー上端（ワールド ped_collar_z1 = 9.8）より上に材料を出さない
-assert(ped_collar_z1 <= servo_ears_z - wall + 0.001, "ペデスタル最上端が想定 (受けカラー上端) を超える");
-assert(ped_collar_ro < knob_env_r + 30, "受けカラー外半径のサニティ上限");
-// ノブ包絡（r < knob_env_r）はペデスタルのどの要素にも侵されない（受けカラー内半径 > 包絡半径）
-assert(ped_collar_ri > knob_env_r + 0.5, "受けカラー内面がノブ回転包絡に食い込む");
 
 // 駆動ギア・サーボ位置（Z は既存のホーンスタック定数から逆算）
 drive_hub_d    = 38;   // 駆動ギア下面ハブボス径（ホーンバー全長 33.3 + 壁を内包し爪梁の根元を実体に埋める）
@@ -213,6 +166,8 @@ pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;  // 25.4
 
 // ペデスタル受けカーブの半径系（BB/トレイの -Y アンカーが参照するため、依存順でここに定義。
 // カーブ本体・ローブ等の残りのペデスタル定数は後段の「ペデスタルのボルトオン分離」ブロック）
+// ペデスタル廃止(2026-07-24)により現在は未使用。BB/トレイのアンカーが ped_curb_ro に依存
+// しているため、ボディ見直しタスクで一括整理する。
 pedestal_fit   = 0.3;    // フランジ⇔受けカーブの横嵌めすき間（フェーズ2でクーポン実測して確定）
 ped_curb_wt    = 2.0;    // 受けカーブ壁厚
 ped_base_d     = 2*(rosette_d/2 + pedestal_wall_t + fit_clearance);  // フランジ基礎円 = 筒外径 50.8
@@ -432,10 +387,13 @@ assert(max(plate_rib_ys) + plate_rib_w/2 <= ped_fix_r*sin(45) - tray_sleeve_od/2
 assert(fork_free_play >= 90 + fork_margin, "フォーク回廊の遊びが手動 90°+マージンに足りない");
 // サーボ実効可動域の想定 140°（1000µs メカ端〜2400µs、実測前の安全側仮定）で押し切れること
 assert(fork_range <= 140 * gear_ratio, "フォーク必要可動域がギア比で賄えない（比を上げるか実測可動域で見直す）");
-assert(ring_bore_d/2 > knob_env_r + 0.5, "リング開口がノブ回転包絡と干渉");
+// ボアはノブ回転包絡を軸受けとして自己芯出しする（2026-07-24 でスカート・受けカラー廃止）。
+// 旧設計は「ボアがノブに触れない 0.5mm 逃げ」だったが、新設計はボアがノブ包絡を摺動する
+// すべり軸受け。包絡半径 14.05 を下回らず（挿入可）、かつ片側 0.5mm 以内のはめあいに収める。
+assert(ring_bore_d/2 >= knob_env_r, "リング開口がノブ回転包絡より小さい（ノブが通らない）");
+assert(ring_bore_d/2 - knob_env_r <= 0.5, "ボア⇔ノブ包絡のすき間が大きすぎ（軸受けとして芯が出ない）");
 assert((gear_module * gear_z_ring / 2 - 1.25 * gear_module) - ring_bore_d/2 >= 1.5, "リング歯底とボアのリム肉厚 >= 1.5mm");
 assert(fork_claw_ri < knob_w_base/2, "爪の内半径がノブ半幅の外（押せない）");
-assert(collar_or - rosette_d/2 > -8, "カラーがロゼット開口の真上に張り出しすぎない目安");
 assert(gear_axis_dist * sin(-gear_dir_deg) + (gear_module * gear_z_drive / 2 + gear_module) <= clear_down, "駆動ギアがドアハンドルクリアランスを超える");
 assert(gear_axis_dist * cos(gear_dir_deg) + (gear_module * gear_z_drive / 2 + gear_module) <= ext_right + 10, "駆動ギアが +X に張り出しすぎ");
 assert(drive_top_z + horn_h == servo_ears_z, "サーボ耳面はホーンスタックから逆算した値");

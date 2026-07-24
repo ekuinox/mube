@@ -11,7 +11,6 @@
 include <params.scad>
 use <body.scad>
 use <tray.scad>
-use <pedestal.scad>
 use <servo_tower.scad>
 use <gears.scad>
 
@@ -23,30 +22,7 @@ intersection() {
   translate([0, 0, wall + clash_eps]) tray();
 }
 
-// body × pedestal（ペデスタルは組立位置 z=wall + 浮かせ）
-intersection() {
-  body();
-  translate([0, 0, wall + clash_eps]) pedestal();
-}
-
-// tray × pedestal（どちらも組立位置。同一平面同士なので浮かせ不要＝相対位置は組立通り）
-intersection() {
-  translate([0, 0, wall]) tray();
-  translate([0, 0, wall]) pedestal();
-}
-
 // ring_gear はワールド座標（z=wall 持ち上げ不要）。載せる側を clash_eps だけ +Z に浮かす。
-// pedestal × ring_gear（受けカラー⇔スカートは径すき間で非接触のはず）
-intersection() {
-  translate([0, 0, wall]) pedestal();
-  translate([0, 0, clash_eps]) ring_gear();
-}
-// pedestal × drive_gear（窓・梁と歯の接触検出。噛み合い位相で回した実姿勢）
-intersection() {
-  translate([0, 0, wall]) pedestal();
-  translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0 + clash_eps])
-    rotate(gear_drive_phase) drive_gear();
-}
 // ring_gear × drive_gear（噛み合い部の食い込み検出。噛み合い位相合わせ）
 intersection() {
   ring_gear();
@@ -71,11 +47,6 @@ intersection() {
   translate([0, 0, wall]) tray();
   translate([0, 0, wall]) servo_tower();
 }
-// servo_tower × pedestal（同一床上。相対位置は組立通り）
-intersection() {
-  translate([0, 0, wall]) pedestal();
-  translate([0, 0, wall]) servo_tower();
-}
 // servo_tower × drive_gear（コラム・ブリッジ・天板が駆動ギア掃引体に触れないこと。噛み合い位相）
 intersection() {
   translate([0, 0, wall]) servo_tower();
@@ -96,11 +67,6 @@ intersection() {
 module knob_envelope() {
   translate([0, 0, 0.05]) cylinder(r = knob_env_r + 0.5, h = 24 - 0.05);
 }
-// knob_envelope × pedestal（梁・カラー等がノブ上空を横切らないこと）
-intersection() {
-  translate([0, 0, wall]) pedestal();
-  knob_envelope();
-}
 // knob_envelope × drive_gear（駆動ギアはノブに一切触れてはならない）
 intersection() {
   translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0])
@@ -114,4 +80,4 @@ intersection() {
 }
 // 注記: ring_gear は意図的に除外する。リングギア下面のフォーク爪はノブ根元を押す
 // 「押し子」であり、設計上ノブの回転路（包絡内）に入る。ここで対にすると必ず干渉検出
-// されてしまうため、ノブに触れてはならない pedestal / drive_gear だけを対にする。
+// されてしまうため、ノブに触れてはならない drive_gear / servo_tower だけを対にする。

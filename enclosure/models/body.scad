@@ -16,8 +16,11 @@ module body() {
       // 上面リブ（外周一周＋横桟）
       plate_ribs();
       // ペデスタル受けカーブ（ローブ通過の切り欠き＝回り止め）
+      // ペデスタル廃止(2026-07-24)により現在は未使用。BB/トレイのアンカーが ped_curb_ro に
+      // 依存しているため、ボディ見直しタスクで一括整理する。
       pedestal_curb();
       // 固定ボス（トレイ4＋ペデスタル4＋サーボ塔3、天面 M2 留め）
+      // ped_mount_bosses はペデスタル廃止(2026-07-24)で未使用（ボディ見直しタスクで整理）。
       tray_mount_bosses();
       ped_mount_bosses();
       tower_mount_bosses();
