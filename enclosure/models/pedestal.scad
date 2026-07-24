@@ -62,15 +62,21 @@ module pedestal() {
               translate([servo_shaft_offset + sx * servo_screw_span/2, 0])
                 circle(d = servo_screw_pilot);
           }
-      // 梁: 筒の上端帯からサーボ天板まで（セパレーション反力方向。歯帯より上を通す）
+      // 梁: 筒の上端帯（gear_dir_deg 側の壁）からサーボ天板まで（セパレーション反力方向。
+      //   歯帯より上を通す）。旧版は近端アンカーを筒全周 circle(ped_cyl_ro) にしていたため
+      //   hull がノブ中央（原点）上空へ材料を引き込み、ノブ掴み代（ワールド z<=24, r<=knob_env_r）
+      //   を覆って干渉していた（TASK-7 の要点を潰す）。修正: 近端アンカーを壁取り付け点
+      //   （gear_dir_deg 方向・半径 ped_cyl_ri+1 の小円）に置き、帯も半径 ped_cyl_ri から
+      //   始めることで、梁を「筒壁の gear_dir_deg 側の一片」だけに根付かせ、原点上空へ材料を
+      //   出さない。壁アンカー円は筒環（23.2..25.6）へ ped_arm_w/2 分食い込んで融合する。
       translate([0, 0, top_local - servo_plate_t - 4])
         linear_extrude(height = servo_plate_t + 4)
           intersection() {
             hull() {
-              circle(r = ped_cyl_ro);
+              rotate(gear_dir_deg) translate([ped_cyl_ri + 1, 0]) circle(r = ped_arm_w/2);
               translate(gear_axis_pos) circle(r = ped_plate_r);
             }
-            rotate(gear_dir_deg) translate([0, -ped_arm_w/2]) square([100, ped_arm_w]);
+            rotate(gear_dir_deg) translate([ped_cyl_ri, -ped_arm_w/2]) square([100 - ped_cyl_ri, ped_arm_w]);
           }
       // 固定スリーブ（現行と同一）
       for (p = ped_fix_pts)

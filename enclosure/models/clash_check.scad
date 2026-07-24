@@ -58,3 +58,26 @@ intersection() {
   translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0 + clash_eps])
     rotate(gear_drive_phase) drive_gear();
 }
+
+// ノブ包絡（TASK-7 回帰ガード）。サムターンノブは軸(原点)まわりに回転しながら
+// プレート床上面(ワールド z≈0)からノブ先端(ワールド z = knob_h - mount_pad_t = 24)まで
+// 突き出し、掴み代として露出し続けねばならない。回転包絡半径 knob_env_r に 0.5 の
+// マージンを足した円柱を「ノブが占有し続ける空間」として定義し、これに触れる部品を検出する。
+//   包絡下端は z=0.05（床上面のわずか上）から。上端は掴み代先端 z=24。
+module knob_envelope() {
+  translate([0, 0, 0.05]) cylinder(r = knob_env_r + 0.5, h = 24 - 0.05);
+}
+// knob_envelope × pedestal（梁・カラー等がノブ上空を横切らないこと）
+intersection() {
+  translate([0, 0, wall]) pedestal();
+  knob_envelope();
+}
+// knob_envelope × drive_gear（駆動ギアはノブに一切触れてはならない）
+intersection() {
+  translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0])
+    rotate(gear_drive_phase) drive_gear();
+  knob_envelope();
+}
+// 注記: ring_gear は意図的に除外する。リングギア下面のフォーク爪はノブ根元を押す
+// 「押し子」であり、設計上ノブの回転路（包絡内）に入る。ここで対にすると必ず干渉検出
+// されてしまうため、ノブに触れてはならない pedestal / drive_gear だけを対にする。
