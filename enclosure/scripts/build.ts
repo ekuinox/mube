@@ -12,8 +12,9 @@ const smartlock = join(modelsDir, "smartlock.scad");
 
 // smartlock.scad から -D part= で切り出す部品（asm_* は組立プレビュー）
 const parts = [
-  "body", "pedestal", "socket", "tray",
-  "asm_body", "asm_pedestal", "asm_socket", "asm_tray",
+  "body", "pedestal", "gear_ring", "gear_drive", "tray",
+  "asm_body", "asm_pedestal", "asm_gear_ring", "asm_gear_drive", "asm_tray",
+  "gear_mesh_coupon",
 ];
 // 単体 scad の実測補助ゲージ・テストクーポン
 const gauges = ["tray_pilot_gauge", "pilot_gauge", "spline_gauge", "horn_snap_coupon"];

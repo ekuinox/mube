@@ -12,6 +12,7 @@ include <params.scad>
 use <body.scad>
 use <tray.scad>
 use <pedestal.scad>
+use <gears.scad>
 
 clash_eps = 0.05;
 
@@ -31,4 +32,29 @@ intersection() {
 intersection() {
   translate([0, 0, wall]) tray();
   translate([0, 0, wall]) pedestal();
+}
+
+// ring_gear はワールド座標（z=wall 持ち上げ不要）。載せる側を clash_eps だけ +Z に浮かす。
+// pedestal × ring_gear（受けカラー⇔スカートは径すき間で非接触のはず）
+intersection() {
+  translate([0, 0, wall]) pedestal();
+  translate([0, 0, clash_eps]) ring_gear();
+}
+// pedestal × drive_gear（窓・梁と歯の接触検出。噛み合い位相で回した実姿勢）
+intersection() {
+  translate([0, 0, wall]) pedestal();
+  translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0 + clash_eps])
+    rotate(gear_drive_phase) drive_gear();
+}
+// ring_gear × drive_gear（噛み合い部の食い込み検出。噛み合い位相合わせ）
+intersection() {
+  ring_gear();
+  translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0 + clash_eps])
+    rotate(gear_drive_phase) drive_gear();
+}
+// tray × drive_gear（BB/トレイ側との干渉検出。噛み合い位相で回した実姿勢）
+intersection() {
+  translate([0, 0, wall]) tray();
+  translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0 + clash_eps])
+    rotate(gear_drive_phase) drive_gear();
 }

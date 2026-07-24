@@ -1,7 +1,7 @@
 include <params.scad>
 use <body.scad>
 use <pedestal.scad>
-use <socket.scad>
+use <gears.scad>
 use <tray.scad>
 
 // Select with: openscad -D part="body" ...
@@ -9,15 +9,31 @@ part = "assembly";
 // exploded=0: assembled, exploded=1: exploded view
 exploded = 1;
 
-// ソケット下端の高さ（プレート座標）。ドア面はパッド厚ぶんプレートより下にある
-socket_z = knob_h - knob_engage - mount_pad_t;
-
 exp = exploded ? 1 : 0;
 
 if (part == "body") body();
-else if (part == "socket") thumbturn_socket();
 else if (part == "tray") tray();
 else if (part == "pedestal") pedestal();
+// リングギア（従動）。印刷向き: 歯付き盤の上面（ワールド z=15）をベッドに伏せ、
+// スカート・フォーク爪を上向きに立てる（盤下面から爪先まで平坦面が無いためこの向きが安定）。
+else if (part == "gear_ring")
+  translate([0, 0, ring_z0 + gear_t]) rotate([180, 0, 0]) ring_gear();
+// 駆動ギア。印刷向き: ハブボス下面（ローカル z=−drive_hub_h）をベッドに接地。
+// 歯リング下面（ローカル z=0、ワールド換算で盤下）が z=drive_hub_h より上に浮くため、
+// 歯リングのオーバーハングはスライサのサポートで支える（許容・要サポート）。
+else if (part == "gear_drive")
+  translate([0, 0, drive_hub_h]) drive_gear();
+// 噛み合いクーポン: 両ギアの歯帯だけを 5mm 厚スライスで抜き出し、軸間距離で並べて
+// 平置きする（歯当たり・バックラッシュ実測用）。リング歯帯はワールド z10..15 を切り出して
+// ベッドへ落とし、駆動歯帯はローカル z0..5 をそのまま使う。駆動側は半歯位相 rotate(180/gear_z_drive)。
+else if (part == "gear_mesh_coupon") {
+  intersection() {
+    translate([0, 0, -ring_z0]) ring_gear();
+    cylinder(r = 60, h = gear_t);
+  }
+  translate([gear_axis_dist, 0, 0]) rotate(180/gear_z_drive)
+    intersection() { drive_gear(); cylinder(r = 60, h = gear_t); }
+}
 // トレイの +X/+Y 隅（右固定スリーブ＋BB ポケット角）を切り出したクーポン
 // （固定スリーブのネジ効き・ポケット壁の勘合確認用）
 else if (part == "tray_coupon")
@@ -67,24 +83,6 @@ else if (part == "ped_mount_coupon") {
         cube([2*hw, 2*hw, tray_boss_h + tray_cap_t + 2], center = true);
     }
 }
-// ポケット周辺のみ切り出した薄型クーポン（ホーンフィット＋キャプチャ壁確認用）
-else if (part == "socket_coupon")
-  intersection() {
-    thumbturn_socket();
-    translate([0, 0, -sock_wall_h - 0.5])
-      linear_extrude(height = sock_wall_h + 0.5 + horn_thick + horn_clearance + socket_wall + 0.5)
-        square([200, 200], center = true);
-  }
-// ペデスタル天板のみ切り出した薄型クーポン（サーボ耳の位置・ネジ効き確認用）
-else if (part == "mount_coupon")
-  translate([0, 0, -(pedestal_top_z - wall - servo_plate_t)]) // 天板下面をベッドに接地
-    intersection() {
-      pedestal();
-      translate([0, 0, pedestal_top_z - wall - servo_plate_t])
-        // 半径をペデスタル外周までに絞り、フランジ/スリーブを巻き込まない
-        cylinder(r = rosette_d/2 + pedestal_wall_t + fit_clearance + 0.1,
-                 h = servo_plate_t + 0.5);
-    }
 // 床フットプリントのみ切り出した薄型クーポン（ロゼット嵌合＋ドア左/下クリアランス確認用）。
 // 台座は別部品化済みのため、ここに写るのは床＋受けカーブ(2.4mm)＋ボス根元まで。
 // ロゼットの出っ張りが中央開口(Ø45.4)へ逃げるかを実ドアで当てて確認する。
@@ -95,12 +93,15 @@ else if (part == "floor_coupon")
       square([300, 300], center = true);
   }
 else if (part == "asm_body") color("SteelBlue") body();
-else if (part == "asm_socket")
+// リングギア（ワールド座標そのまま）。分解ビューは -Z へ退避。
+else if (part == "asm_gear_ring")
   color("SandyBrown")
-    translate([0, 0, socket_z + socket_oh/2 - exp * 15])
-      rotate([180, 0, 0])
-        translate([0, 0, -socket_oh/2])
-          thumbturn_socket();
+    translate([0, 0, exp * -12]) ring_gear();
+// 駆動ギア（軸オフセット位置・ローカル z=0 をワールド ring_z0 に合わせる）。噛み合い位相で回す。分解ビューは +Z へ退避。
+else if (part == "asm_gear_drive")
+  color("Orange")
+    translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0 + exp * 12])
+      rotate(gear_drive_phase) drive_gear();
 else if (part == "asm_tray")
   color("Plum")
     translate([0, 0, wall + exp * 10]) tray();
@@ -111,14 +112,15 @@ else {
   // full assembly
   color("SteelBlue") body();
 
-  color("SandyBrown")
-    translate([0, 0, socket_z + socket_oh/2 - exp * 15])
-      rotate([180, 0, 0])
-        translate([0, 0, -socket_oh/2])
-          thumbturn_socket();
-
   color("Khaki")
     translate([0, 0, wall + exp * 8]) pedestal();
+
+  // リングギア（ワールド座標）＋駆動ギア（軸オフセット位置・z=ring_z0・噛み合い位相）
+  color("SandyBrown")
+    translate([0, 0, exp * -12]) ring_gear();
+  color("Orange")
+    translate([gear_axis_pos[0], gear_axis_pos[1], ring_z0 + exp * 12])
+      rotate(gear_drive_phase) drive_gear();
 
   color("Plum")
     translate([0, 0, wall + exp * 10]) tray();

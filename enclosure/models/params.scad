@@ -54,7 +54,7 @@ rosette_d   = 45;   // circular escutcheon diameter (registration only)（実測
 
 // --- Door mount pad（面ファスナー固定） ---
 // プレートは面ファスナー（マジックテープ類）でドアに貼る。噛み合い状態の呼び厚を
-// Z スタックに明示し、ペデスタル高さ（pedestal_top_z）で吸収する。ドア面基準の量
+// Z スタックに明示し、ギアデッキの高さ（ring_z0 / servo_ears_z 系）で吸収する。ドア面基準の量
 // （knob_h 等）とプレート基準の量の橋渡しはこの 1 定数だけが担う。
 mount_pad_t = 6;    // 面ファスナー呼び厚（暫定。現物の噛み合い厚で確定する）
 
@@ -72,10 +72,6 @@ horn_seat_clear   = 0.3;    // ホーンバー下面とポケット底のすき�
 // ソケット上面から耳の載る面までの高さ。バーがポケットに嵌合した状態で
 // サーボの耳が来る位置を実測スタックから逆算する
 horn_h            = servo_horn_stack + horn_seat_clear - (horn_thick + horn_clearance);  // 10.4
-socket_oh         = knob_engage + socket_wall + 6;   // socket total height (18)
-// サーボ耳の載る面（プレート座標）。面ファスナー厚ぶんの v2 主補正（-mount_pad_t）は
-// 実機で過補正と判明（ローカル 46mm がちょうど良かった）ため撤回。補正なしに戻す。
-pedestal_top_z    = (knob_h - knob_engage) + socket_oh + horn_h;  // 48.4（ローカル 46）
 pedestal_wall_t   = 2.5;    // pedestal wall thickness
 
 // --- TASK-7 ギア伝達＋ロストモーション・フォーク（全値暫定。クーポン・実機で確定） ---
@@ -91,6 +87,11 @@ gear_axis_dist = gear_module * (gear_z_ring + gear_z_drive) / 2;  // 軸間距�
 gear_dir_deg  = -30;   // オフセット方向。+X 純方向は BB ポケット/ジャンパと干渉、-45° はハンドルクリアランス超過
 gear_axis_pos = [gear_axis_dist * cos(gear_dir_deg), gear_axis_dist * sin(gear_dir_deg)];  // ≈ (45.5, -26.3)
 gear_ratio    = gear_z_drive / gear_z_ring;  // 1.5
+// 駆動ギアの噛み合い位相[deg]。リング（原点・+X に歯中心）に対し、駆動ギアを軸方向 gear_dir_deg に
+// 置いたとき歯と谷を噛み合わせる回転量。半歯ずらし 180/z_drive に、リング歯の中心線オフセットを
+// ギア比で増幅した分（gear_dir_deg*(1+z_ring/z_drive)）を加えた閉形式。gear_dir_deg=−30 で ≈ 5.71°。
+// （clash_check.scad の実測で ring×drive の食い込みが空になる角度と一致することを確認済み）
+gear_drive_phase = 180/gear_z_drive + gear_dir_deg * (1 + gear_z_ring/gear_z_drive);
 
 // リングギア（従動）
 ring_bore_d   = 29;    // 中央開口。ノブ回転包絡 2*sqrt((knob_w_base/2)^2+(knob_t/2)^2) ≈ 28.1 + すき間
@@ -163,17 +164,10 @@ assert(ring_z0 - drive_hub_h >= wall + 1, "駆動ギア下面ハブがプレー�
 drive_top_z    = ring_z0 + gear_t;                    // 駆動ギア上面 15（ホーンポケットはここに彫る）
 servo_ears_z   = drive_top_z + horn_h;                // サーボ耳の載る面 ≈ 25.4
 
-// --- ソケット キャプチャ壁（v2: ホーンバーの軸方向掛かりの鈍感化） ---
-// バー両脇（Y 方向）の壁をポケット口からサーボ側へ延長し、バーが数 mm 浮いても
-// 壁内に留まるようにする。中央はギアヘッドのドーム逃げで開ける。壁上端は 45° の
-// 外開きファンネルで、ペデスタルごと下ろす組み付けの誘い込みを兼ねる。
-// スナップ爪（連結用・任意）はクーポン v3 の予圧実測が確定してから追加する。
-sock_wall_h    = 5;    // 壁高（バー面から。バー厚 1.7 + 浮き許容 ~3mm）
-sock_wall_t    = 2.4;  // 壁厚
-sock_wall_gap  = 0.1;  // 壁内面の追加すき間（ポケットの horn_clearance に上乗せ）
-sock_wall_x0   = 7.5;  // 壁の内端 |x|（ドーム逃げ）。>= servo_dome_d/2 + 1
-sock_funnel    = 2.0;  // 壁上端ファンネルの開き量（高さも同値 = 45°）
-servo_dome_d   = 12;   // ギアヘッドのドーム外径（暫定・要実測）
+// --- ホーン爪逃がし溝の深さ（駆動ギアのホーンポケット押さえ爪で共用） ---
+// 旧ソケットのキャプチャ壁高 = 爪逃がし溝がバー面より下へ伸びる量。壁自体は廃止したが、
+// hardware.scad の sock_claw_slots がこの深さを使う（駆動ギアのホーン爪逃がしに継承）。
+sock_wall_h    = 5;    // 爪逃がし溝がバー面より下へ伸びる深さ
 
 // --- ソケット押さえ爪（クーポン v4 で形状確定: 横配置・浅くさび 4 本） ---
 // バー先端付近の長辺側から爪を出し、返しをバー上面に被せて浅いくさびで
@@ -344,22 +338,13 @@ assert(horn_hub_d >= horn_arm_w_base, "ハブ径 >= 腕幅中心側（中央ポ�
 assert(horn_stub_d < horn_hub_d, "中心突起径 < ハブ径（突起がハブくぼみに収まる）");
 assert(horn_arm_l + horn_clearance + 0.4 <= (knob_w_base + knob_t)/2 + socket_wall, "ホーンバーがソケット外形内に収まる（先端壁 >= 0.4mm）");
 
-// --- キャプチャ壁・マウントパッド整合チェック（v2） ---
-assert(knob_h - knob_engage - mount_pad_t > wall + 1, "パッド厚が厚すぎてソケット下端がプレート床に迫る");
-assert(sock_wall_h <= horn_h - servo_plate_t - 0.5, "キャプチャ壁が天板下面に当たる（すき間 >= 0.5mm）");
-assert(sock_wall_x0 >= servo_dome_d/2 + 1, "キャプチャ壁の内端がギアヘッドのドームに当たる");
-assert(sock_wall_x0 < horn_arm_l, "壁の内端がバー先端より外（壁がバーを囲えない）");
-assert(sock_funnel < sock_wall_h, "ファンネルが壁高より大きい");
-assert(sock_wall_h > horn_thick + horn_clearance + 1, "壁高が浮き許容を生まない（バー厚+1mm 超が必要）");
-
 // --- 押さえ爪の整合チェック ---
 // 爪位置でのバー半幅（ポケット縁 = 爪内面の y）
 sock_claw_bar_hw = horn_clearance +
   (horn_arm_w_tip + (horn_arm_w_base - horn_arm_w_tip) * (1 - sock_claw_x/horn_arm_l)) / 2;
 assert(sock_claw_x + sock_claw_w/2 + sock_claw_side < horn_arm_l + horn_clearance, "爪帯がバー先端を超える");
-assert(sock_claw_x - sock_claw_w/2 - sock_claw_side > sock_wall_x0, "爪帯が壁内端（ドーム逃げ）に食い込む");
 assert(sock_claw_bar_hw > knob_t/2 + fit_clearance + 0.4, "爪の根元の直下がノブポケット（実体が無い）");
-assert(sock_claw_root <= socket_oh, "爪の根元がソケット全高を超える");
+assert(sock_claw_root <= gear_t + drive_hub_h, "爪の根元が駆動ギア実体（盤+ハブボス）の高さを超える");
 assert(sock_claw_preload < sock_claw_hk/2, "予圧がくさび勾配に対して過大（坂が急になり自己ロックが崩れる）");
 
 // --- Electronics tray / breadboard layout checks ---
