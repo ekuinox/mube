@@ -15,7 +15,10 @@ export function serveDir(dir: string, port: number): ReturnType<typeof Bun.serve
         return new Response("Forbidden", { status: 403 });
       }
       const file = Bun.file(resolved);
-      if (await file.exists()) return new Response(file);
+      // STL はモデル編集のたびに再生成される。キャッシュヘッダ無しだとブラウザの
+      // 発見的キャッシュに掴まれて古い形状が表示され続けるため、明示的に無効化する
+      if (await file.exists())
+        return new Response(file, { headers: { "Cache-Control": "no-store" } });
       return new Response("Not Found", { status: 404 });
     },
   });
