@@ -21,3 +21,11 @@ pub const WIFI_PASSWORD: &str = match option_env!("WIFI_PASSWORD") {
 /// false（プレースホルダのまま）だと join は永久に失敗するので、起動時に警告する。
 pub const WIFI_CONFIGURED: bool =
     option_env!("WIFI_SSID").is_some() && option_env!("WIFI_PASSWORD").is_some();
+
+use embassy_time::Duration;
+
+/// 解錠してから自動で施錠するまでの待ち時間。
+/// ここを変えればオートロックの間隔を調整できる。`Duration::from_secs` は
+/// const fn なので const 定数として置ける。0 に近い値は解錠直後に即施錠して
+/// しまうので避けること。
+pub const AUTO_LOCK_AFTER: Duration = Duration::from_secs(60);
