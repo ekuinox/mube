@@ -7,7 +7,7 @@ members = ["crates/*"]
 # `--target wasm32-unknown-unknown` を明示して行う（cd crates/mube-webui && trunk build）。
 # 同じ理由で `--workspace` / `--all-targets` 付きの cargo 実行は webui が thumbv6m に
 # 乗って失敗する。全体を対象にしたいときは `-p` で分けるか trunk 側と分離すること。
-default-members = ["crates/mube-firmware", "crates/mube-core"]
+default-members = ["crates/mube-firmware", "crates/mube-core", "crates/mube-boot"]
 
 # 各クレートで共有する package メタデータ。member 側は `version.workspace = true` /
 # `edition.workspace = true` で参照する。
