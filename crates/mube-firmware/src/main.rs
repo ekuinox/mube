@@ -40,7 +40,7 @@ use embassy_rp::pwm::{Config as PwmConfig, Pwm};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::blocking_mutex::Mutex as BlockingMutex;
 use embassy_sync::signal::Signal;
-use embassy_time::{Duration, Timer};
+use embassy_time::{with_timeout, Duration, Timer};
 use servo::Servo;
 use mube_core::LockState;
 use static_cell::StaticCell;
@@ -74,6 +74,10 @@ const IDLE_TIMEOUT_SECS: u64 = 30;
 /// Signal は最新値のみ保持するため、指令が連続しても安全側（最新状態）へ収束する。
 static SERVO_CMD: Signal<CriticalSectionRawMutex, LockState> = Signal::new();
 
+/// 状態変化をオートロックタスクへ伝えるシグナル。apply_target が叩く。
+/// Signal は最新値のみ保持するため、連続通知でも最新状態へ収束する。
+static AUTO_LOCK_CMD: Signal<CriticalSectionRawMutex, LockState> = Signal::new();
+
 /// 唯一の現在ロック状態。TCP STATUS とボタンのトグルが参照する単一ソース。
 /// 起動時は安全側に施錠。
 static LOCK_STATE: BlockingMutex<CriticalSectionRawMutex, Cell<LockState>> =
@@ -84,6 +88,7 @@ static LOCK_STATE: BlockingMutex<CriticalSectionRawMutex, Cell<LockState>> =
 pub(crate) fn apply_target(target: LockState) {
     LOCK_STATE.lock(|c| c.set(target));
     SERVO_CMD.signal(target);
+    AUTO_LOCK_CMD.signal(target); // オートロックタスクへ状態変化を通知
 }
 
 /// http.rs から現在のロック状態を読むための口。
@@ -138,6 +143,32 @@ async fn button_task(mut btn: Input<'static>) -> ! {
     }
 }
 
+/// 解錠を検知して config::AUTO_LOCK_AFTER 後に自動施錠するタスク。
+/// 再解錠でタイマーをリセットし、手動施錠でキャンセルする。自タスクが
+/// apply_target(Locked) を呼んで飛ぶ AUTO_LOCK_CMD(Locked) は、次のループ先頭で
+/// 受けて while に入らず無害に待機へ戻る（ループ暴走しない）。
+#[embassy_executor::task]
+async fn auto_lock_task() -> ! {
+    loop {
+        let mut target = AUTO_LOCK_CMD.wait().await;
+        while target == LockState::Unlocked {
+            match with_timeout(config::AUTO_LOCK_AFTER, AUTO_LOCK_CMD.wait()).await {
+                // 時間切れ前に新コマンド：施錠なら while を抜けて待機へ、
+                // 再解錠ならこのまま while を回してタイマーを測り直す。
+                Ok(new_target) => target = new_target,
+                // 時間切れ：まだ解錠中なら自動施錠（競合で施錠済みなら何もしない）。
+                Err(_) => {
+                    if current_state() == LockState::Unlocked {
+                        info!("auto-lock: firing after timeout");
+                        apply_target(LockState::Locked);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
 /// CYW43 ドライバを回し続けるタスク。
 #[embassy_executor::task]
 async fn cyw43_task(
@@ -167,6 +198,7 @@ async fn main(spawner: Spawner) {
     // ボタン: GP17 内部プルアップ（アクティブ Low）。押下でロックをトグル。
     let button = Input::new(p.PIN_17, Pull::Up);
     spawner.spawn(button_task(button).unwrap());
+    spawner.spawn(auto_lock_task().unwrap());
 
     // CYW43 ファームウェアブロブ。cyw43-firmware/ を埋め込む（README の取得手順を参照）。
     // cyw43 v0.7.0 は 3 つ要る: firmware / nvram（基板設定, new へ）/ clm（国別規制, control.init へ）。
