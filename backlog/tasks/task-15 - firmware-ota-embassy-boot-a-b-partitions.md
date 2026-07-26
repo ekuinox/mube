@@ -4,6 +4,7 @@ title: 'ファーム: embassy-boot A/B パーティションで OTA アップデ
 status: To Do
 assignee: []
 created_date: '2026-07-26 14:03'
+updated_date: '2026-07-26 14:32'
 labels:
   - firmware
 dependencies: []
@@ -43,3 +44,9 @@ embassy-boot-rp による A/B パーティション OTA。
 - [ ] #4 cargo host-test が通る
 - [ ] #5 docs/firmware.md に OTA 手順と初回書き込み手順が記載されている
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+実装済み（mube-boot / mube-core ota / firmware ota タスク / lockctl ota / just ota / docs）。残: 実機での初回プロビジョニング（ブートローダー + アプリの DAP 書き込み）と 3 種の実機テスト（正常系・電源断・ロールバック。docs/firmware.md の OTA 節参照）。実機系の AC はそこで消化する
+<!-- SECTION:NOTES:END -->

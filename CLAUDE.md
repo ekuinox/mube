@@ -31,6 +31,7 @@ Claude が実行するときは各コマンドに `nix develop -c` を前置す�
 | 回路 ERC（導通・ショート） | `just erc` | `cd circuit && bun install --frozen-lockfile && bun test` |
 | WebUI ビルド（yew→dist） | `just webui` | `cd crates/mube-webui && trunk build --release` |
 | ファームビルド一発（blob→webui→cargo build） | `just firmware` | — |
+| OTA でファーム更新（LAN 内・要 TARGET_IP） | `just ota` | — |
 | ロジックの host テスト（実機不要） | `just host-test` | `cargo host-test` |
 | 3D ビューア公開 | `just viewer` | `bun viewer/serve.ts` |
 | ブレッドボード配線図ビューア | `just breadboard` | `bun circuit/breadboard-serve.ts` |
