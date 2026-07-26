@@ -38,6 +38,7 @@
             # channel = "stable" は flake.lock の rust-overlay スナップショット時点の
             # 最新 stable に解決される（更新は `nix flake update rust-overlay`）。
             (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
+            pkgs.cargo-binutils   # rust-objcopy（OTA 用 raw バイナリの切り出し。実体は llvm-tools コンポーネント）
             pkgs.bun          # tscircuit/ の TS 回路記述を実行（tsci は bun 管理の npm パッケージ）
             pkgs.just         # ルート Justfile のタスクランナー
             pkgs.trunk            # yew(WASM) を dist へビルド（crates/mube-webui）

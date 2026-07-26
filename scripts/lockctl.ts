@@ -53,20 +53,153 @@ export async function runLockctl(
   return msg;
 }
 
-const USAGE = "usage: bun scripts/lockctl.ts <toggle|lock|unlock|status>";
+// ---- OTA（ファーム更新）----
+// ワイヤ形式は crates/mube-core/src/ota.rs と同一契約:
+//   "MUBEOTA1" + length u32 LE + crc32 u32 LE + ペイロード → "OK <len>\n" | "ERR <reason>\n"
+
+/** IEEE CRC32（reflected, poly 0xEDB88320）。1MB 級の入力があるためテーブル版。 */
+export function crc32(data: Uint8Array): number {
+  const table = crc32Table();
+  let c = 0xffffffff;
+  for (let i = 0; i < data.length; i++) {
+    c = (c >>> 8) ^ table[(c ^ data[i]) & 0xff];
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+let CRC_TABLE: Uint32Array | null = null;
+function crc32Table(): Uint32Array {
+  if (CRC_TABLE) return CRC_TABLE;
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  CRC_TABLE = t;
+  return t;
+}
+
+/** OTA フレームの 16 バイトヘッダを組み立てる。 */
+export function buildOtaHeader(len: number, crc: number): Uint8Array {
+  const buf = new Uint8Array(16);
+  buf.set(new TextEncoder().encode("MUBEOTA1"), 0);
+  const view = new DataView(buf.buffer);
+  view.setUint32(8, len, true);
+  view.setUint32(12, crc >>> 0, true);
+  return buf;
+}
+
+/** デバイスの応答行を解釈する。想定外は null。 */
+export function parseOtaReply(line: string): { ok: boolean; detail: string } | null {
+  const m = line.trim().match(/^(OK|ERR) (.+)$/);
+  if (!m) return null;
+  return { ok: m[1] === "OK", detail: m[2] };
+}
+
+/** TCP でヘッダ + イメージを送り、応答行を受ける。 */
+function sendImage(host: string, port: number, image: Uint8Array): Promise<string> {
+  const header = buildOtaHeader(image.length, crc32(image));
+  return new Promise<string>((resolve, reject) => {
+    let reply = "";
+    let done = false;
+    Bun.connect({
+      hostname: host,
+      port,
+      socket: {
+        open(socket) {
+          socket.write(header);
+          socket.write(image); // Bun が内部バッファリングして送り切る
+          socket.flush();
+        },
+        data(socket, data) {
+          reply += new TextDecoder().decode(data);
+          if (reply.includes("\n")) {
+            done = true;
+            socket.end();
+            resolve(reply);
+          }
+        },
+        close() {
+          if (!done) reject(new Error("応答なしで切断された"));
+        },
+        error(_socket, err) {
+          reject(err);
+        },
+        connectError(_socket, err) {
+          reject(err);
+        },
+      },
+    }).catch(reject);
+  });
+}
+
+/** /api/version を叩く。未対応ファーム・接続不可は null。 */
+async function fetchVersion(base: string): Promise<string | null> {
+  try {
+    const resp = await fetch(`${base}/api/version`, { signal: AbortSignal.timeout(3000) });
+    if (!resp.ok) return null;
+    return ((await resp.json()) as { version?: string })?.version ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** OTA 一式: 事前チェック → 送信 → 再起動後のバージョン確認。進捗は console に出す。 */
+export async function runOta(binPath: string, host: string, httpBase: string): Promise<void> {
+  const image = new Uint8Array(await Bun.file(binPath).arrayBuffer());
+  if (image.length === 0) throw new Error(`${binPath} が空`);
+  console.log(`image: ${binPath} (${(image.length / 1024).toFixed(0)} KB)`);
+
+  // 解錠中の更新は再起動で状態表示が実態とずれる（起動時は LOCKED 扱い）ため既定で拒否。
+  const state = await fetch(`${httpBase}/api/status`, { signal: AbortSignal.timeout(5000) })
+    .then((r) => r.text())
+    .then(parseState)
+    .catch(() => null);
+  if (state === null) throw new Error(`${httpBase} に接続できない。IP・電源・WiFi 接続を確認してね`);
+  if (state === "UNLOCKED" && process.env.OTA_ALLOW_UNLOCKED !== "1") {
+    throw new Error("解錠中。施錠してから実行するか OTA_ALLOW_UNLOCKED=1 を付けて");
+  }
+
+  const before = await fetchVersion(httpBase);
+  console.log(`current version: ${before ?? "(不明: /api/version 未対応ファーム)"}`);
+
+  const otaPort = Number(process.env.OTA_PORT ?? "4242");
+  const reply = parseOtaReply(await sendImage(host, otaPort, image));
+  if (reply === null) throw new Error("応答が想定外");
+  if (!reply.ok) throw new Error(`デバイス側エラー: ${reply.detail}`);
+  console.log(`送信完了 (${reply.detail} bytes)。再起動とスワップを待つ（数十秒かかる）...`);
+
+  // スワップは ACTIVE/DFU の消去を伴い数十秒かかる。3 分までポーリングする。
+  const deadline = Date.now() + 180_000;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const now = await fetchVersion(httpBase);
+    if (now !== null && now !== before) {
+      console.log(`更新完了: ${before ?? "?"} → ${now}`);
+      return;
+    }
+  }
+  throw new Error(
+    "3 分待ってもバージョンが変わらない。旧版のまま応答するなら revert された可能性。probe-rs でログ確認を",
+  );
+}
+
+const USAGE = "usage: bun scripts/lockctl.ts <toggle|lock|unlock|status|ota <bin>>";
 
 if (import.meta.main) {
   // 引数なしでは何もしない（誤って施錠状態を変えるのを防ぐため、サブコマンド必須）。
   const cmd = process.argv[2];
   if (cmd === "-h" || cmd === "--help" || cmd === "help") {
     console.log(USAGE);
-    console.log("  toggle  現在と逆に切り替え");
-    console.log("  lock    施錠（赤）");
-    console.log("  unlock  解錠（緑）");
-    console.log("  status  現在状態を問い合わせ（駆動しない）");
+    console.log("  toggle     現在と逆に切り替え");
+    console.log("  lock       施錠（赤）");
+    console.log("  unlock     解錠（緑）");
+    console.log("  status     現在状態を問い合わせ（駆動しない）");
+    console.log("  ota <bin>  ファームを OTA 更新（raw バイナリを TCP 4242 で送信）");
     process.exit(0);
   }
-  if (cmd !== "toggle" && cmd !== "lock" && cmd !== "unlock" && cmd !== "status") {
+  if (cmd !== "toggle" && cmd !== "lock" && cmd !== "unlock" && cmd !== "status" && cmd !== "ota") {
     console.error(USAGE);
     process.exit(2);
   }
@@ -77,6 +210,20 @@ if (import.meta.main) {
   }
   const port = process.env.PORT ?? "80";
   const base = `http://${host}:${port}`;
+  if (cmd === "ota") {
+    const binPath = process.argv[3];
+    if (!binPath) {
+      console.error("usage: bun scripts/lockctl.ts ota <path/to/firmware.bin>");
+      process.exit(2);
+    }
+    try {
+      await runOta(binPath, host, base);
+    } catch (err) {
+      console.error(`error: ${err instanceof Error ? err.message : err}`);
+      process.exit(1);
+    }
+    process.exit(0);
+  }
   const timeoutMs = Number(process.env.CONNECT_TIMEOUT ?? "5") * 1000;
   try {
     console.log(await runLockctl(cmd, base, timeoutMs));
