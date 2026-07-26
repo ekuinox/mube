@@ -3,6 +3,7 @@
 #![cfg_attr(not(test), no_std)]
 
 pub mod lock;
+pub mod ota;
 pub mod servo_math;
 pub mod webapi;
 
