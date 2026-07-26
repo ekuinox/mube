@@ -26,5 +26,6 @@ use embassy_time::Duration;
 
 /// 解錠してから自動で施錠するまでの待ち時間。
 /// ここを変えればオートロックの間隔を調整できる。`Duration::from_secs` は
-/// const fn なので const 定数として置ける。
+/// const fn なので const 定数として置ける。0 に近い値は解錠直後に即施錠して
+/// しまうので避けること。
 pub const AUTO_LOCK_AFTER: Duration = Duration::from_secs(60);
