@@ -33,6 +33,9 @@ const CT_JS: &str = "application/javascript";
 const CT_WASM: &str = "application/wasm";
 const CT_JSON: &str = "application/json";
 
+/// build.rs が git describe から埋めるファームバージョン（JSON 形に固めて埋め込む）。
+const VERSION_JSON: &str = concat!("{\"version\":\"", env!("MUBE_VERSION"), "\"}");
+
 /// 静的バイト列＋任意の Content-Type を返す `Content` 実装。
 /// これにより Content-Type が正しく単一で付く（`with_header` の二重付与を避ける）。
 struct StaticAsset {
@@ -88,6 +91,7 @@ pub fn make_app() -> picoserve::Router<impl picoserve::routing::PathRouter> {
         .route("/", get(|| async { asset(INDEX_HTML, CT_HTML) }))
         .route("/mube-webui.js", get(|| async { asset(WEBUI_JS, CT_JS) }))
         .route("/mube-webui_bg.wasm", get(|| async { asset(WEBUI_WASM, CT_WASM) }))
+        .route("/api/version", get(|| async { json(VERSION_JSON) }))
         .route("/api/status", get(|| async { json(current().as_json()) }))
         .route("/api/lock", post(|| async { json(drive(Action::Lock)) }))
         .route("/api/unlock", post(|| async { json(drive(Action::Unlock)) }))

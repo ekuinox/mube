@@ -55,6 +55,7 @@ WiFi 接続後、HTTP ポート 80 で yew SPA（WebUI）と JSON API を配信�
 | `/api/lock` | POST | `{"state":"LOCKED"}` |
 | `/api/unlock` | POST | `{"state":"UNLOCKED"}` |
 | `/api/toggle` | POST | `{"state":"LOCKED"}` または `{"state":"UNLOCKED"}` |
+| `/api/version` | GET | `{"version":"f90217f"}`（git describe。更新の反映確認用） |
 
 ### ハードウェア
 
