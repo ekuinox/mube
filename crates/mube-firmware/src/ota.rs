@@ -60,7 +60,7 @@ pub async fn ota_task(stack: embassy_net::Stack<'static>, flash: &'static crate:
             Ok(len) => {
                 info!("ota: image received ({} bytes), swapping on next boot", len);
                 let mut line: String<32> = String::new();
-                let _ = write!(line, "OK {}\n", len);
+                let _ = writeln!(line, "OK {}", len);
                 let _ = socket.write_all(line.as_bytes()).await;
                 let _ = socket.flush().await;
                 socket.close();
@@ -72,7 +72,7 @@ pub async fn ota_task(stack: embassy_net::Stack<'static>, flash: &'static crate:
             Err(fail) => {
                 warn!("ota: failed: {}", fail.reason());
                 let mut line: String<64> = String::new();
-                let _ = write!(line, "ERR {}\n", fail.reason());
+                let _ = writeln!(line, "ERR {}", fail.reason());
                 let _ = socket.write_all(line.as_bytes()).await;
                 let _ = socket.flush().await;
                 socket.close();

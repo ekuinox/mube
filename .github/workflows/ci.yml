@@ -44,11 +44,17 @@ jobs:
       - name: cargo check (mube-firmware)
         run: cargo check -p mube-firmware --locked --target thumbv6m-none-eabi
 
+      - name: cargo check (mube-boot)
+        run: cargo check -p mube-boot --locked --target thumbv6m-none-eabi
+
       - name: cargo clippy (mube-core)
         run: cargo clippy -p mube-core --locked --all-features --target x86_64-unknown-linux-gnu -- -D warnings
 
       - name: cargo clippy (mube-firmware)
         run: cargo clippy -p mube-firmware --locked --target thumbv6m-none-eabi -- -D warnings
+
+      - name: cargo clippy (mube-boot)
+        run: cargo clippy -p mube-boot --locked --target thumbv6m-none-eabi -- -D warnings
 
       - name: cargo test (mube-core)
         run: cargo test -p mube-core --locked --all-features --target x86_64-unknown-linux-gnu
