@@ -13,7 +13,10 @@ mube-core = { path = "../mube-core", features = ["defmt"] }
 
 embassy-executor = { version = "0.10", features = ["platform-cortex-m", "executor-thread", "executor-interrupt", "defmt"] }
 embassy-time = { version = "0.5", features = ["defmt", "defmt-timestamp-uptime"] }
-embassy-rp = { version = "0.10", features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl", "rp2040"] }
+# boot2-none: boot2 はブートローダー（mube-boot）だけが持つ。アプリ ELF から外すことで
+# probe-rs のアプリ書き込みがセクタ 0（boot2 とブートローダー先頭が同居する 4KB）に
+# 触れなくなり、アプリ単体の焼き直しでブートローダーを壊さないことが保証される。
+embassy-rp = { version = "0.10", features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl", "rp2040", "boot2-none"] }
 embassy-sync = { version = "0.8", features = ["defmt"] }
 embassy-net = { version = "0.9", features = ["defmt", "tcp", "dhcpv4", "medium-ethernet"] }
 cyw43 = { version = "0.7", features = ["defmt", "firmware-logs"] }

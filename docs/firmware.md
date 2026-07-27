@@ -54,9 +54,16 @@ probe-rs download --chip RP2040 target/thumbv6m-none-eabi/release/mube-firmware
 probe-rs reset --chip RP2040
 ```
 
-以後の更新は OTA（後述）だけで済む。開発中の焼き直しは従来どおり
-`cargo run --release`（probe-rs runner、defmt ログが出る）が使える
-（ブートローダーが焼けてさえいればアプリだけの書き換えで動く）。
+2 段書き込みが要るのは**初回と、mube-boot 自体を変更した時だけ**。以後の更新は
+OTA（後述）だけで済み、開発中の焼き直しも従来どおり `cargo run --release`
+（probe-rs runner、defmt ログが出る）で**アプリだけ**焼き直せばよい。
+
+これが安全なのは、アプリ ELF が boot2 を持たないため（embassy-rp の `boot2-none`
+feature）。boot2（256B）とブートローダー先頭は同じ 4KB 消去セクタに同居しており、
+アプリ側に boot2 を残すと probe-rs のセクタ消去がブートローダーを壊しうる。
+boot2 は mube-boot が `rp2040_boot2::BOOT_LOADER_W25Q080` を明示的に持つ
+（embassy-rp の feature 任せにしないのは、ワークスペースの feature 統一で
+boot2-none がブートローダー側にも効いて boot2 が消えるため）。
 
 プローブなしの場合は BOOTSEL + UF2 も使える（UF2 はアドレス付きなので、
 ブートローダー書き込み済みならアプリの UF2 だけでよい）:

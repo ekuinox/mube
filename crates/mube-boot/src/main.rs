@@ -15,6 +15,13 @@ use embassy_time::Duration;
 
 const FLASH_SIZE: usize = 2 * 1024 * 1024;
 
+/// 第 2 段ブートローダー（boot2）。ROM がフラッシュ先頭 256B から読み、XIP を立ち上げる。
+/// フラッシュ全体で boot2 を持つのはこのクレートだけ（アプリは embassy-rp の boot2-none で
+/// 持たない）。Pico W 標準の W25Q080 互換ローダーを使う（従来の embassy-rp 既定と同じ）。
+#[unsafe(link_section = ".boot2")]
+#[used]
+static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
+
 #[entry]
 fn main() -> ! {
     let p = embassy_rp::init(Default::default());
