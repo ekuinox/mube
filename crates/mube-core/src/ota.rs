@@ -152,6 +152,8 @@ mod tests {
         b
     }
 
+    // 正常なヘッダから len / crc32 をリトルエンディアンで取り出せること
+    // （lockctl.ts の buildOtaHeader と対になるワイヤ契約の読み側）。
     #[test]
     fn parse_header_ok() {
         let h = parse_header(&header_bytes(1234, 0xDEADBEEF), 4096).unwrap();
@@ -164,6 +166,8 @@ mod tests {
         );
     }
 
+    // マジック不一致（OTA ポートへの無関係な接続や化けたフレーム）を
+    // 先頭 8 バイトの時点で拒否できること。
     #[test]
     fn parse_header_bad_magic() {
         let mut b = header_bytes(1, 0);
@@ -171,6 +175,8 @@ mod tests {
         assert_eq!(parse_header(&b, 4096), Err(OtaError::BadMagic));
     }
 
+    // ACTIVE スロットに収まらない宣言長をヘッダの時点で拒否できること
+    // （受信を始める前に弾く = DFU へ 1 バイトも書かない）。
     #[test]
     fn parse_header_too_large() {
         assert_eq!(
@@ -182,19 +188,23 @@ mod tests {
         );
     }
 
+    // CRC32 実装が IEEE 802.3 の標準アルゴリズムに一致すること
+    // （"123456789" → 0xCBF43926 は既知の検証ベクタ。lockctl.ts 側と同じ値で契約を固定）。
     #[test]
     fn crc32_known_vector() {
-        // IEEE CRC32 の標準テストベクタ
         let mut c = Crc32::new();
         c.update(b"123456789");
         assert_eq!(c.finalize(), 0xCBF43926);
     }
 
+    // 空入力の CRC32 が 0 になること（初期値と反転の組み合わせの退行検知）。
     #[test]
     fn crc32_empty_is_zero() {
         assert_eq!(Crc32::new().finalize(), 0);
     }
 
+    // 分割して update しても一括と同じ CRC になること
+    // （受信は TCP のチャンク単位で逐次計算するため、分割不変性が前提になる）。
     #[test]
     fn crc32_split_equals_whole() {
         let mut a = Crc32::new();
@@ -211,6 +221,8 @@ mod tests {
         c.finalize()
     }
 
+    // 分割受信の正常系: TCP のチャンク単位で accept しても remaining / is_complete が
+    // 正しく進み、全量受信後に verify（CRC 込み）が成立すること。
     #[test]
     fn receiver_happy_path_in_chunks() {
         let payload = b"hello ota world";
@@ -221,13 +233,15 @@ mod tests {
         let mut r = Receiver::new(h);
         assert!(!r.is_complete());
         assert_eq!(r.remaining(), payload.len() as u32);
-        r.accept(&payload[..5]).unwrap();
+        assert!(r.accept(&payload[..5]).is_ok());
         assert_eq!(r.remaining(), (payload.len() - 5) as u32);
-        r.accept(&payload[5..]).unwrap();
+        assert!(r.accept(&payload[5..]).is_ok());
         assert!(r.is_complete());
-        r.verify().unwrap();
+        assert!(r.verify().is_ok());
     }
 
+    // 宣言長を超えるデータを Overrun として拒否できること
+    // （firmware 側で DFU スロットの範囲外書き込みに至らせないための防壁）。
     #[test]
     fn receiver_overrun() {
         let h = Header { len: 4, crc32: 0 };
@@ -235,11 +249,13 @@ mod tests {
         assert_eq!(r.accept(b"12345"), Err(OtaError::Overrun));
     }
 
+    // 全量に達しないまま verify すると Incomplete になること
+    // （途中切断のフレームを誤って mark_updated しないための防壁）。
     #[test]
     fn receiver_incomplete_verify_fails() {
         let h = Header { len: 10, crc32: 0 };
         let mut r = Receiver::new(h);
-        r.accept(b"12345").unwrap();
+        assert!(r.accept(b"12345").is_ok());
         assert_eq!(
             r.verify(),
             Err(OtaError::Incomplete {
@@ -249,6 +265,8 @@ mod tests {
         );
     }
 
+    // 全量は受けたが CRC が合わない場合に CrcMismatch になること
+    // （化けたイメージを誤って mark_updated しないための防壁）。
     #[test]
     fn receiver_crc_mismatch() {
         let payload = b"abcd";
@@ -257,7 +275,7 @@ mod tests {
             crc32: 0x12345678,
         };
         let mut r = Receiver::new(h);
-        r.accept(payload).unwrap();
+        assert!(r.accept(payload).is_ok());
         assert_eq!(
             r.verify(),
             Err(OtaError::CrcMismatch {
@@ -267,6 +285,8 @@ mod tests {
         );
     }
 
+    // 全エラー種の reason() がワイヤ応答 "ERR <reason>" に載せられる形
+    // （非空 ASCII）であることを網羅的に確認する。
     #[test]
     fn error_reasons_are_short_ascii() {
         for e in [
