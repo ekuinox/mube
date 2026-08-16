@@ -18,6 +18,8 @@ export const PARTS: PartSpec[] = [
   { ref: "Rled", kind: "resistor", props: { resistance: "330" } },
   { ref: "Rled2", kind: "resistor", props: { resistance: "330" } },
   { ref: "D1", kind: "chip", pinLabels: { pin1: "R", pin2: "G", pin3: "K" } },
+  // SW1 はカバーにパネル取付する PS21B-1（秋月 P-04583）。基板上には 2pin コネクタだけが載り、
+  // ここから 2 本の線でスイッチへ繋ぐ。ネットとしては従来のタクトスイッチと等価。
   { ref: "SW1", kind: "pushbutton" },
   { ref: "C1", kind: "capacitor", props: { capacitance: "470uF", polarized: true } },
   { ref: "C2", kind: "capacitor", props: { capacitance: "100nF" } },
