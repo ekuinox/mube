@@ -214,6 +214,11 @@ cover_x0 = -(ped_curb_ro + cover_clear);   // -28.7（受けカーブが支配�
 cover_x1 = tray_x1 + cover_clear;          // 46.5
 cover_y0 = -(ped_curb_ro + cover_clear);   // -28.7
 cover_y1 = tray_y1 + cover_clear;          // 91.9
+// 外形角の丸め半径。カバー裾（cover.scad の cover_outline_2d / cover_ear_webs）と
+// プレート外形（body.scad の plate_outline_2d）が同じ offset(r) offset(-r) の書き方で
+// 共有する。プレートはカバー裾を追従する輪郭なので、両者がずれると耳とラグの位置
+// 関係（下のラグ分離ガードの前提）が崩れる。1 箇所で持つ。
+cover_round_r = 2;
 
 // カバーの高さと勾配。天面をベッドに伏せて刷るので屋根に水平な段を作らない
 // （段は第 1 層より下に宙で現れて垂れる）。+Y への単一勾配 45°。
@@ -321,7 +326,7 @@ assert(cover_ear_off*sqrt(2) >= tray_sleeve_od/2,
        "cover_ear_off が小さく、ラグ内のスリーブが裾の角に食い込む");
 // 上限: cover_ear_off が大きすぎるとラグが本体矩形の丸め offset で橋渡しされず、
 // 4枚の独立した円盤に分離してしまう（offset(r=2) offset(r=-2) は非連結形状を繋がない）。
-assert((cover_ear_off - plate_margin + 2)*sqrt(2) - 2 < plate_lug_d/2,
+assert((cover_ear_off - plate_margin + cover_round_r)*sqrt(2) - cover_round_r < plate_lug_d/2,
        "ラグが本体矩形から離れて別体になる");
 // -Y の耳は角丸めのぶん裾から浮くので cover_ear_webs() が橋を架ける。その橋はリブ天面より
 // 上の z 帯（wall + plate_rib_h + fit_clearance 〜 wall + tray_boss_h + tray_cap_t）に張るので、
@@ -410,7 +415,11 @@ assert(tray_cap_t > tray_head_h, "キャップ厚が頭ザグリ深さ以下（�
 assert(tray_cap_t - tray_head_h - 0.3 >= (tray_sleeve_id - tray_screw_clear)/2, "ファンネルが 45°より急（自己サポート不可でネジ穴が塞がる）");
 // ペデスタル・ボルトオンの配置ガード
 assert(ped_fix_r*sin(45) + tray_sleeve_od/2 <= tray_y0, "ペデスタルスリーブがトレイ床に食い込む");
-assert(ped_fix_r*cos(45) + tray_sleeve_od/2 <= min(ext_left, ext_down), "ペデスタルスリーブがプレート端を超える");
+// -X/-Y 端に一番近づくのはスリーブ（od 7.8）ではなくフランジのローブ（幅 ped_lobe_w=10）。
+// ローブは線分 p/2→p の全長に太さ ped_lobe_w で存在するので、外への張り出しは
+// ped_lobe_w/2 = 5 で見る。スリーブ半径 3.9 で見ると 1.1mm 見落とす（トレイ側の
+// 「ローブに食い込む」assert と同じ盲点）。
+assert(ped_fix_r*cos(45) + ped_lobe_w/2 <= min(ext_left, ext_down), "ペデスタルのフランジローブがプレート端を超える");
 assert(ped_curb_ro <= min(ext_left, ext_down) + wall - 0.2, "受けカーブがプレート端に寄りすぎ");
 assert(ped_fix_r - tray_sleeve_od/2 > rosette_d/2 + fit_clearance, "ペデスタルボスがロゼット開口に食い込む");
 assert(ped_lobe_w > tray_sleeve_od, "ローブ幅がスリーブ外径より細い（スリーブがローブから食み出す）");

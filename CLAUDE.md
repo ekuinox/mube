@@ -27,7 +27,7 @@ Claude が実行するときは各コマンドに `nix develop -c` を前置す�
 | 筐体ビルド（STL を enclosure/build/ へ） | `just enclosure` | `bun enclosure/scripts/build.ts` |
 | SCAD 単発レンダリング | `just render <scad> [out]` | `bun enclosure/scripts/render.ts <scad> [out]` |
 | 部品間の体積干渉チェック | `just clash` | `bun enclosure/scripts/clash.ts` |
-| カバー STL が単一連結ソリッドであることのチェック | `just cover-components` | `bun enclosure/scripts/components.ts` |
+| 印刷パート5点の STL が単一連結ソリッドであることのチェック | `just components` | `bun enclosure/scripts/components.ts` |
 | enclosure ツールの単体テスト | `just test-enclosure` | `bun test enclosure/scripts/` |
 | 回路 ERC（導通・ショート） | `just erc` | `cd circuit && bun install --frozen-lockfile && bun test` |
 | WebUI ビルド（yew→dist） | `just webui` | `cd crates/mube-webui && trunk build --release` |

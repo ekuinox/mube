@@ -2,7 +2,9 @@ include <params.scad>
 use <cover.scad>
 // 屋根内面が中身の最高点を上回ること
 assert(cover_inner_top >= servo_top_z + 1.5, "カバー天井がサーボに当たる");
-assert(roof_in_z(pcb_off_y) >= pcb_top_z + pcb_stack_usb + 2, "屋根が Pico/USB に当たる");
+// Pico は Y 方向に pico_w = 21 あるので、基板中心（pcb_off_y）ではなく Pico の +Y 端で
+// 評価する。屋根は +Y ほど低いので、中心で見ると 10.5mm ぶん甘く出る。
+assert(roof_in_z(pcb_off_y + pico_w/2) >= pcb_top_z + pcb_stack_usb + 2, "屋根が Pico/USB に当たる");
 // 「屋根が最高部品(pcb_stack_tall)に当たる」の assert は params.scad の
 // pcb_tall_y_max > pcb_off_y - pcb_w/2 と代数的に同一（roof_in_z(pcb_off_y-pcb_w/2)
 // >= pcb_top_z+pcb_stack_tall+2 を整理するとその式になる）なので重複させない。

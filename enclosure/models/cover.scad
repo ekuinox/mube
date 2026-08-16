@@ -76,9 +76,6 @@ module cover_body(inset, top_z, z0) {
   }
 }
 
-// 角の丸め半径（cover_ear_webs が角の実体位置を出すのにも参照する）
-cover_round_r = 2;
-
 // 裾の外形 2D（inset で内腔用に絞る）
 module cover_outline_2d(inset) {
   x0 = cover_x0 - cover_wall + inset;
@@ -100,7 +97,13 @@ module cover_roof_cut(top_z) {
 
 // 屋根の斜面に法線方向の素通し穴をあける。pt = [x, y]（ワールド）。
 // rotate([-45,0,0]) はシリンダ軸 (0,0,1) を斜面の外向き法線 (0,√2/2,√2/2) に一致させる。
+// z の式は「斜面の上に居る」ことが前提で、y < cover_slope_y0 だと平天面より上の空中に
+// 穴を置いてしまい（＝黙って何も開かない）、+Y 端を超えると壁を斜めに削る。呼び出し側
+// ごとに書くと片方だけ書き忘れる（実際に sw_pt にはあり cover_led_pt には無かった）ので
+// モジュール側に置き、穴の縁（直径ぶん）で評価する。
 module roof_normal_hole(pt, d) {
+  assert(pt[1] - d/2 >= cover_slope_y0 && pt[1] + d/2 <= cover_y1 + cover_wall,
+         "屋根の穴が斜面の範囲外（勾配の始点より -Y、または +Y 端より外）");
   z = cover_top_z - (pt[1] - cover_slope_y0);
   translate([pt[0], pt[1], z])
     rotate([-45, 0, 0])

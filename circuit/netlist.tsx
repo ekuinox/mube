@@ -2,7 +2,11 @@ import { RootCircuit } from "tscircuit"
 import Board from "./index"
 import { runErc } from "./erc"
 
-// 本番配線で意図的に未接続のピン（tactile switch SW1 の未使用重複パッド）。
+// 本番配線で意図的に未接続のピン。SW1 の実物はパネル取付の PS21B-1（2 端子）で
+// 基板外に付き、基板とは 2pin コネクタで繋がる。それでもネットリスト上のシンボルは
+// 4 パッドの押しボタンのまま意図的に据え置いてある（tscircuit の ERC が見るのは
+// 導通だけなので、フットプリントを差し替えても検証結果は 1 ビットも変わらない。
+// 設計書の Ruling 15）。よって pin3/pin4 は未接続のまま許容する。
 export const ALLOW_UNCONNECTED = ["SW1.pin3", "SW1.pin4"]
 
 // index.tsx の本番配線を circuit JSON へ描画する。

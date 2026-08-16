@@ -32,7 +32,7 @@ module body() {
 // 矩形本体＋カバー固定ラグ（cover_ear_pts の4点。-Y 側の2隅＋±X 壁上の2点）を
 // 角R2 で融合する。
 module plate_outline_2d() {
-  offset(r = 2) offset(r = -2)
+  offset(r = cover_round_r) offset(r = -cover_round_r)
     union() {
       square([body_l, body_w], center = true);
       for (p = cover_ear_pts)
