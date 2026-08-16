@@ -160,7 +160,13 @@ pcb_top_z = pcb_z0 + pcb_t;                   // 基板上面 11.4
 pcb_stack_pico = 9.5;    // 基板上面 → Pico 上面（メスソケット 8.5 + Pico 1.0）
 pcb_stack_usb  = 12.0;   // 基板上面 → USB コネクタ上端
 pcb_stack_tall = 16.0;   // 基板上面 → 最高部品（TO-220 立て）上端
-pcb_stack_low  = 3.0;    // 基板上面 → 低背部品（抵抗・ダイオード）上端
+// 基板上面 → 低背部品（抵抗・ダイオード）上端。
+// 注意: この定数を読む assert はもう無い（唯一の読み手だった cover_test.scad の
+// 「屋根が基板 +Y 端に当たる」は、同じ評価点で pcb_stack_mid + 2 を要求する
+// params.scad の assert に完全に包含されるので削除した）。実効的なガードは
+// pcb_stack_mid 側が担っており、これは部品高さのバジェットを文書として残すためのもの。
+// つまりこの値を編集しても検証結果は何も変わらない。
+pcb_stack_low  = 3.0;
 // +Y 側の中背部品の上端。実物で一番背が高いのは C1（470µF 16V ルビコン PX
 // 16PX470MEFC8X11.5 = φ8 × 11.5、リードピッチ 3.5）で、次が D1 の 2 色 LED（φ5 × 8.6）。
 // 11.5 を 12.0 へ丸めて予算として持つ。屋根は +Y ほど低いので、この値が「基板のどこに
@@ -349,7 +355,8 @@ assert(max([for (p = cover_ear_pts) max(-p[0], -p[1])]) + plate_lug_d/2
 assert(cover_ear_off*sqrt(2) >= tray_sleeve_od/2,
        "cover_ear_off が小さく、ラグ内のスリーブが裾の角に食い込む");
 // 上限: cover_ear_off が大きすぎるとラグが本体矩形の丸め offset で橋渡しされず、
-// 4枚の独立した円盤に分離してしまう（offset(r=2) offset(r=-2) は非連結形状を繋がない）。
+// 4枚の独立した円盤に分離してしまう（offset(r=cover_round_r) offset(r=-cover_round_r) は
+// 非連結形状を繋がない）。
 assert((cover_ear_off - plate_margin + cover_round_r)*sqrt(2) - cover_round_r < plate_lug_d/2,
        "ラグが本体矩形から離れて別体になる");
 // -Y の耳は角丸めのぶん裾から浮くので cover_ear_webs() が橋を架ける。その橋はリブ天面より
@@ -372,7 +379,7 @@ assert(plate_rib_h + fit_clearance < tray_boss_h + tray_cap_t,
 assert(cover_top_z - (tray_fix_y_hi + tray_sleeve_od/2 - cover_slope_y0)
        >= wall + tray_boss_h + tray_cap_t,
        "+Y の耳の天面が屋根を突き抜ける（伏せ印刷で孤立島になる）");
-// cover_slope_y0（手置き定数）が守るべき2つの下限。cover_slope_y0 自体を導出式にすると
+// cover_slope_y0（手置き定数）が守るべき3つの下限。cover_slope_y0 自体を導出式にすると
 // 下限とそれを検証する assert が同じ式になって恒真化するので、ここで独立に検証する
 // （Ruling 10）。
 assert(cover_slope_y0 >= ped_curb_ro + cover_clear,
