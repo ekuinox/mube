@@ -40,6 +40,17 @@ module pico_w_mounts() {
   }
 }
 
+// ユニバーサル基板 P-03229 の支柱 1 本（原点基準・呼び出し側で translate）。
+// 基板を pcb_standoff_h 浮かせて裏のハンダ足を床から逃がし、上から M2 セルフタップで
+// 留める。基板穴 φ3.2 に対しネジ山は効かないので、頭（tray_head_d）が押さえる。
+module pcb_standoff() {
+  difference() {
+    cylinder(d = pcb_standoff_d, h = pcb_standoff_h);
+    translate([0, 0, pcb_standoff_h - pcb_screw_grip])
+      cylinder(d = tray_screw_pilot, h = pcb_screw_grip + 0.1);
+  }
+}
+
 // M2 セルフタップ用ボス1本（原点基準・呼び出し側で translate）。床上面に立て、上面から
 // tray_screw_pilot の袋下穴を tray_screw_grip 深さで彫る（下=ドア面を貫通しない）。加算形状（union 側で使う）。
 module m2_boss() {
