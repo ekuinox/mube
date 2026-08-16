@@ -8,12 +8,18 @@ assert(roof_in_z(pcb_off_y + pico_w/2) >= pcb_top_z + pcb_stack_usb + 2, "屋根
 // 「屋根が最高部品(pcb_stack_tall)に当たる」の assert は params.scad の
 // pcb_tall_y_max > pcb_off_y - pcb_w/2 と代数的に同一（roof_in_z(pcb_off_y-pcb_w/2)
 // >= pcb_top_z+pcb_stack_tall+2 を整理するとその式になる）なので重複させない。
-assert(roof_in_z(pcb_off_y + pcb_w/2) >= pcb_top_z + pcb_stack_low, "屋根が基板 +Y 端に当たる");
+// 「屋根が基板 +Y 端の低背部品(pcb_stack_low)に当たる」の assert は、Ruling 12 で
+// params.scad に入れた中背部品版（同じ評価点 pcb_off_y + pcb_w/2、pcb_stack_mid + 2）に
+// 完全に包含される（3.0 < 12.0 + 2）ので置かない。
 // 屋根 × トレイ +Y 固定スリーブの干渉ガードは params.scad の Sanity セクションに移した
 // （cover_tray_gap を参照。include されるどのモデルからでも常に効くほうが強いので、
 // ここに重複させない。Ruling 10）。
 // スイッチ（PS21B-1）が斜面に収まり本体が基板に当たらないこと
-assert(cover_wall / cos(45) < sw_thread_l, "斜面の実効パネル厚がネジ部長さを超える");
+// スイッチの軸は斜面の法線方向（roof_normal_hole）なので、ネジに沿って通る材料は
+// 斜めに切られず、ちょうど cover_wall = 2.0 になる。旧版は cover_wall/cos(45) = 2.83 と
+// 書いていたが、これは「斜面を垂直に貫いた場合」の厚みで、この取付には当てはまらない。
+// （旧版は真の厚みより大きい値で比較していたので保守側。落ちるべきものを通してはいない）
+assert(cover_wall < sw_thread_l, "斜面の実効パネル厚がネジ部長さを超える");
 assert(sw_panel_d > sw_thread_d, "取付穴がネジ部より小さい");
 // 軸上の先端 sw_tip_z ではなく、φsw_body_d の掃引体の最下点（法線に垂直な
 // (0,+1,-1)/√2 方向へ半径ぶんずれた点）が基板に当たるかを見る
