@@ -22,22 +22,34 @@
 - 各タスクの完了条件に「`nix develop -c bun enclosure/scripts/render.ts <対象>` が WARNING / ERROR なしで通ること」を含む。`render.ts` は WARNING でも失敗扱いになる。
 - テストの書き方は既存に合わせる。`*_test.scad` は「assert を並べてモジュールを1回インスタンス化し、最後に `echo("<name> ok")`」の形。
 
+## Preflight rulings（実行前のスコープ照合で確定した修正）
+
+計画作成後の照合で 2 件の欠陥を見つけ、以下のとおり確定した。台帳
+`.superpowers/sdd/2026-08-16-universal-pcb-cover/progress.md` に根拠を記録してある。
+
+- **Ruling 1**: トレイ固定スリーブがペデスタル固定スリーブ（45°/135°、中心 ±21.21, 21.21）と
+  中心間 4.36mm まで接近して食い込む。ペデスタル無改造の制約があるので、基板とトレイ固定点を
+  +Y へずらして避ける。プレートは Y 方向に 4.7mm 伸びる（123.8 → 128.5）。
+- **Ruling 2**: プレートの横桟がカバー側壁の真下を貫く。横桟を全廃し、剛性はカバーに担わせる。
+
+以下の本文はこの 2 件を反映済み。spec 側の数値（基板中心 (9, 53.5) 等）より **この計画の数値が優先** する。
+
 ## 確定値（spec からの写し）
 
 | 名前 | 値 | 由来 |
 | --- | --- | --- |
 | 基板 P-03229 | 72(X) × 47(Y) × 1.6、穴 φ3.2 ピッチ 66×41 | docs/parts-selection.md |
-| 基板中心（世界） | (9, 53.5) | −Y 端が受けカーブ 27.7 から 2.3 逃げる |
+| 基板中心（世界） | (9, 58.1) | −Y 端(34.6) が -Y 側トレイ固定スリーブの上端(33.9) を 0.7 かわす |
 | 支柱 | 高さ 5、外径 5 | 基板裏のハンダ足逃げ |
-| トレイ固定 4 点 | (−22, 25.5) (40, 25.5) (−22, 81.5) (40, 81.5) | 基板の ±Y 側。±X 側だとドア枠に寄る |
-| カバー内面 | X −28.7〜46.5、Y −28.7〜86.5 | 受けカーブ／トレイ + すきま 1.0 |
+| トレイ固定 4 点 | (−22, 30) (40, 30) (−22, 86.2) (40, 86.2) | 基板の ±Y 側。±X 側だとドア枠に寄る。-Y 側の y=30 は ped_fix_pts(±21.21, 21.21) から 8.8mm 離す下限（Ruling 1） |
+| カバー内面 | X −28.7〜46.5、Y −28.7〜91.2 | 受けカーブ／トレイ + すきま 1.0 |
 | カバー壁 | 2.0 | |
 | カバー内面天井 / 外面天面 | 72.9 / 75.73 | サーボ上端 70.9 + 2.0、斜面の壁厚確保に ×√2 |
 | 勾配開始 y | 28.7 | 受けカーブ 27.7 + すきま 1.0 |
-| プレート外形 | X −33.0〜50.8、Y −33.0〜90.8 | カバー裾外面 + リブ幅 2 + 嵌合 0.3 |
+| プレート外形 | X −33.0〜50.8、Y −33.0〜95.5（83.8 × 128.5） | カバー裾外面 + リブ幅 2 + 嵌合 0.3 |
 | スイッチ PS21B-1 | ネジ部 φ11.5、取付穴 φ12.0、フランジ φ18.7、奥行き 26 | 実測とメーカー図面 |
 | スイッチ取付点 | (−1, 60) | 奥行き 26 を逃がせる位置 |
-| LED 窓 | (−15, 74.5)、φ6 | |
+| LED 窓 | (−15, 79.1)、φ6 | `[pcb_off_x - 24, pcb_off_y + 21]` |
 
 ---
 
@@ -104,7 +116,8 @@ nix develop -c bun enclosure/scripts/render.ts enclosure/models/tray_test.scad
 - `ext_left` / `ext_right` / `ext_down` / `ext_up` の定義（後述の新定義で置き換え）
 - `bb_l` `bb_w` `bb_t` `bb_clearance` `bb_pocket_wt` `bb_pocket_wall_h` `bb_rail_hook` `bb_rail_lip_h` `pico_bb_gap` `bb_ped_gap` `bb_off_x` `bb_off_y` `bb_ext_farx` `pocket_inner_left` `pocket_inner_right` `pocket_inner_bottom` `pocket_inner_top` `pocket_outer_left` `pocket_outer_right` `pocket_outer_bottom` `pocket_outer_top`
 - `tray_fix_gap` / `tray_fix_x_left` / `tray_fix_x_right` / `tray_fix_y_lo` / `tray_fix_y_hi` / `tray_fix_pts` / `tray_x0` / `tray_x1` / `tray_y0` / `tray_y1` の定義（新定義で置き換え）
-- assert のうち以下: `realized left extent...` `realized down extent...` `Pico -Y 端がペデスタルに干渉` `Pico +Y 端が内寸を超える` `スタンドオフ高が下ピン突出を逃がせない` `ネジ下穴 grip がスタンドオフ高を超える` `スタンドオフ肉厚が下穴に対して薄すぎる` `BB ポケット右端...` `BB ポケット上端...` `BB ポケット下端...` `BB レールリップ...` `Pico↔BB ポケットのすき間不足` `右スリーブが BB ポケットに食い込む` `右スリーブがプレート端(+X)を超える` `左スリーブが Pico に食い込む` `左スリーブがプレート端(-X)を超える` `トレイ床 X が内寸を超える` `トレイ床 Y が内寸を超える` `トレイ床下端がペデスタルに寄りすぎ` `受けカーブがトレイ床に近すぎる`
+- assert のうち以下: `realized left extent...` `realized down extent...` `Pico -Y 端がペデスタルに干渉` `Pico +Y 端が内寸を超える` `スタンドオフ高が下ピン突出を逃がせない` `ネジ下穴 grip がスタンドオフ高を超える` `スタンドオフ肉厚が下穴に対して薄すぎる` `BB ポケット右端...` `BB ポケット上端...` `BB ポケット下端...` `BB レールリップ...` `Pico↔BB ポケットのすき間不足` `右スリーブが BB ポケットに食い込む` `右スリーブがプレート端(+X)を超える` `左スリーブが Pico に食い込む` `左スリーブがプレート端(-X)を超える` `トレイ床 X が内寸を超える` `トレイ床 Y が内寸を超える` `トレイ床下端がペデスタルに寄りすぎ` `受けカーブがトレイ床に近すぎる` `横桟がトレイ床に食い込む` `横桟がペデスタルスリーブに食い込む`
+- **残す assert**: `ped_fix_r*sin(45) + tray_sleeve_od/2 <= tray_y0`（ペデスタルスリーブ ⇔ トレイ床。新 tray_y0 = 26.0 で 25.11 ≤ 26.0 と通る。この assert が Ruling 1 の欠陥を検出した）
 
 `ped_curb_ro` の定義ブロックの直後（BB 系があった位置）に以下を **追加** する。
 
@@ -118,8 +131,10 @@ pcb_t = 1.6;
 pcb_hole_d  = 3.2;   // 既製マウント穴（M2 は頭で押さえる。ネジ山は効かない）
 pcb_hole_dx = 66;    // 長辺方向の穴ピッチ
 pcb_hole_dy = 41;    // 短辺方向の穴ピッチ
-pcb_ped_gap = 2.3;   // 基板 -Y 端 ⇔ 受けカーブ外周
-pcb_off_y   = ped_curb_ro + pcb_ped_gap + pcb_w/2;   // 53.5
+// 基板 -Y 端(34.6) は -Y 側トレイ固定スリーブの上端(30+3.9) を 0.7 かわす位置。
+// その固定点自体がペデスタル固定スリーブ(45°/135°)から逃げた結果ここまで上がっている。
+pcb_ped_gap = 6.9;   // 基板 -Y 端 ⇔ 受けカーブ外周
+pcb_off_y   = ped_curb_ro + pcb_ped_gap + pcb_w/2;   // 58.1
 // 基板 -X 端を受けカーブ外周とほぼ同じ x（-27）に揃え、プレート -X 端を最小にする
 pcb_off_x   = -27 + pcb_l/2;                          // 9
 pcb_hole_pts = [for (sx = [-1, 1], sy = [-1, 1])
@@ -141,16 +156,18 @@ pcb_stack_low  = 3.0;    // 基板上面 → 低背部品（抵抗・ダイオ�
 // （tray_t / tray_screw_* / tray_boss_* / tray_sleeve_* の既存定義はそのまま）
 tray_fix_x_left  = -22;
 tray_fix_x_right = 40;
-tray_fix_y_lo    = 25.5;   // 基板 -Y 端(30) の下。受けカーブからも逃げる
-tray_fix_y_hi    = 81.5;   // 基板 +Y 端(77) の上
+// -Y 側は ped_fix_pts の 45°/135°（±21.21, 21.21）から中心間 8.8mm 離れる下限。
+// 両方ともスリーブ外径 7.8 なので 8.3 が最小、余裕を見て y=30。
+tray_fix_y_lo    = 30;     // 基板 -Y 端(34.6) の下
+tray_fix_y_hi    = 86.2;   // 基板 +Y 端(81.6) の上
 tray_fix_pts = [
   [tray_fix_x_left,  tray_fix_y_lo], [tray_fix_x_left,  tray_fix_y_hi],
   [tray_fix_x_right, tray_fix_y_lo], [tray_fix_x_right, tray_fix_y_hi],
 ];
 tray_x0 = pcb_off_x - pcb_l/2 - 0.5;                  // -27.5
 tray_x1 = pcb_off_x + pcb_l/2 + 0.5;                  // 45.5
-tray_y0 = tray_fix_y_lo - tray_sleeve_od/2 - 0.1;     // 21.5
-tray_y1 = tray_fix_y_hi + tray_sleeve_od/2 + 0.1;     // 85.5
+tray_y0 = tray_fix_y_lo - tray_sleeve_od/2 - 0.1;     // 26.0
+tray_y1 = tray_fix_y_hi + tray_sleeve_od/2 + 0.1;     // 90.2
 tray_ped_notch_r = ped_curb_ro + 1.3;                 // 29。床が受けカーブをまたぐ逃げ
 
 // --- サーボ上端（カバー天井の根拠） ---
@@ -166,7 +183,7 @@ cover_clear = 1.0;    // 内面 ⇔ 中身のすきま
 cover_x0 = -(ped_curb_ro + cover_clear);   // -28.7（受けカーブが支配）
 cover_x1 = tray_x1 + cover_clear;          // 46.5
 cover_y0 = -(ped_curb_ro + cover_clear);   // -28.7
-cover_y1 = tray_y1 + cover_clear;          // 86.5
+cover_y1 = tray_y1 + cover_clear;          // 91.2
 
 // --- プレート外形 ---
 // カバー裾の外面を外周リブの内面で受ける。プレート端 = 裾外面 + リブ幅 + 嵌合すきま。
@@ -175,11 +192,11 @@ plate_margin  = plate_rib_w + cover_lip_fit;   // 2.3
 plate_x0 = cover_x0 - cover_wall - plate_margin;   // -33.0
 plate_x1 = cover_x1 + cover_wall + plate_margin;   //  50.8
 plate_y0 = cover_y0 - cover_wall - plate_margin;   // -33.0
-plate_y1 = cover_y1 + cover_wall + plate_margin;   //  90.8
+plate_y1 = cover_y1 + cover_wall + plate_margin;   //  95.5
 body_l   = plate_x1 - plate_x0;        // 83.8
-body_w   = plate_y1 - plate_y0;        // 123.8
+body_w   = plate_y1 - plate_y0;        // 128.5
 center_x = (plate_x0 + plate_x1)/2;    // 8.9
-center_y = (plate_y0 + plate_y1)/2;    // 28.9
+center_y = (plate_y0 + plate_y1)/2;    // 31.25
 // 旧 ext_* は「軸原点から内寸の端まで」の意味。既存 assert と互換のため導出で残す。
 ext_left  = -plate_x0 - wall;
 ext_right =  plate_x1 - wall;
@@ -187,7 +204,9 @@ ext_down  = -plate_y0 - wall;
 ext_up    =  plate_y1 - wall;
 ```
 
-`plate_rib_w` は現状ファイル後半で定義されているので、この位置より前へ移動させる（`plate_rib_h` / `plate_rib_ys` も一緒に移す）。`plate_rib_ys` は新レイアウトに合わせて `[-14, 14]` から `[0]`（横桟 1 本）へ変更する。トレイ床が y ≥ 21.5 まで来るため、桟を置ける帯は受けカーブ（半径 27.7）とトレイ床の間しか無く、y = 0 は受けカーブの中で自動的に差し引かれるので実質「外周リブのみ」になる。
+`plate_rib_w` は現状ファイル後半で定義されているので、この位置より前へ移動させる（`plate_rib_h` / `plate_rib_ys` も一緒に移す）。
+
+`plate_rib_ys` は **`[]` に変更して横桟を全廃する**（Ruling 2）。横桟はプレート全幅（`square([body_l, plate_rib_w])`）に走るのでカバーの −X / +X 側壁の真下を貫いてしまい、カバーが座らない。剛性は四隅で M2 留めされたカバーが肩代わりする。これに伴い `max(plate_rib_ys)` を参照する 2 本の assert（`横桟がトレイ床に食い込む` / `横桟がペデスタルスリーブに食い込む`）も削除する。空リストに `max()` を適用すると undef になり assert が壊れるため、残すことはできない。
 
 最後に、削除した assert の代わりに以下を追加する。
 
@@ -204,6 +223,10 @@ assert(tray_fix_y_lo + tray_sleeve_od/2 <= pcb_off_y - pcb_w/2, "-Y 固定スリ
 assert(tray_fix_y_hi - tray_sleeve_od/2 >= pcb_off_y + pcb_w/2, "+Y 固定スリーブが基板に食い込む");
 assert(min([for (p = tray_fix_pts) norm(p)]) >= ped_curb_ro + tray_sleeve_od/2 + 0.5,
        "固定スリーブが受けカーブに食い込む");
+// トレイ固定スリーブとペデスタル固定スリーブの共倒れガード。
+// 旧レイアウトで実際に 4.36mm まで接近して食い込んでいたので必ず入れる。
+assert(min([for (t = tray_fix_pts, q = ped_fix_pts) norm(t - q)]) >= tray_sleeve_od + 0.5,
+       "トレイ固定スリーブがペデスタル固定スリーブに食い込む");
 assert(tray_ped_notch_r >= ped_curb_ro + ped_curb_tray_gap, "トレイ床の逃げが受けカーブに近すぎる");
 assert(tray_y0 <= tray_fix_y_lo - tray_sleeve_od/2, "トレイ床 -Y 端が固定スリーブを覆えない");
 assert(tray_y1 >= tray_fix_y_hi + tray_sleeve_od/2, "トレイ床 +Y 端が固定スリーブを覆えない");
