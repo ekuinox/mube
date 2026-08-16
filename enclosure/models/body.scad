@@ -13,13 +13,14 @@ module body() {
       translate([center_x, center_y, 0])
         linear_extrude(height = wall)
           plate_outline_2d();
-      // 上面リブ（外周一周＋横桟）
+      // 上面リブ（外周一周のみ）
       plate_ribs();
       // ペデスタル受けカーブ（ローブ通過の切り欠き＝回り止め）
       pedestal_curb();
-      // 固定ボス（トレイ4＋ペデスタル4、天面 M2 留め）
+      // 固定ボス（トレイ4＋ペデスタル4＋カバー4、天面 M2 留め）
       tray_mount_bosses();
       ped_mount_bosses();
+      cover_mount_bosses();
     }
     // 中央ロゼット開口（ドア側のサムターン座金を通す）
     translate([0, 0, -0.1])
@@ -27,15 +28,22 @@ module body() {
   }
 }
 
-// プレート外形 2D（原点基準・中心合わせは呼び出し側の translate で行う）
+// プレート外形 2D（プレート中心基準・中心合わせは呼び出し側の translate で行う）。
+// 矩形本体＋四隅のカバー固定ラグを角R2 で融合する。
 module plate_outline_2d() {
   offset(r = 2) offset(r = -2)
-    square([body_l, body_w], center = true);
+    union() {
+      square([body_l, body_w], center = true);
+      for (p = cover_ear_pts)
+        translate([p[0] - center_x, p[1] - center_y]) circle(d = plate_lug_d);
+    }
 }
 
-// 上面リブ: 外周一周＋横桟。受けカーブ・スリーブ・ロゼット開口の周りは半径 ped_curb_ro+1 で
-// 丸ごと逃がす（開口の上をリブが橋渡しして印刷ブリッジになるのも防ぐ）。トレイ床の下（y>=tray_y0）
-// には横桟を置かない（plate_rib_ys で保証、assert 済み）。
+// 上面リブ: 外周一周のみ（横桟は plate_rib_ys=[] で全廃済み。カバーの -X/+X 側壁が
+// 全幅横桟の真下を貫いてしまい座らなくなるため。剛性は四隅で M2 留めされたカバーが
+// 肩代わりする）。受けカーブ・スリーブ・ロゼット開口の周りは半径 ped_curb_ro+1 で、
+// カバー固定ボスの周りは各点 tray_sleeve_od+1 で丸ごと逃がす（開口の上をリブが
+// 橋渡しして印刷ブリッジになるのも防ぐ）。
 module plate_ribs() {
   translate([0, 0, wall])
     linear_extrude(height = plate_rib_h)
@@ -54,6 +62,9 @@ module plate_ribs() {
         }
         // 受けカーブ・スリーブ・中央開口まわりの逃げ
         circle(r = ped_curb_ro + 1);
+        // カバー固定ボスまわりの逃げ（リブとボスの干渉を避ける）
+        for (p = cover_ear_pts)
+          translate([p[0], p[1]]) circle(d = tray_sleeve_od + 1);
       }
 }
 

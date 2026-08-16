@@ -98,3 +98,9 @@ module ped_mount_bosses() {
   for (p = ped_fix_pts)
     translate([p[0], p[1], wall]) m2_boss();
 }
+
+// カバーをプレート天面から留めるための本体側ボス。cover_ear_pts の各点に床上面から立てる。
+module cover_mount_bosses() {
+  for (p = cover_ear_pts)
+    translate([p[0], p[1], wall]) m2_boss();
+}

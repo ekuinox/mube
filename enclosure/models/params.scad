@@ -235,6 +235,20 @@ body_l   = plate_x1 - plate_x0;        // 83.8
 body_w   = plate_y1 - plate_y0;        // 129.2
 center_x = (plate_x0 + plate_x1)/2;    // 8.9
 center_y = (plate_y0 + plate_y1)/2;    // 31.6
+// カバー固定の耳／ラグ。裾の外角から対角方向へ各軸 cover_ear_off ずらし、
+// 円（tray_sleeve_od）が裾の角にちょうど接するようにする。
+cover_ear_off = 2.8;
+cover_ear_pts = [
+  [cover_x0 - cover_wall - cover_ear_off, cover_y0 - cover_wall - cover_ear_off],
+  [cover_x1 + cover_wall + cover_ear_off, cover_y0 - cover_wall - cover_ear_off],
+  [cover_x0 - cover_wall - cover_ear_off, cover_y1 + cover_wall + cover_ear_off],
+  [cover_x1 + cover_wall + cover_ear_off, cover_y1 + cover_wall + cover_ear_off],
+];  // (-33.5, -33.5) / (51.3, -33.5) / (-33.5, 96.7) / (51.3, 96.7)
+plate_lug_d = 9;   // プレート側ラグの円径（スリーブ od 7.8 を内包）
+assert(plate_lug_d > tray_sleeve_od, "ラグ径がスリーブ外径以下");
+assert(max([for (p = cover_ear_pts) max(-p[0], -p[1])]) + plate_lug_d/2
+       <= min(clear_left, clear_down), "固定ラグがドアクリアランスを超える");
+
 // 旧 ext_* は「軸原点から内寸の端まで」の意味。既存 assert と互換のため導出で残す。
 ext_left  = -plate_x0 - wall;
 ext_right =  plate_x1 - wall;
