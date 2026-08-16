@@ -1,0 +1,23 @@
+[package]
+name = "mube-boot"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "embassy-boot bootloader for mube — A/B swap + watchdog rollback"
+
+[dependencies]
+embassy-boot-rp = "0.10"
+# boot2 は embassy-rp の feature 任せにせず、このクレートが rp2040-boot2 から明示的に持つ
+# （src/main.rs の BOOT2 static）。アプリ側の boot2-none がワークスペースの feature 統一で
+# ここにも効くため、embassy-rp 経由の boot2 はビルドの組み合わせ次第で消えてしまう。
+embassy-rp = { version = "0.10", features = ["rp2040", "critical-section-impl", "time-driver", "unstable-pac"] }
+rp2040-boot2 = "0.3"
+embassy-sync = "0.8"
+embassy-time = "0.5"
+cortex-m = { version = "0.7", features = ["inline-asm"] }
+cortex-m-rt = "0.7"
+# ワークスペースビルドでは feature 統一により embassy-rp の defmt が常に有効になる。
+# defmt.x をリンクするために defmt を正式な依存として持つ（RTT でブートログも見られる）。
+defmt = "0.3"
+defmt-rtt = "0.4"

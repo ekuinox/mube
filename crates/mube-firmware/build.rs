@@ -36,4 +36,26 @@ fn main() {
     println!("cargo:rerun-if-changed=../mube-webui/dist/index.html");
     println!("cargo:rerun-if-changed=../mube-webui/dist/mube-webui.js");
     println!("cargo:rerun-if-changed=../mube-webui/dist/mube-webui_bg.wasm");
+
+    // 更新が反映されたかを /api/version で確認できるよう、git describe を埋め込む。
+    // .git が無い環境（tarball 等）でもビルドできるよう "unknown" へフォールバック。
+    let version = std::process::Command::new("git")
+        .args(["describe", "--always", "--dirty"])
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+    println!("cargo:rustc-env=MUBE_VERSION={version}");
+    // HEAD の移動（コミット・ブランチ切替）で再実行し、バージョンの陳腐化を防ぐ。
+    // linked worktree では .git がファイルのため、実体は rev-parse で解決する。
+    if let Some(git_dir) = std::process::Command::new("git")
+        .args(["rev-parse", "--absolute-git-dir"])
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+    {
+        println!("cargo:rerun-if-changed={git_dir}/HEAD");
+    }
 }

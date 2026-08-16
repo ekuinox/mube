@@ -34,6 +34,12 @@ blobs:
 firmware: blobs webui
     cargo build
 
+# OTA でファーム更新（ビルド → raw バイナリ化 → TCP 4242 送信。要 TARGET_IP と書き込み済みブートローダー）
+ota: blobs webui
+    cargo build --release
+    rust-objcopy -O binary --remove-section .boot2 target/thumbv6m-none-eabi/release/mube-firmware target/mube-firmware-ota.bin
+    bun scripts/lockctl.ts ota target/mube-firmware-ota.bin
+
 # ロジックの host テスト（実機不要）
 host-test:
     cargo host-test

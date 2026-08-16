@@ -33,13 +33,84 @@ direnv を使う場合はリポジトリ直下に `.env.local`（dotenv 形式�
 
 ## 書き込みと実行
 
-- デバッグプローブあり: `cargo run --release`（runner = `probe-rs run --chip RP2040`、defmt ログが出る）
-- プローブなし: BOOTSEL ボタンを押しながら USB 接続 → UF2 を生成して書き込む
+フラッシュは OTA 対応の A/B レイアウトに分割されている（単一ソースは `crates/mube-boot/memory.x`）。
+
+```
+0x10000000  BOOT2 + ブートローダー   28KB   (crates/mube-boot = embassy-boot-rp)
+0x10007000  STATE パーティション      4KB   (swap/revert フラグ)
+0x10008000  ACTIVE スロット         988KB   (実行中ファーム。XIP でここから実行)
+0x100FF000  DFU スロット            992KB   (OTA 受信バッファ)
+0x101F7000  余白（将来用）           36KB
+```
+
+### 初回プロビジョニング（DAP、一度だけ）
+
+新しい Pico W には、ブートローダーとアプリの 2 つを DAP 経由で焼く。
+
+```
+cargo build --release        # mube-boot と mube-firmware の両方がビルドされる
+probe-rs download --chip RP2040 target/thumbv6m-none-eabi/release/mube-boot
+probe-rs download --chip RP2040 target/thumbv6m-none-eabi/release/mube-firmware
+probe-rs reset --chip RP2040
+```
+
+2 段書き込みが要るのは**初回と、mube-boot 自体を変更した時だけ**。以後の更新は
+OTA（後述）だけで済み、開発中の焼き直しも従来どおり `cargo run --release`
+（probe-rs runner、defmt ログが出る）で**アプリだけ**焼き直せばよい。
+
+これが安全なのは、アプリ ELF が boot2 を持たないため（embassy-rp の `boot2-none`
+feature）。boot2（256B）とブートローダー先頭は同じ 4KB 消去セクタに同居しており、
+アプリ側に boot2 を残すと probe-rs のセクタ消去がブートローダーを壊しうる。
+boot2 は mube-boot が `rp2040_boot2::BOOT_LOADER_W25Q080` を明示的に持つ
+（embassy-rp の feature 任せにしないのは、ワークスペースの feature 統一で
+boot2-none がブートローダー側にも効いて boot2 が消えるため）。
+
+プローブなしの場合は BOOTSEL + UF2 も使える（UF2 はアドレス付きなので、
+ブートローダー書き込み済みならアプリの UF2 だけでよい）:
 
 ```
 cargo install elf2uf2-rs
 elf2uf2-rs -d target/thumbv6m-none-eabi/release/mube-firmware
 ```
+
+## OTA アップデート
+
+初回プロビジョニング済みの実機は、LAN 内から一発で更新できる:
+
+```
+just ota        # blobs → webui → cargo build --release → objcopy → TCP 4242 で送信
+```
+
+接続先は `TARGET_IP`（lockctl と同じ）。流れと安全装置は次のとおり。
+
+- 送信側（`scripts/lockctl.ts ota`）はイメージの CRC32 を添えて送り、
+  デバイスは **DFU スロットに書き終えて CRC 一致を確認してから** 更新を確定する。
+  転送中の切断・電源断では ACTIVE スロットに触れていないため、現行ファームが無傷で動き続ける。
+- 確定後に自動リセット → ブートローダーが DFU→ACTIVE をスワップして新ファームを起動する。
+  スワップは約 1MB の消去・書き込みを伴うため**再起動に数十秒かかる**。
+  `lockctl ota` は `/api/version` をポーリングし、バージョンが変わったら完了報告する。
+- 新ファームは「サーボ初期化 + WiFi 接続 + HTTP サーバ起動」に到達すると mark_booted で自分を確定する。
+  到達できないまま watchdog（8 秒）が発火すると、ブートローダーが**旧ファームへ自動ロールバック**する。
+- 解錠中の OTA は既定で拒否する（再起動で状態表示が実態とずれるため）。
+  やむを得ない場合は `OTA_ALLOW_UNLOCKED=1` で上書きできる。
+
+なお watchdog は mark_booted 後も常時有効のままにしている。OTA と無関係のハングでも
+8 秒で自動再起動するようになった（鍵の可用性優先の挙動変更）。
+
+### 実機テスト（OTA 導入時のチェックリスト）
+
+1. **正常系**: 適当なコミットを積んで `just ota` → `/api/version` が新しい git describe になる。
+2. **転送中の電源断**: `just ota` の転送中に AC を抜く → 再起動後も旧版で施解錠できる。
+3. **ロールバック**: 意図的に起動失敗する「壊れ玉」を送る。
+
+```
+cargo build --release -p mube-firmware --features ota-rollback-test
+rust-objcopy -O binary --remove-section .boot2 target/thumbv6m-none-eabi/release/mube-firmware target/mube-firmware-broken.bin
+bun scripts/lockctl.ts ota target/mube-firmware-broken.bin
+```
+
+   スワップ → 起動即 panic → watchdog リセット → revert スワップ、と 2 回のスワップを挟むため
+   数分待ってから `/api/version` が**旧版のまま**であることを確認する。
 
 ## 遠隔操作（HTTP / WebUI）
 
@@ -55,6 +126,7 @@ WiFi 接続後、HTTP ポート 80 で yew SPA（WebUI）と JSON API を配信�
 | `/api/lock` | POST | `{"state":"LOCKED"}` |
 | `/api/unlock` | POST | `{"state":"UNLOCKED"}` |
 | `/api/toggle` | POST | `{"state":"LOCKED"}` または `{"state":"UNLOCKED"}` |
+| `/api/version` | GET | `{"version":"f90217f"}`（git describe。更新の反映確認用） |
 
 ### ハードウェア
 
@@ -81,6 +153,8 @@ bun scripts/lockctl.ts status     # 現在状態を問い合わせ（駆動し�
 ### セキュリティ注意事項
 
 平文 HTTP・無認証。LAN 内のみで使用すること（公開ネットワークに晒さない）。
+OTA ポート（TCP 4242）も同じ信頼モデルで、LAN 内の誰でもファームを書き換えられる。
+インターネットへは絶対に露出しないこと（Cloudflare Tunnel の公開対象にも含めない）。
 
 ### WebUI の事前ビルド
 

@@ -20,6 +20,7 @@
 
 mod config;
 mod http;
+mod ota;
 mod servo;
 
 use core::cell::Cell;
@@ -28,17 +29,21 @@ use config::{WIFI_PASSWORD, WIFI_SSID};
 use cyw43::SpiBus;
 use cyw43_pio::PioSpi;
 use defmt::*;
+use embassy_boot_rp::{AlignedBuffer, FirmwareUpdater, FirmwareUpdaterConfig};
 use embassy_executor::Spawner;
 use embassy_net::{Config as NetConfig, StackResources};
 use embassy_rp::bind_interrupts;
 use embassy_rp::clocks::RoscRng;
 use embassy_rp::dma::{Channel, InterruptHandler as DmaInterruptHandler};
+use embassy_rp::flash::{Async as FlashAsync, Flash};
 use embassy_rp::gpio::{Input, Level, Output, Pull};
-use embassy_rp::peripherals::{DMA_CH0, PIO0};
+use embassy_rp::peripherals::{DMA_CH0, DMA_CH1, FLASH, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_rp::pwm::{Config as PwmConfig, Pwm};
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_rp::watchdog::Watchdog;
+use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex};
 use embassy_sync::blocking_mutex::Mutex as BlockingMutex;
+use embassy_sync::mutex::Mutex as AsyncMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{with_timeout, Duration, Timer};
 use servo::Servo;
@@ -48,7 +53,7 @@ use {defmt_rtt as _, panic_probe as _};
 
 bind_interrupts!(struct Irqs {
     PIO0_IRQ_0 => InterruptHandler<PIO0>;
-    DMA_IRQ_0 => DmaInterruptHandler<DMA_CH0>;
+    DMA_IRQ_0 => DmaInterruptHandler<DMA_CH0>, DmaInterruptHandler<DMA_CH1>;
 });
 
 /// HTTP WebUI を配信するポート。
@@ -69,6 +74,19 @@ const HTTP_WORKERS: usize = 4;
 
 /// 無通信で切断するまでの秒数。1 クライアントによる占有を防ぐ。
 const IDLE_TIMEOUT_SECS: u64 = 30;
+
+/// watchdog のタイムアウト。ブートローダー（mube-boot）が張る値と揃える。
+/// embassy-rp 0.10 の feed はリロード値を毎回取るため、start と feed の両方で使う。
+const WATCHDOG_TIMEOUT: Duration = Duration::from_secs(8);
+
+/// QSPI フラッシュ全長。embassy-rp の Flash 型パラメータに使う。
+pub(crate) const FLASH_SIZE: usize = 2 * 1024 * 1024;
+
+/// OTA が使う共有フラッシュハンドル（DFU/STATE パーティションへの書き込み口）。
+/// async Mutex なのはフラッシュ操作中に他タスクを待たせるため（XIP 停止を伴う）。
+pub(crate) type OtaFlash =
+    AsyncMutex<NoopRawMutex, Flash<'static, FLASH, FlashAsync, FLASH_SIZE>>;
+static FLASH_CELL: StaticCell<OtaFlash> = StaticCell::new();
 
 /// サーボへの施錠/解錠指令。`apply_target` が叩く。
 /// Signal は最新値のみ保持するため、指令が連続しても安全側（最新状態）へ収束する。
@@ -183,9 +201,31 @@ async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'sta
     runner.run().await
 }
 
+/// ヘルス条件到達後の watchdog 餌やり専任タスク。以後どんなハングでも 8 秒で自動再起動する
+/// （鍵の可用性優先。挙動変更として docs/firmware.md に明記済み）。
+#[embassy_executor::task]
+async fn watchdog_task(mut watchdog: Watchdog) -> ! {
+    loop {
+        watchdog.feed(WATCHDOG_TIMEOUT);
+        Timer::after(Duration::from_secs(2)).await;
+    }
+}
+
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
+
+    // ロールバック実機試験用の意図的な起動失敗（docs/firmware.md の OTA 節参照）。
+    // watchdog リセット → ブートローダーの revert で旧ファームに戻ることを確認する。
+    #[cfg(feature = "ota-rollback-test")]
+    defmt::panic!("ota-rollback-test: intentional boot failure");
+
+    // watchdog はブートローダーが張った 8 秒を引き継ぐ。ヘルス条件（WiFi + HTTP +
+    // サーボ初期化）到達までは main が要所で直接餌をやり、以後は専任タスクが担う。
+    // ヘルス到達前に panic / ハングすると 8 秒でリセットされ、ブートローダーが
+    // 旧ファームへ revert する（これが OTA の自動ロールバック経路）。
+    let mut watchdog = Watchdog::new(p.WATCHDOG);
+    watchdog.start(WATCHDOG_TIMEOUT);
 
     // サーボ駆動: PWM 信号 = GP15（slice7 ch B）、電源ゲート = GP14（active-high）。
     let gate = Output::new(p.PIN_14, Level::Low);
@@ -257,6 +297,7 @@ async fn main(spawner: Spawner) {
 
     // WPA2 で接続。失敗したら少し待って再試行。
     loop {
+        watchdog.feed(WATCHDOG_TIMEOUT); // 再試行が続いても watchdog で落ちないように
         match control
             .join(WIFI_SSID, cyw43::JoinOptions::new(WIFI_PASSWORD.as_bytes()))
             .await
@@ -270,7 +311,13 @@ async fn main(spawner: Spawner) {
     }
     info!("WiFi connected, waiting for DHCP...");
 
-    stack.wait_config_up().await;
+    // DHCP 待ち: 4 秒ごとに餌をやりながら待つ（ルーター側の遅延で落ちないように）。
+    while with_timeout(Duration::from_secs(4), stack.wait_config_up())
+        .await
+        .is_err()
+    {
+        watchdog.feed(WATCHDOG_TIMEOUT);
+    }
     if let Some(cfg) = stack.config_v4() {
         info!("DHCP up: IP = {}", cfg.address);
     }
@@ -295,6 +342,25 @@ async fn main(spawner: Spawner) {
     for id in 0..HTTP_WORKERS {
         spawner.spawn(http_worker(id, stack, config).unwrap());
     }
+
+    // ここまで到達 = ヘルス条件成立（サーボ・ボタン・WiFi・HTTP すべて起動済み）。
+    // 更新を確定し（未確定のままだと次回リセットで revert される）、watchdog を専任タスクへ、
+    // OTA 受信口を開く。
+    let flash = FLASH_CELL.init(AsyncMutex::new(Flash::new(p.FLASH, p.DMA_CH1, Irqs)));
+    {
+        let config = FirmwareUpdaterConfig::from_linkerfile(flash, flash);
+        let mut aligned = AlignedBuffer([0; embassy_rp::flash::WRITE_SIZE]);
+        let mut updater = FirmwareUpdater::new(config, &mut aligned.0);
+        if let Err(e) = updater.mark_booted().await {
+            // 確定に失敗すると次回リセットで revert されうる。ログだけ出して動作は継続する
+            //（施解錠は生きているほうが鍵として安全側）。
+            warn!("ota: mark_booted failed: {:?}", defmt::Debug2Format(&e));
+        } else {
+            info!("ota: mark_booted ok (this firmware is now confirmed)");
+        }
+    }
+    spawner.spawn(watchdog_task(watchdog).unwrap());
+    spawner.spawn(ota::ota_task(stack, flash).unwrap());
 }
 
 /// port 80 の HTTP を 1 本の worker として捌くタスク。pool_size 分だけ並列に立てる。
