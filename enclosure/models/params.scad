@@ -234,6 +234,11 @@ cover_top_z      = cover_inner_top + cover_wall*sqrt(2);   // 75.73
 cover_slope_y0   = ped_curb_ro + cover_clear;              // 28.7（勾配開始 y）
 // 屋根内面の高さ（y の関数）。干渉チェックの assert が参照する。
 function roof_in_z(y) = cover_inner_top - max(0, y - cover_slope_y0);
+// 背高部品（pcb_stack_tall）を置ける +Y 側の限界。roof_in_z(y) >= pcb_top_z + pcb_stack_tall + 2
+// を y について解いたもの。これより +Y は屋根が下がるので低背部品だけ。基板は 82.3 まで
+// あるので、+Y 端 10mm ほどは 16mm 級を置けない帯になる。
+pcb_tall_y_max = cover_slope_y0 + cover_inner_top - (pcb_top_z + pcb_stack_tall) - 2;  // 72.2
+assert(pcb_tall_y_max > pcb_off_y - pcb_w/2, "背高部品を置ける帯が基板上に存在しない");
 
 // 開口: USB 切欠き（+X 壁）
 cover_usb_y = pcb_off_y;                    // 58.8
@@ -254,10 +259,16 @@ sw_thread_l = 8.3;    // ネジ部長さ（挟めるパネル厚の上限）
 sw_depth    = 26;     // パネル面より内側の奥行き（端子先端まで）
 sw_cap_d    = 14;     // キャップ外径
 sw_cap_h    = 7.6;    // パネル面より外への突出
-sw_pt       = [-1, 60];   // 屋根斜面上の取付中心（xy）
-// 取付点の屋根外面 z と、法線方向へ sw_depth 伸ばした本体先端の z
-sw_face_z = cover_top_z - (sw_pt[1] - cover_slope_y0);   // 44.43
-sw_tip_z  = sw_face_z - sw_depth*cos(45);                // 26.05
+sw_body_d   = sw_thread_d;   // 本体（掃引体）の外径。実測が無いのでネジ部外径を保守的に流用
+sw_pt       = [-1, 55];   // 屋根斜面上の取付中心（xy）
+// 取付点の屋根外面 z と、法線方向へ sw_depth 伸ばした本体先端の z（軸上）
+sw_face_z = cover_top_z - (sw_pt[1] - cover_slope_y0);   // 49.43
+sw_tip_z  = sw_face_z - sw_depth*cos(45);                // 31.04
+// 基板側 keep-out: 本体を φsw_body_d の円柱として法線方向に sw_depth 掃引すると、
+// ワールド x -6.8〜4.8 / y 32.5〜59.1 を通り、最下点は (x -1, y 40.7, z 26.98)。
+// 軸上の先端 z（31.04）ではなく、この最下点が基板の部品と当たるかを決める。
+// この帯には pcb_stack_tall 級（上端 27.4）の部品を置かないこと。Pico スタック
+// （上端 20.9）なら 6.08mm の余裕がある。cover_test.scad の assert が下限を守る。
 
 // --- プレート外形 ---
 // カバー裾の外面を外周リブの内面で受ける。プレート端 = 裾外面 + リブ幅 + 嵌合すきま。
@@ -271,15 +282,20 @@ body_l   = plate_x1 - plate_x0;        // 83.8
 body_w   = plate_y1 - plate_y0;        // 129.2
 center_x = (plate_x0 + plate_x1)/2;    // 8.9
 center_y = (plate_y0 + plate_y1)/2;    // 31.6
-// カバー固定の耳／ラグ。裾の外角から対角方向へ各軸 cover_ear_off ずらし、
+// カバー固定の耳／ラグ。-Y 側は裾の外角から対角方向へ各軸 cover_ear_off ずらし、
 // 円（tray_sleeve_od）が裾の角にちょうど接するようにする。
+// +Y 側は角ではなく ±X 壁の y = tray_fix_y_hi（トレイ +Y 固定点と同じ y）に置く。
+// +Y の角に置くと耳の天面（12.2）がその y の屋根（7.73）を突き抜け、天面をベッドに
+// 伏せる印刷でベッドから 63mm の孤立島になって刷れない。y = 86.9 なら屋根外面が 17.53
+// なので耳は壁の高さに収まり、しかも直線の壁には角丸めの引っ込みが無いので耳の円が
+// 裾外面へ 1.1mm 食い込み、ウェブ無しで裾と繋がる（cover.scad の cover_ear_webs 参照）。
 cover_ear_off = 2.8;
 cover_ear_pts = [
   [cover_x0 - cover_wall - cover_ear_off, cover_y0 - cover_wall - cover_ear_off],
   [cover_x1 + cover_wall + cover_ear_off, cover_y0 - cover_wall - cover_ear_off],
-  [cover_x0 - cover_wall - cover_ear_off, cover_y1 + cover_wall + cover_ear_off],
-  [cover_x1 + cover_wall + cover_ear_off, cover_y1 + cover_wall + cover_ear_off],
-];  // (-33.5, -33.5) / (51.3, -33.5) / (-33.5, 96.7) / (51.3, 96.7)
+  [cover_x0 - cover_wall - cover_ear_off, tray_fix_y_hi],
+  [cover_x1 + cover_wall + cover_ear_off, tray_fix_y_hi],
+];  // (-33.5, -33.5) / (51.3, -33.5) / (-33.5, 86.9) / (51.3, 86.9)
 plate_lug_d = 9;   // プレート側ラグの円径（スリーブ od 7.8 を内包）
 assert(plate_lug_d > tray_sleeve_od, "ラグ径がスリーブ外径以下");
 assert(max([for (p = cover_ear_pts) max(-p[0], -p[1])]) + plate_lug_d/2
@@ -293,6 +309,11 @@ assert(cover_ear_off*sqrt(2) >= tray_sleeve_od/2,
 // 4枚の独立した円盤に分離してしまう（offset(r=2) offset(r=-2) は非連結形状を繋がない）。
 assert((cover_ear_off - plate_margin + 2)*sqrt(2) - 2 < plate_lug_d/2,
        "ラグが本体矩形から離れて別体になる");
+// -Y の耳は角丸めのぶん裾から浮くので cover_ear_webs() が橋を架ける。その橋はリブ天面より
+// 上の z 帯（wall + plate_rib_h + fit_clearance 〜 wall + tray_boss_h + tray_cap_t）に張るので、
+// リブが高くなると帯が消えて linear_extrude が負の高さになり、耳が黙って分離する。
+assert(plate_rib_h + fit_clearance < tray_boss_h + tray_cap_t,
+       "リブが高すぎて耳ウェブの z 帯が消える");
 
 // 旧 ext_* は「軸原点から内寸の端まで」の意味。既存 assert と互換のため導出で残す。
 ext_left  = -plate_x0 - wall;

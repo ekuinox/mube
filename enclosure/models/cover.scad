@@ -22,9 +22,12 @@ module cover() {
   }
 }
 
-// 固定耳と裾をつなぐウェブ。cover_ear_off は「耳の円が裾の角にちょうど接する」寸法だが、
-// 裾の角は cover_round_r で丸めてあるので実際には 0.89mm 離れる。これが無いと耳は裾から
-// 浮いた別部品になる（STL の連結成分が 5 個になる）。
+// 角に置いた固定耳と裾をつなぐウェブ。cover_ear_off は「耳の円が裾の角にちょうど接する」
+// 寸法だが、裾の角は cover_round_r で丸めてあるので実際には 0.89mm 離れる。これが無いと
+// 耳は裾から浮いた別部品になる（STL の連結成分が 5 個になる）。
+// 対象は「両軸とも角の丸め円より外」にある耳、すなわち -Y の 2 隅だけ。+Y の耳は ±X 壁の
+// 直線部（y = tray_fix_y_hi）に置いてあり、そこには角丸めの引っ込みが無いので耳の円が裾外面へ
+// 直接食い込む＝ウェブは要らない（params.scad の cover_ear_pts 参照）。
 // 橋は耳ごとに「最寄りの角の丸め円 ⇔ 耳の円」の凸包だけで架ける。裾の外形全体と凸包を
 // 取ると、耳から遠い辺まで接線で結ばれて側壁の外にヒレが生える。
 // z 帯はプレート外周リブの天面（wall + plate_rib_h）より上へ逃がす。リブは裾のすぐ外を
@@ -39,13 +42,15 @@ module cover_ear_webs() {
       linear_extrude(height = wall + tray_boss_h + tray_cap_t - z0)
         difference() {
           for (p = cover_ear_pts)
-            hull() {
-              // 耳に最も近い角の丸め円（＝角の実体そのもの）
-              translate([p[0] < (x0 + x1)/2 ? x0 + cover_round_r : x1 - cover_round_r,
-                         p[1] < (y0 + y1)/2 ? y0 + cover_round_r : y1 - cover_round_r])
-                circle(r = cover_round_r);
-              translate(p) circle(d = tray_sleeve_od);
-            }
+            if ((p[0] < x0 + cover_round_r || p[0] > x1 - cover_round_r) &&
+                (p[1] < y0 + cover_round_r || p[1] > y1 - cover_round_r))
+              hull() {
+                // 耳に最も近い角の丸め円（＝角の実体そのもの）
+                translate([p[0] < (x0 + x1)/2 ? x0 + cover_round_r : x1 - cover_round_r,
+                           p[1] < (y0 + y1)/2 ? y0 + cover_round_r : y1 - cover_round_r])
+                  circle(r = cover_round_r);
+                translate(p) circle(d = tray_sleeve_od);
+              }
           cover_outline_2d(cover_wall);   // 内腔は塞がない
         }
     // 屋根面より上へはみ出させない（+Y 側は屋根がこの高さまで降りてくる）
