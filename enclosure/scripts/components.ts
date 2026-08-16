@@ -1,7 +1,10 @@
 #!/usr/bin/env bun
-// カバー STL が単一の連結ソリッドであることを確認する回帰チェック。
+// 印刷パート（body / pedestal / socket / tray / cover）の STL が、それぞれ単一の
+// 連結ソリッドであることを確認する回帰チェック。
 // Task 3 で「固定耳が裾とウェブで繋がっておらず、STL の連結成分が複数（実測5個）に
-// 割れる」バグを、clash.ts も assert も検出できずに見逃した反省から追加。
+// 割れる」バグを、clash.ts も assert も検出できずに見逃した反省から追加（当初は cover
+// だけを見ていたが、body のラグも同じ「静かに分離する」失敗モードを持ち、いまは
+// params.scad:330 の代数ガードしか無いため、汎用にしてループで全パートを見る）。
 //
 // 判定方法: STL の頂点座標を丸め誤差 1e-5mm でキー化し、三角形が共有する頂点を
 // Union-Find で連結する。三角形同士が頂点を共有していれば同一ソリッドとみなせるので、
@@ -62,40 +65,67 @@ export function countComponents(stlText: string): ComponentStats {
       cur = [];
     }
   }
+  // 頂点数が3の倍数でない（バイナリ STL の誤読・途中で切れたファイル等）まま黙って
+  // 末尾を落とすと、以降のグルーピングがずれて false PASS 方向に劣化しうる。
+  // ここで確実に例外を投げて FAIL 側へ倒す。
+  if (cur.length !== 0) {
+    throw new Error(
+      `STL 中の vertex 行が3の倍数でない（末尾に ${cur.length} 個の端数）。` +
+        "ASCII STL として不正か、パースが壊れている。",
+    );
+  }
 
   const roots = new Set([...parent.keys()].map(find));
   return { triangles, vertices: parent.size, components: roots.size };
 }
+
+// 印刷向けパート一式。smartlock.scad の -D part= で切り出せるもののうち、単体の
+// プリントパーツ（asm_* の組立プレビューやクーポン類は対象外）。
+const PARTS = ["body", "pedestal", "socket", "tray", "cover"];
 
 // このモジュールが直接実行された場合のみ CLI として動く（components.test.ts からの
 // import では openscad を呼ばない）。
 if (import.meta.main) {
   const modelsDir = join(dirname(import.meta.dir), "models");
   const smartlock = join(modelsDir, "smartlock.scad");
-  const outPath = "/tmp/cover_components_check.stl";
 
-  const { exitCode, log } = await runOpenscad(smartlock, outPath, { part: "cover" });
-  if (log) process.stdout.write(log);
-  if (exitCode !== 0) {
-    console.error(`FAIL: openscad exit ${exitCode}`);
-    process.exit(1);
-  }
-  if (/WARNING:|ERROR:/.test(log)) {
-    console.error("FAIL: warnings/errors present");
-    process.exit(1);
+  let anyFail = false;
+  for (const part of PARTS) {
+    console.log(`== ${part} ==`);
+    const outPath = `/tmp/${part}_components_check.stl`;
+
+    const { exitCode, log } = await runOpenscad(smartlock, outPath, { part });
+    if (log) process.stdout.write(log);
+    if (exitCode !== 0) {
+      console.error(`FAIL: ${part}: openscad exit ${exitCode}`);
+      anyFail = true;
+      continue;
+    }
+    if (/WARNING:|ERROR:/.test(log)) {
+      console.error(`FAIL: ${part}: warnings/errors present`);
+      anyFail = true;
+      continue;
+    }
+
+    const text = await Bun.file(outPath).text();
+    const stats = countComponents(text);
+    if (stats.triangles === 0) {
+      console.error(`FAIL: ${part}: STL に三角形が見つからない（空メッシュ）`);
+      anyFail = true;
+      continue;
+    }
+    console.log(
+      `${part}: triangles=${stats.triangles} vertices=${stats.vertices} components=${stats.components}`,
+    );
+    if (stats.components === 1) {
+      console.log(`OK: ${part} STL is a single connected solid`);
+    } else {
+      console.error(
+        `FAIL: ${part} STL has ${stats.components} disconnected components (expected 1)`,
+      );
+      anyFail = true;
+    }
   }
 
-  const text = await Bun.file(outPath).text();
-  const stats = countComponents(text);
-  if (stats.triangles === 0) {
-    console.error("FAIL: STL に三角形が見つからない（空メッシュ）");
-    process.exit(1);
-  }
-  console.log(`triangles=${stats.triangles} vertices=${stats.vertices} components=${stats.components}`);
-  if (stats.components === 1) {
-    console.log("OK: cover STL is a single connected solid");
-    process.exit(0);
-  }
-  console.error(`FAIL: cover STL has ${stats.components} disconnected components (expected 1)`);
-  process.exit(1);
+  process.exit(anyFail ? 1 : 0);
 }

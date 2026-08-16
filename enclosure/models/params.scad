@@ -209,9 +209,10 @@ ped_curb_tray_gap = 1.0; // 受けカーブ外周 → トレイ床下端に要�
 
 // プレート上面リブ（手持ち時の剛性・印刷反り対策。ドア面はフラット維持）。
 // 横桟はプレート全幅に走るのでカバーの -X/+X 側壁の真下を貫いてしまい、カバーが座らない。
-// よって全廃し、剛性は四隅で M2 留めされたカバーが肩代わりする。残るのは四隅（カバー固定
-// ボス）を逃がした外周リブ（＝閉じた一周ではなく4本の直線区間）で、これがカバー裾の外面を
-// 受ける（plate_margin 参照。詳細は body.scad の plate_ribs() 参照）。
+// よって全廃し、剛性は M2 留めされたカバーが肩代わりする。残るのはカバー固定ボス
+// （cover_ear_pts の4点。-Y 側の2隅＋±X 壁上の2点）を逃がした外周リブ（＝閉じた一周
+// ではなく4本の直線区間）で、これがカバー裾の外面を受ける（plate_margin 参照。
+// 詳細は body.scad の plate_ribs() 参照）。
 plate_rib_h  = 4;            // リブ高（床上面から）
 plate_rib_w  = 2;            // リブ幅
 plate_rib_ys = [];           // 横桟なし（ワールド y のリスト。空＝外周リブのみ）
@@ -238,8 +239,11 @@ cover_tray_gap = 1.0;
 
 // 勾配の開始 y。手置き。下の2本の assert（Sanity セクション）が下限を守る。
 //  - ペデスタル域を全高で覆う下限: ped_curb_ro + cover_clear = 28.7
-//  - トレイ +Y 固定スリーブの天面をかわす下限: 31.1
-//    （スリーブは中心 tray_fix_y_hi から半径ぶん +Y に張り出すので、最外点 90.8 で評価する）
+//  - トレイ +Y 固定スリーブの天面をかわす下限:
+//    (tray_fix_y_hi + tray_sleeve_od/2) - (cover_inner_top - (wall+tray_boss_h+tray_cap_t) - cover_tray_gap)
+//    = 31.1（スリーブは中心 tray_fix_y_hi から半径ぶん +Y に張り出すので、最外点 90.8 で
+//    評価する。式は Ruling 10 で assert 側へ移した参考値であり、この行の数値をコードが
+//    読むことはない）
 // 導出式のままだと下限とそれを検証する assert が同じ式になって恒真化するうえ、浮動小数の
 // 等号ぎりぎりで丸め次第で落ちるため、値は手で置いて 0.1 の余裕を持たせてある。
 cover_slope_y0 = 31.2;
@@ -247,7 +251,7 @@ cover_slope_y0 = 31.2;
 function roof_in_z(y) = cover_inner_top - max(0, y - cover_slope_y0);
 // 背高部品（pcb_stack_tall）を置ける +Y 側の限界。roof_in_z(y) >= pcb_top_z + pcb_stack_tall + 2
 // を y について解いたもの。これより +Y は屋根が下がるので低背部品だけ。基板は 82.3 まで
-// あるので、+Y 端 10mm ほどは 16mm 級を置けない帯になる。
+// あるので、+Y 端 7.6mm（= 82.3 - pcb_tall_y_max）ほどは 16mm 級を置けない帯になる。
 // 注意: これとは別に、パネル取付スイッチのキープアウト帯（x -6.8〜4.8, y 32.5〜59.1。
 // pcb_tall_y_max=74.7 のずっと内側。下記 sw_pt 周辺のコメント参照）が独立に存在する。
 // この帯は基準が違う（スイッチ本体の掃引と部品の当たり）ので、pcb_tall_y_max だけ見て
@@ -305,8 +309,8 @@ center_y = (plate_y0 + plate_y1)/2;    // 31.6
 // カバー固定の耳／ラグ。-Y 側は裾の外角から対角方向へ各軸 cover_ear_off ずらし、
 // 円（tray_sleeve_od）が裾の角にちょうど接するようにする。
 // +Y 側は角ではなく ±X 壁の y = tray_fix_y_hi（トレイ +Y 固定点と同じ y）に置く。
-// +Y の角に置くと耳の天面（12.2）がその y の屋根（7.73）を突き抜け、天面をベッドに
-// 伏せる印刷でベッドから 63mm の孤立島になって刷れない。y = 86.9 なら屋根外面が 17.53
+// +Y の角に置くと耳の天面（12.2）がその y の屋根（10.23）を突き抜け、天面をベッドに
+// 伏せる印刷でベッドから 63mm の孤立島になって刷れない。y = 86.9 なら屋根外面が 20.03
 // なので耳は壁の高さに収まり、しかも直線の壁には角丸めの引っ込みが無いので耳の円が
 // 裾外面へ 1.1mm 食い込み、ウェブ無しで裾と繋がる（cover.scad の cover_ear_webs 参照）。
 cover_ear_off = 2.8;
@@ -334,11 +338,20 @@ assert((cover_ear_off - plate_margin + 2)*sqrt(2) - 2 < plate_lug_d/2,
 // リブが高くなると帯が消えて linear_extrude が負の高さになり、耳が黙って分離する。
 assert(plate_rib_h + fit_clearance < tray_boss_h + tray_cap_t,
        "リブが高すぎて耳ウェブの z 帯が消える");
-// +Y の耳（cover_ear_pts の y = tray_fix_y_hi）は屋根勾配の途中に直接載る。耳の天面
-// （wall + tray_boss_h + tray_cap_t）がその y での屋根外面より上に出ると、伏せ印刷時に
-// ベッドから浮いた孤立島になり刷れない（Task 3 で踏んだ地雷）。将来 tray_fix_y_hi を
-// +Y へ動かす変更に対するガード。
-assert(cover_top_z - (tray_fix_y_hi - cover_slope_y0) >= wall + tray_boss_h + tray_cap_t,
+// +Y の耳（cover_ear_pts の y = tray_fix_y_hi、実体は m2_sleeve_solid() = φ tray_sleeve_od）
+// は屋根勾配の途中に直接載る。耳の天面（wall + tray_boss_h + tray_cap_t）が、耳の半径ぶん
+// +Y に張り出した最外点（tray_fix_y_hi + tray_sleeve_od/2）でもその y での屋根外面より
+// 上に出ると、伏せ印刷時にベッドから浮いた孤立島になり刷れない（Task 3 で踏んだ地雷）。
+// 将来 tray_fix_y_hi を +Y へ動かす変更に対するガード。中心 tray_fix_y_hi だけで見て
+// 最外点を見落とす失敗パターンは Ruling 9 参照（この assert 自体も一度その形で書いていた）。
+// 支配関係の注記: 現在値では下の assert（屋根がトレイ +Y 固定スリーブの天面に当たる。
+// cover_tray_gap ぶんの追加マージン込み）の方が必ず先に落ちるため、この assert は単独では
+// 発火しない（cover_top_z 基準 vs cover_inner_top+cover_tray_gap 基準の差ぶん、この assert
+// の方が常に緩い）。それでも削除しない: メッセージが「耳が孤立島になる」という cover.scad
+// 側の固有の破綻モードを名指ししており、下の assert（「屋根がスリーブ天面に当たる」という
+// 干渉そのもの）とは診断上の役割が違う。将来どちらかを変更・削除する際の判断材料として残す。
+assert(cover_top_z - (tray_fix_y_hi + tray_sleeve_od/2 - cover_slope_y0)
+       >= wall + tray_boss_h + tray_cap_t,
        "+Y の耳の天面が屋根を突き抜ける（伏せ印刷で孤立島になる）");
 // cover_slope_y0（手置き定数）が守るべき2つの下限。cover_slope_y0 自体を導出式にすると
 // 下限とそれを検証する assert が同じ式になって恒真化するので、ここで独立に検証する

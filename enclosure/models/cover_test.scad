@@ -3,7 +3,9 @@ use <cover.scad>
 // 屋根内面が中身の最高点を上回ること
 assert(cover_inner_top >= servo_top_z + 1.5, "カバー天井がサーボに当たる");
 assert(roof_in_z(pcb_off_y) >= pcb_top_z + pcb_stack_usb + 2, "屋根が Pico/USB に当たる");
-assert(roof_in_z(pcb_off_y - pcb_w/2) >= pcb_top_z + pcb_stack_tall + 2, "屋根が最高部品に当たる");
+// 「屋根が最高部品(pcb_stack_tall)に当たる」の assert は params.scad の
+// pcb_tall_y_max > pcb_off_y - pcb_w/2 と代数的に同一（roof_in_z(pcb_off_y-pcb_w/2)
+// >= pcb_top_z+pcb_stack_tall+2 を整理するとその式になる）なので重複させない。
 assert(roof_in_z(pcb_off_y + pcb_w/2) >= pcb_top_z + pcb_stack_low, "屋根が基板 +Y 端に当たる");
 // 屋根 × トレイ +Y 固定スリーブの干渉ガードは params.scad の Sanity セクションに移した
 // （cover_tray_gap を参照。include されるどのモデルからでも常に効くほうが強いので、

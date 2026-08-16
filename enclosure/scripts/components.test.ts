@@ -77,3 +77,19 @@ test("countComponents: 空メッシュは三角形0", () => {
   const stats = countComponents("solid empty\nendsolid empty\n");
   expect(stats.triangles).toBe(0);
 });
+
+// vertex 行が3の倍数でない（バイナリ STL の誤読・途中で切れたファイル等）場合、
+// 末尾を黙って落として false PASS 方向に劣化させず、確実に throw する（Minor 6）。
+test("countComponents: vertex 行が3の倍数でないと throw する", () => {
+  const malformed = `
+solid broken
+  facet normal 0 0 1
+    outer loop
+      vertex 0 0 0
+      vertex 1 0 0
+    endloop
+  endfacet
+endsolid broken
+`;
+  expect(() => countComponents(malformed)).toThrow();
+});
