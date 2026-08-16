@@ -5,8 +5,9 @@ assert(cover_inner_top >= servo_top_z + 1.5, "カバー天井がサーボに当�
 assert(roof_in_z(pcb_off_y) >= pcb_top_z + pcb_stack_usb + 2, "屋根が Pico/USB に当たる");
 assert(roof_in_z(pcb_off_y - pcb_w/2) >= pcb_top_z + pcb_stack_tall + 2, "屋根が最高部品に当たる");
 assert(roof_in_z(pcb_off_y + pcb_w/2) >= pcb_top_z + pcb_stack_low, "屋根が基板 +Y 端に当たる");
-assert(roof_in_z(tray_fix_y_hi) >= wall + tray_boss_h + tray_cap_t + 1,
-       "屋根が +Y 固定スリーブに当たる");
+// 屋根 × トレイ +Y 固定スリーブの干渉ガードは params.scad の Sanity セクションに移した
+// （cover_tray_gap を参照。include されるどのモデルからでも常に効くほうが強いので、
+// ここに重複させない。Ruling 10）。
 // スイッチ（PS21B-1）が斜面に収まり本体が基板に当たらないこと
 assert(cover_wall / cos(45) < sw_thread_l, "斜面の実効パネル厚がネジ部長さを超える");
 assert(sw_panel_d > sw_thread_d, "取付穴がネジ部より小さい");

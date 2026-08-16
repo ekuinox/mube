@@ -12,6 +12,7 @@ include <params.scad>
 use <body.scad>
 use <tray.scad>
 use <pedestal.scad>
+use <cover.scad>
 
 clash_eps = 0.05;
 
@@ -31,4 +32,22 @@ intersection() {
 intersection() {
   translate([0, 0, wall]) tray();
   translate([0, 0, wall]) pedestal();
+}
+
+// cover × body（カバーを浮かせる）
+intersection() {
+  body();
+  translate([0, 0, clash_eps]) cover();
+}
+
+// cover × tray（どちらも組立位置。トレイは z=wall へ）
+intersection() {
+  translate([0, 0, wall]) tray();
+  translate([0, 0, clash_eps]) cover();
+}
+
+// cover × pedestal
+intersection() {
+  translate([0, 0, wall]) pedestal();
+  translate([0, 0, clash_eps]) cover();
 }

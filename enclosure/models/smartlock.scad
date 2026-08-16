@@ -3,6 +3,7 @@ use <body.scad>
 use <pedestal.scad>
 use <socket.scad>
 use <tray.scad>
+use <cover.scad>
 
 // Select with: openscad -D part="body" ...
 part = "assembly";
@@ -17,6 +18,9 @@ exp = exploded ? 1 : 0;
 if (part == "body") body();
 else if (part == "socket") thumbturn_socket();
 else if (part == "tray") tray();
+// カバーは天面をベッドに伏せて印刷する。組立向きから 180° 反転して天面を z=0 へ。
+else if (part == "cover")
+  translate([0, 0, cover_top_z]) rotate([180, 0, 0]) cover();
 else if (part == "pedestal") pedestal();
 // トレイの +X/+Y 隅（右固定スリーブ＋BB ポケット角）を切り出したクーポン
 // （固定スリーブのネジ効き・ポケット壁の勘合確認用）
@@ -104,6 +108,8 @@ else if (part == "asm_socket")
 else if (part == "asm_tray")
   color("Plum")
     translate([0, 0, wall + exp * 10]) tray();
+else if (part == "asm_cover")
+  color("LightSteelBlue") translate([0, 0, exp * 30]) cover();
 else if (part == "asm_pedestal")
   color("Khaki")
     translate([0, 0, wall + exp * 8]) pedestal();
@@ -122,4 +128,7 @@ else {
 
   color("Plum")
     translate([0, 0, wall + exp * 10]) tray();
+
+  color("LightSteelBlue")
+    translate([0, 0, exp * 30]) cover();
 }

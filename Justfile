@@ -14,6 +14,10 @@ render scad *rest:
 clash:
     bun enclosure/scripts/clash.ts
 
+# カバー STL が単一の連結ソリッドであることの回帰チェック
+cover-components:
+    bun enclosure/scripts/components.ts
+
 # enclosure スクリプトの単体テスト（openscad 不要）
 test-enclosure:
     bun test enclosure/scripts/

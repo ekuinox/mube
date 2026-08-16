@@ -102,3 +102,6 @@ jobs:
 
       - name: Part clash check (組立位置での部品間体積干渉が無いこと)
         run: nix develop --command bun enclosure/scripts/clash.ts
+
+      - name: Cover STL connected-component check (単一連結ソリッドであること)
+        run: nix develop --command bun enclosure/scripts/components.ts

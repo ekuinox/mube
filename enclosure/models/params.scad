@@ -231,13 +231,28 @@ cover_inner_top  = servo_top_z + cover_head_clear;         // 72.9
 // 斜面で壁厚 cover_wall を「垂直」に確保するには、天面との垂直差が √2 倍要る。
 // 平天面の厚みは cover_wall*sqrt(2) = 2.83 になる（ベッド面なので厚い方が都合が良い）。
 cover_top_z      = cover_inner_top + cover_wall*sqrt(2);   // 75.73
-cover_slope_y0   = ped_curb_ro + cover_clear;              // 28.7（勾配開始 y）
+// カバー内面とトレイ固定スリーブ天面に要求する最小すきま。勾配開始 y の下限と
+// cover_test.scad の検証の両方がこの 1 個を参照する（別々に書くと値がずれる。
+// 実際に Ruling 8 で 0.5 と 1.0 の2つの値を書いて食い違わせた反省）。
+cover_tray_gap = 1.0;
+
+// 勾配の開始 y。手置き。下の2本の assert（Sanity セクション）が下限を守る。
+//  - ペデスタル域を全高で覆う下限: ped_curb_ro + cover_clear = 28.7
+//  - トレイ +Y 固定スリーブの天面をかわす下限: 31.1
+//    （スリーブは中心 tray_fix_y_hi から半径ぶん +Y に張り出すので、最外点 90.8 で評価する）
+// 導出式のままだと下限とそれを検証する assert が同じ式になって恒真化するうえ、浮動小数の
+// 等号ぎりぎりで丸め次第で落ちるため、値は手で置いて 0.1 の余裕を持たせてある。
+cover_slope_y0 = 31.2;
 // 屋根内面の高さ（y の関数）。干渉チェックの assert が参照する。
 function roof_in_z(y) = cover_inner_top - max(0, y - cover_slope_y0);
 // 背高部品（pcb_stack_tall）を置ける +Y 側の限界。roof_in_z(y) >= pcb_top_z + pcb_stack_tall + 2
 // を y について解いたもの。これより +Y は屋根が下がるので低背部品だけ。基板は 82.3 まで
 // あるので、+Y 端 10mm ほどは 16mm 級を置けない帯になる。
-pcb_tall_y_max = cover_slope_y0 + cover_inner_top - (pcb_top_z + pcb_stack_tall) - 2;  // 72.2
+// 注意: これとは別に、パネル取付スイッチのキープアウト帯（x -6.8〜4.8, y 32.5〜59.1。
+// pcb_tall_y_max=74.7 のずっと内側。下記 sw_pt 周辺のコメント参照）が独立に存在する。
+// この帯は基準が違う（スイッチ本体の掃引と部品の当たり）ので、pcb_tall_y_max だけ見て
+// 「この y より内側なら 16mm 級を置ける」と判断しないこと。
+pcb_tall_y_max = cover_slope_y0 + cover_inner_top - (pcb_top_z + pcb_stack_tall) - 2;  // 74.7
 assert(pcb_tall_y_max > pcb_off_y - pcb_w/2, "背高部品を置ける帯が基板上に存在しない");
 
 // 開口: USB 切欠き（+X 壁）
@@ -246,7 +261,8 @@ cover_usb_z = pcb_top_z + pcb_stack_pico + (pcb_stack_usb - pcb_stack_pico)/2;  
 cover_usb_w = 14;    // Y 方向
 cover_usb_h = 10;    // Z 方向
 
-// 開口: LED 窓（屋根の斜面。素通し穴）
+// 開口: LED 窓（屋根の斜面。素通し穴）。y=79.8 での屋根内面 z = roof_in_z(79.8) = 24.3
+// （基板上面 11.4 から 12.9mm。低背 LED なら余裕）
 cover_led_pt = [pcb_off_x - 24, pcb_off_y + 21];   // (-15, 79.8)
 cover_led_d  = 6;
 
@@ -262,13 +278,17 @@ sw_cap_h    = 7.6;    // パネル面より外への突出
 sw_body_d   = sw_thread_d;   // 本体（掃引体）の外径。実測が無いのでネジ部外径を保守的に流用
 sw_pt       = [-1, 55];   // 屋根斜面上の取付中心（xy）
 // 取付点の屋根外面 z と、法線方向へ sw_depth 伸ばした本体先端の z（軸上）
-sw_face_z = cover_top_z - (sw_pt[1] - cover_slope_y0);   // 49.43
-sw_tip_z  = sw_face_z - sw_depth*cos(45);                // 31.04
+sw_face_z = cover_top_z - (sw_pt[1] - cover_slope_y0);   // 51.93
+sw_tip_z  = sw_face_z - sw_depth*cos(45);                // 33.54
 // 基板側 keep-out: 本体を φsw_body_d の円柱として法線方向に sw_depth 掃引すると、
-// ワールド x -6.8〜4.8 / y 32.5〜59.1 を通り、最下点は (x -1, y 40.7, z 26.98)。
-// 軸上の先端 z（31.04）ではなく、この最下点が基板の部品と当たるかを決める。
+// ワールド x -6.8〜4.8 / y 32.5〜59.1 を通り、最下点は (x -1, y 40.7, z 29.48)。
+// x/y の帯は sw_pt・sw_depth・45° 勾配だけで決まり cover_slope_y0 に依存しないが、
+// z（29.48）は cover_slope_y0 のぶんだけ底上げされている（cover_slope_y0 を手置きの
+// 定数にした Ruling 10 の値 31.2 に対応。以前の値からのズレはそのつど cover_slope_y0
+// の変化ぶんだけ連動する）。
+// 軸上の先端 z（33.54）ではなく、この最下点が基板の部品と当たるかを決める。
 // この帯には pcb_stack_tall 級（上端 27.4）の部品を置かないこと。Pico スタック
-// （上端 20.9）なら 6.08mm の余裕がある。cover_test.scad の assert が下限を守る。
+// （上端 20.9）なら 8.58mm の余裕がある。cover_test.scad の assert が下限を守る。
 
 // --- プレート外形 ---
 // カバー裾の外面を外周リブの内面で受ける。プレート端 = 裾外面 + リブ幅 + 嵌合すきま。
@@ -314,6 +334,22 @@ assert((cover_ear_off - plate_margin + 2)*sqrt(2) - 2 < plate_lug_d/2,
 // リブが高くなると帯が消えて linear_extrude が負の高さになり、耳が黙って分離する。
 assert(plate_rib_h + fit_clearance < tray_boss_h + tray_cap_t,
        "リブが高すぎて耳ウェブの z 帯が消える");
+// +Y の耳（cover_ear_pts の y = tray_fix_y_hi）は屋根勾配の途中に直接載る。耳の天面
+// （wall + tray_boss_h + tray_cap_t）がその y での屋根外面より上に出ると、伏せ印刷時に
+// ベッドから浮いた孤立島になり刷れない（Task 3 で踏んだ地雷）。将来 tray_fix_y_hi を
+// +Y へ動かす変更に対するガード。
+assert(cover_top_z - (tray_fix_y_hi - cover_slope_y0) >= wall + tray_boss_h + tray_cap_t,
+       "+Y の耳の天面が屋根を突き抜ける（伏せ印刷で孤立島になる）");
+// cover_slope_y0（手置き定数）が守るべき2つの下限。cover_slope_y0 自体を導出式にすると
+// 下限とそれを検証する assert が同じ式になって恒真化するので、ここで独立に検証する
+// （Ruling 10）。
+assert(cover_slope_y0 >= ped_curb_ro + cover_clear,
+       "勾配開始がペデスタル域に食い込む");
+// スリーブは中心 tray_fix_y_hi ではなく半径ぶん +Y に張り出した最外点で評価する
+// （中心だけを見て実干渉を1回見落とした。clash.ts の cover×tray ペアが検出した）。
+assert(roof_in_z(tray_fix_y_hi + tray_sleeve_od/2)
+       >= wall + tray_boss_h + tray_cap_t + cover_tray_gap,
+       "屋根がトレイ +Y 固定スリーブの天面に当たる");
 
 // 旧 ext_* は「軸原点から内寸の端まで」の意味。既存 assert と互換のため導出で残す。
 ext_left  = -plate_x0 - wall;
