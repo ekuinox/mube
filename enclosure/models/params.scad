@@ -176,8 +176,9 @@ tray_fix_x_left  = -22;
 tray_fix_x_right = 40;
 // -Y 側の下限を決めるのはペデスタルのフランジローブ（45°/135°）。ローブ先端円は
 // (±21.21, 21.21) 中心・半径 ped_lobe_w/2=5 なので上端が y=26.21 まで来る。トレイ床
-// (tray_y0 = ここ - 3.9 - 0.1) がこれに乗らない下限が y=30.62、余裕を見て 30.7。
-// スリーブ同士の中心間距離 9.5 も最小 8.3 を満たす。
+// (tray_y0 = ここ - 3.9 - 0.1) がこれに 0.3 のマージンで乗らない下限は y=30.513。
+// 採用値 30.7 の余裕は 0.187 しかないので、この 3 定数はどれも動かすと assert が鳴る。
+// スリーブ中心間もローブ半幅込みの下限 9.4 に対し 9.519（余裕 0.119）とやはり詰まっている。
 tray_fix_y_lo    = 30.7;   // 基板 -Y 端(35.3) の下
 tray_fix_y_hi    = 86.9;   // 基板 +Y 端(82.3) の上
 tray_fix_pts = [
@@ -297,27 +298,41 @@ assert(ped_lobe_w > tray_sleeve_od, "ローブ幅がスリーブ外径より細�
 assert(ped_flange_t < tray_boss_h, "フランジ厚がボス高以上（ボスがスリーブに届かない）");
 
 // --- 基板・トレイのレイアウトチェック ---
-assert(pcb_off_y - pcb_w/2 >= ped_curb_ro + 1, "基板 -Y 端が受けカーブに近すぎる");
+// ここに置く assert は「入力パラメータを手で変えたときに落ちうる」ものだけにする。
+// 同じ定義式から導いた値どうしの比較（例: tray_x0 <= pcb -X 端。tray_x0 の定義がまさに
+// それ -0.5）は恒真でガードとして働かないので置かない。
+//
+// 基板 -Y 端を受けカーブから 1mm 以上逃がす、という設計意図の表明。
+// pcb_off_y の定義に代入すると pcb_ped_gap >= 1 に縮退するので、そのまま直に書く。
+assert(pcb_ped_gap >= 1, "基板 -Y 端が受けカーブに近すぎる");
+// -X 端はカバー内面（受けカーブ支配の -28.7）に対して独立に置いているので実効ガード。
+// +X 側は cover_x1 が tray_x1 = 基板 +X 端 +0.5 から導出＝恒真なので置かない。
 assert(pcb_off_x - pcb_l/2 >= cover_x0, "基板 -X 端がカバー内面を超える");
-assert(pcb_off_x + pcb_l/2 <= cover_x1, "基板 +X 端がカバー内面を超える");
 assert(pcb_screw_grip < pcb_standoff_h, "支柱の下穴 grip が支柱高を超える");
 assert(pcb_standoff_d > tray_screw_pilot + 1.6, "支柱の肉厚が下穴に対して薄すぎる");
-assert(tray_x0 <= pcb_off_x - pcb_l/2 && tray_x1 >= pcb_off_x + pcb_l/2,
-       "トレイ床が基板を支えきれない");
 assert(tray_fix_y_lo + tray_sleeve_od/2 <= pcb_off_y - pcb_w/2, "-Y 固定スリーブが基板に食い込む");
 assert(tray_fix_y_hi - tray_sleeve_od/2 >= pcb_off_y + pcb_w/2, "+Y 固定スリーブが基板に食い込む");
+// 基板支柱と固定スリーブはどちらも tray() の union の中なので、食い込んでも融合して
+// 黙って印刷される（clash.ts は部品「間」しか見ないので検出できない）。ここで殺す。
+assert(min([for (s = pcb_hole_pts, t = tray_fix_pts) norm(s - t)])
+       >= (pcb_standoff_d + tray_sleeve_od)/2 + 0.5,
+       "基板支柱がトレイ固定スリーブに食い込む");
 assert(min([for (p = tray_fix_pts) norm(p)]) >= ped_curb_ro + tray_sleeve_od/2 + 0.5,
        "固定スリーブが受けカーブに食い込む");
-// トレイ固定スリーブとペデスタル固定スリーブの共倒れガード。
+// トレイ固定スリーブとペデスタル底フランジの共倒れガード。
 // 旧レイアウトで実際に 4.36mm まで接近して食い込んでいたので必ず入れる。
-assert(min([for (t = tray_fix_pts, q = ped_fix_pts) norm(t - q)]) >= tray_sleeve_od + 0.5,
-       "トレイ固定スリーブがペデスタル固定スリーブに食い込む");
+// トレイスリーブに先に当たるのはペデスタルの「スリーブ」ではなく「ローブ」。ローブは
+// 線分 p/2→p の全長に太さ ped_lobe_w=10 で存在し、z 帯もスリーブと確実に重なるので、
+// 必要な中心間距離は od/2 + ped_lobe_w/2。スリーブ外径だけで見ると 0.6mm 見落とす。
+assert(min([for (t = tray_fix_pts, q = ped_fix_pts) norm(t - q)])
+       >= tray_sleeve_od/2 + ped_lobe_w/2 + 0.5,
+       "トレイ固定スリーブがペデスタルのフランジローブに食い込む");
+// 同じローブが y 方向でトレイ床の -Y 端にも当たる（先端円の上端 y = 21.21 + 5）。
 assert(tray_y0 >= ped_fix_r*sin(45) + ped_lobe_w/2 + 0.3, "トレイ床 -Y 端がペデスタルのフランジローブに乗る");
 assert(tray_ped_notch_r >= ped_curb_ro + ped_curb_tray_gap, "トレイ床の逃げが受けカーブに近すぎる");
-assert(tray_y0 <= tray_fix_y_lo - tray_sleeve_od/2, "トレイ床 -Y 端が固定スリーブを覆えない");
-assert(tray_y1 >= tray_fix_y_hi + tray_sleeve_od/2, "トレイ床 +Y 端が固定スリーブを覆えない");
-assert(tray_x1 <= cover_x1 && tray_x0 >= cover_x0, "トレイ床 X がカバー内面を超える");
-assert(tray_y1 <= cover_y1 && tray_y0 >= cover_y0, "トレイ床 Y がカバー内面を超える");
+// -X/-Y 側だけ実効（+X/+Y 側は cover_x1/cover_y1 が tray_x1/tray_y1 から導出＝恒真）。
+assert(tray_x0 >= cover_x0, "トレイ床 -X 端がカバー内面を超える");
+assert(tray_y0 >= cover_y0, "トレイ床 -Y 端がカバー内面を超える");
 // --- プレートのドアクリアランス ---
 assert(-plate_x0 <= clear_left, "プレート -X 端がドアクリアランスを超える");
 assert(-plate_y0 <= clear_down, "プレート -Y 端がドアクリアランスを超える");
