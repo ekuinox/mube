@@ -1,0 +1,22 @@
+include <params.scad>
+use <cover.scad>
+// 屋根内面が中身の最高点を上回ること
+assert(cover_inner_top >= servo_top_z + 1.5, "カバー天井がサーボに当たる");
+assert(roof_in_z(pcb_off_y) >= pcb_top_z + pcb_stack_usb + 2, "屋根が Pico/USB に当たる");
+assert(roof_in_z(pcb_off_y - pcb_w/2) >= pcb_top_z + pcb_stack_tall + 2, "屋根が最高部品に当たる");
+assert(roof_in_z(pcb_off_y + pcb_w/2) >= pcb_top_z + 3, "屋根が基板 +Y 端に当たる");
+assert(roof_in_z(tray_fix_y_hi) >= wall + tray_boss_h + tray_cap_t + 1,
+       "屋根が +Y 固定スリーブに当たる");
+// スイッチ（PS21B-1）が斜面に収まり本体が基板に当たらないこと
+assert(cover_wall / cos(45) < sw_thread_l, "斜面の実効パネル厚がネジ部長さを超える");
+assert(sw_panel_d > sw_thread_d, "取付穴がネジ部より小さい");
+assert(sw_tip_z >= pcb_top_z + pcb_stack_low, "スイッチ本体の先端が基板の部品に当たる");
+assert(sw_pt[1] - sw_seat_d/2 >= cover_slope_y0, "スイッチ座面が勾配の始点をはみ出す");
+assert(sw_pt[1] + sw_seat_d/2 <= cover_y1, "スイッチ座面が +Y 壁をはみ出す");
+// LED 窓が基板の上にあること
+assert(cover_led_pt[0] >= pcb_off_x - pcb_l/2 && cover_led_pt[0] <= pcb_off_x + pcb_l/2,
+       "LED 窓が基板の X 範囲外");
+assert(cover_led_pt[1] >= pcb_off_y - pcb_w/2 && cover_led_pt[1] <= pcb_off_y + pcb_w/2,
+       "LED 窓が基板の Y 範囲外");
+cover();
+echo("cover_test ok");

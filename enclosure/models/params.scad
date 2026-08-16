@@ -224,6 +224,41 @@ cover_x1 = tray_x1 + cover_clear;          // 46.5
 cover_y0 = -(ped_curb_ro + cover_clear);   // -28.7
 cover_y1 = tray_y1 + cover_clear;          // 91.9
 
+// カバーの高さと勾配。天面をベッドに伏せて刷るので屋根に水平な段を作らない
+// （段は第 1 層より下に宙で現れて垂れる）。+Y への単一勾配 45°。
+cover_head_clear = 2.0;                                    // サーボ上端 ⇔ 内面天井
+cover_inner_top  = servo_top_z + cover_head_clear;         // 72.9
+// 斜面で壁厚 cover_wall を「垂直」に確保するには、天面との垂直差が √2 倍要る。
+// 平天面の厚みは cover_wall*sqrt(2) = 2.83 になる（ベッド面なので厚い方が都合が良い）。
+cover_top_z      = cover_inner_top + cover_wall*sqrt(2);   // 75.73
+cover_slope_y0   = ped_curb_ro + cover_clear;              // 28.7（勾配開始 y）
+// 屋根内面の高さ（y の関数）。干渉チェックの assert が参照する。
+function roof_in_z(y) = cover_inner_top - max(0, y - cover_slope_y0);
+
+// 開口: USB 切欠き（+X 壁）
+cover_usb_y = pcb_off_y;                    // 58.8
+cover_usb_z = pcb_top_z + pcb_stack_pico + (pcb_stack_usb - pcb_stack_pico)/2;  // 22.15
+cover_usb_w = 14;    // Y 方向
+cover_usb_h = 10;    // Z 方向
+
+// 開口: LED 窓（屋根の斜面。素通し穴）
+cover_led_pt = [pcb_off_x - 24, pcb_off_y + 21];   // (-15, 79.8)
+cover_led_d  = 6;
+
+// --- パネル取付スイッチ PS21B-1（秋月 P-04583, モーメンタリ OFF-(ON)） ---
+sw_thread_d = 11.5;   // ネジ部外径（実測 2026-08-16）
+sw_panel_d  = 12.0;   // 取付穴（すきま 0.5。印刷公差込み）
+sw_flange_d = 18.7;   // フランジ外径
+sw_seat_d   = 19.0;   // 座面として平面が要る径
+sw_thread_l = 8.3;    // ネジ部長さ（挟めるパネル厚の上限）
+sw_depth    = 26;     // パネル面より内側の奥行き（端子先端まで）
+sw_cap_d    = 14;     // キャップ外径
+sw_cap_h    = 7.6;    // パネル面より外への突出
+sw_pt       = [-1, 60];   // 屋根斜面上の取付中心（xy）
+// 取付点の屋根外面 z と、法線方向へ sw_depth 伸ばした本体先端の z
+sw_face_z = cover_top_z - (sw_pt[1] - cover_slope_y0);   // 44.43
+sw_tip_z  = sw_face_z - sw_depth*cos(45);                // 26.05
+
 // --- プレート外形 ---
 // カバー裾の外面を外周リブの内面で受ける。プレート端 = 裾外面 + リブ幅 + 嵌合すきま。
 cover_lip_fit = 0.3;
