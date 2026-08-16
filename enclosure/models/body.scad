@@ -13,7 +13,7 @@ module body() {
       translate([center_x, center_y, 0])
         linear_extrude(height = wall)
           plate_outline_2d();
-      // 上面リブ（外周一周のみ）
+      // 上面リブ（四隅を逃がした外周リブ。plate_ribs() 参照）
       plate_ribs();
       // ペデスタル受けカーブ（ローブ通過の切り欠き＝回り止め）
       pedestal_curb();
@@ -39,11 +39,13 @@ module plate_outline_2d() {
     }
 }
 
-// 上面リブ: 外周一周のみ（横桟は plate_rib_ys=[] で全廃済み。カバーの -X/+X 側壁が
-// 全幅横桟の真下を貫いてしまい座らなくなるため。剛性は四隅で M2 留めされたカバーが
-// 肩代わりする）。受けカーブ・スリーブ・ロゼット開口の周りは半径 ped_curb_ro+1 で、
-// カバー固定ボスの周りは各点 tray_sleeve_od+1 で丸ごと逃がす（開口の上をリブが
-// 橋渡しして印刷ブリッジになるのも防ぐ）。
+// 上面リブ: 四隅（カバー固定ボス）を逃がした外周リブ（横桟は plate_rib_ys=[] で全廃済み。
+// カバーの -X/+X 側壁が全幅横桟の真下を貫いてしまい座らなくなるため。剛性は四隅で
+// M2 留めされたカバーが肩代わりする）。四隅の逃げが各辺を数 mm ずつ食うため、実体は
+// 閉じた一周ではなく 4 本の独立した直線区間になる（位置決めリップとしては X・Y 両方向を
+// 直線区間で拘束するので機能上は問題ない）。受けカーブ・スリーブ・ロゼット開口の周りは
+// 半径 ped_curb_ro+1 で、カバー固定ボスの周りは各点 max(tray_sleeve_od+1, plate_lug_d+0.2)
+// で丸ごと逃がす（開口の上をリブが橋渡しして印刷ブリッジになるのも防ぐ）。
 module plate_ribs() {
   translate([0, 0, wall])
     linear_extrude(height = plate_rib_h)
@@ -62,9 +64,11 @@ module plate_ribs() {
         }
         // 受けカーブ・スリーブ・中央開口まわりの逃げ
         circle(r = ped_curb_ro + 1);
-        // カバー固定ボスまわりの逃げ（リブとボスの干渉を避ける）
+        // カバー固定ボスまわりの逃げ（リブとボスの干渉を避ける）。ラグ輪郭（plate_lug_d）
+        // より小さいと四隅にノズル幅未満の三日月壁が残ってしまうため、ラグ径基準の
+        // 逃げも下限として取る。
         for (p = cover_ear_pts)
-          translate([p[0], p[1]]) circle(d = tray_sleeve_od + 1);
+          translate([p[0], p[1]]) circle(d = max(tray_sleeve_od + 1, plate_lug_d + 0.2));
       }
 }
 

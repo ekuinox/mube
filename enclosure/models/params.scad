@@ -209,8 +209,9 @@ ped_curb_tray_gap = 1.0; // 受けカーブ外周 → トレイ床下端に要�
 
 // プレート上面リブ（手持ち時の剛性・印刷反り対策。ドア面はフラット維持）。
 // 横桟はプレート全幅に走るのでカバーの -X/+X 側壁の真下を貫いてしまい、カバーが座らない。
-// よって全廃し、剛性は四隅で M2 留めされたカバーが肩代わりする。残るのは外周リブだけで、
-// これがカバー裾の外面を受ける（plate_margin 参照）。
+// よって全廃し、剛性は四隅で M2 留めされたカバーが肩代わりする。残るのは四隅（カバー固定
+// ボス）を逃がした外周リブ（＝閉じた一周ではなく4本の直線区間）で、これがカバー裾の外面を
+// 受ける（plate_margin 参照。詳細は body.scad の plate_ribs() 参照）。
 plate_rib_h  = 4;            // リブ高（床上面から）
 plate_rib_w  = 2;            // リブ幅
 plate_rib_ys = [];           // 横桟なし（ワールド y のリスト。空＝外周リブのみ）
@@ -248,6 +249,15 @@ plate_lug_d = 9;   // プレート側ラグの円径（スリーブ od 7.8 を�
 assert(plate_lug_d > tray_sleeve_od, "ラグ径がスリーブ外径以下");
 assert(max([for (p = cover_ear_pts) max(-p[0], -p[1])]) + plate_lug_d/2
        <= min(clear_left, clear_down), "固定ラグがドアクリアランスを超える");
+// cover_ear_off の下限・上限ガード（対）。
+// 下限: 「円（tray_sleeve_od）が裾の角にちょうど接する」という上のコメントの設計意図。
+// cover_ear_off が小さすぎるとラグ内のスリーブが裾の角に食い込む。
+assert(cover_ear_off*sqrt(2) >= tray_sleeve_od/2,
+       "cover_ear_off が小さく、ラグ内のスリーブが裾の角に食い込む");
+// 上限: cover_ear_off が大きすぎるとラグが本体矩形の丸め offset で橋渡しされず、
+// 4枚の独立した円盤に分離してしまう（offset(r=2) offset(r=-2) は非連結形状を繋がない）。
+assert((cover_ear_off - plate_margin + 2)*sqrt(2) - 2 < plate_lug_d/2,
+       "ラグが本体矩形から離れて別体になる");
 
 // 旧 ext_* は「軸原点から内寸の端まで」の意味。既存 assert と互換のため導出で残す。
 ext_left  = -plate_x0 - wall;
