@@ -22,15 +22,6 @@ else if (part == "tray") tray();
 else if (part == "cover")
   translate([0, 0, cover_top_z]) rotate([180, 0, 0]) cover();
 else if (part == "pedestal") pedestal();
-// トレイの +X/+Y 隅（右固定スリーブ＋BB ポケット角）を切り出したクーポン
-// （固定スリーブのネジ効き・ポケット壁の勘合確認用）
-else if (part == "tray_coupon")
-  intersection() {
-    tray();
-    translate([pocket_outer_right - 8, pocket_outer_top - 40, -1])
-      cube([tray_fix_x_right + tray_sleeve_od/2 + 3 - (pocket_outer_right - 8),
-            40 + 3, tray_boss_h + tray_cap_t + bb_pocket_wall_h + 3]);
-  }
 // 本体ボス1本＋トレイスリーブ1個を並べた嵌合クーポン（横嵌め boss_fit・効き・クランプ確認用）。
 // 右下の固定点を本物の body/tray からそのまま切り出す。両方とも床下面 z=0 がベッド接地。
 else if (part == "tray_mount_coupon") {

@@ -25,21 +25,6 @@ module sg90_cutout() {
   }
 }
 
-// Pico W 四隅スタンドオフ。基板を pico_boss_h だけ浮かせて下側 GPIO ピンを床から
-// 逃がし、四隅の φ2.1 穴へ上から M2 セルフタップで留める。中心の下穴は上面から
-// pico_screw_grip 深さ。フットプリントは原点中心。
-module pico_w_mounts() {
-  difference() {
-    for (sx = [-1, 1], sy = [-1, 1])
-      translate([sx * pico_hole_dx/2, sy * pico_hole_dy/2, 0])
-        cylinder(d = pico_boss_d, h = pico_boss_h);            // スタンドオフ
-    // セルフタップ下穴（上面から grip 深さ。上面を確実に開けるため +0.1 突き抜け）
-    for (sx = [-1, 1], sy = [-1, 1])
-      translate([sx * pico_hole_dx/2, sy * pico_hole_dy/2, pico_boss_h - pico_screw_grip])
-        cylinder(d = pico_screw_pilot, h = pico_screw_grip + 0.1);
-  }
-}
-
 // ユニバーサル基板 P-03229 の支柱 1 本（原点基準・呼び出し側で translate）。
 // 基板を pcb_standoff_h 浮かせて裏のハンダ足を床から逃がし、上から M2 セルフタップで
 // 留める。基板穴 φ3.2 に対しネジ山は効かないので、頭（tray_head_d）が押さえる。

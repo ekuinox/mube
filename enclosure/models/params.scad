@@ -31,21 +31,10 @@ horn_stub_d     = 4.6;      // 中心突起の径。ホーン socket 側の中�
 // 抜け止めネジは不要（軸方向はドア↔サーボ間でソケットが挟持されるため）。回り止めは一文字バーポケットのキー嵌合＋中心突起で担う。
 
 // --- Raspberry Pi Pico W ---
+// 基板上にメスソケットで載せる Pico の外形（配置検証用）。
 pico_l        = 51.0;
 pico_w        = 21.0;
 pico_h        = 1.0;
-pico_hole_d   = 2.1;
-pico_hole_dx  = 47.0;   // mounting hole spacing along length
-pico_hole_dy  = 11.4;   // mounting hole spacing across width
-// GPIO ヘッダは両長辺・両面にピンが出るため、縁は掴めない。ヘッダより内側にある
-// 四隅の φ2.1 マウント穴で固定する。下側ピンが基板下面から pico_pin_drop 突き出すので、
-// 四隅スタンドオフで基板を浮かせて床から逃がし、上から M2 セルフタップで留める。
-pico_pin_drop = 6.0;    // 下側 GPIO ピンの基板下面からの突き出し（実測=6, 暫定）
-pico_boss_d   = 5.0;    // 四隅スタンドオフ外径
-pico_boss_h   = pico_pin_drop + 0.5;  // スタンドオフ高（下ピン先端が床上 0.5mm で浮く）= 6.5
-pico_screw_pilot = 2.1; // M2 セルフタップ下穴径（tray と同仕様。A1 mini 補正込みの実績値）
-pico_screw_grip  = 5;   // セルフタップ効き深さ（スタンドオフ上面から）
-
 
 // --- Door-fit clearances from the thumb-turn axis (origin = rosette center) ---
 clear_left  = 50;   // -X to door edge/frame（実測: ~50 未満の上限。精密値は未確定）
