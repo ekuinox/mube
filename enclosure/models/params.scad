@@ -136,6 +136,7 @@ tray_sleeve_od = tray_sleeve_id + 2*tray_sleeve_wt;    // スリーブ外径 = 7
 pcb_l = 72;      // X 方向（長辺）
 pcb_w = 47;      // Y 方向（短辺）
 pcb_t = 1.6;
+assert(pico_l <= pcb_l && pico_w <= pcb_w, "Pico がユニバーサル基板の外形に収まらない");
 pcb_hole_d  = 3.2;   // 既製マウント穴（M2 は頭で押さえる。ネジ山は効かない）
 pcb_hole_dx = 66;    // 長辺方向の穴ピッチ
 pcb_hole_dy = 41;    // 短辺方向の穴ピッチ
