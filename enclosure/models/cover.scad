@@ -17,8 +17,8 @@ module cover() {
     for (p = cover_ear_pts)
       translate([p[0], p[1], wall]) m2_sleeve_cuts();
     cover_usb_cut();
-    roof_normal_hole(cover_led_pt, cover_led_d);
-    roof_normal_hole(sw_pt, sw_panel_d);
+    cover_mesh_cut();
+    flat_top_hole(sw_pt, sw_panel_d);
   }
 }
 
@@ -95,20 +95,50 @@ module cover_roof_cut(top_z) {
       translate([-400, -400, 0]) cube([800, 800, 400]);
 }
 
-// 屋根の斜面に法線方向の素通し穴をあける。pt = [x, y]（ワールド）。
-// rotate([-45,0,0]) はシリンダ軸 (0,0,1) を斜面の外向き法線 (0,√2/2,√2/2) に一致させる。
-// z の式は「斜面の上に居る」ことが前提で、y < cover_slope_y0 だと平天面より上の空中に
-// 穴を置いてしまい（＝黙って何も開かない）、+Y 端を超えると壁を斜めに削る。呼び出し側
-// ごとに書くと片方だけ書き忘れる（実際に sw_pt にはあり cover_led_pt には無かった）ので
-// モジュール側に置き、穴の縁（直径ぶん）で評価する。
-module roof_normal_hole(pt, d) {
-  assert(pt[1] - d/2 >= cover_slope_y0 && pt[1] + d/2 <= cover_y1 + cover_wall,
-         "屋根の穴が斜面の範囲外（勾配の始点より -Y、または +Y 端より外）");
-  z = cover_top_z - (pt[1] - cover_slope_y0);
-  translate([pt[0], pt[1], z])
+// 平天面に鉛直の素通し穴をあける。pt = [x, y]（ワールド）。パネル取付スイッチ用。
+// 穴が斜面へかかると座面が折れ線をまたいでフランジが座らないので、穴の +Y 縁（直径ぶん）
+// で判定する。座面 φsw_seat_d 側のより厳しい判定は cover_test.scad が持つ。
+module flat_top_hole(pt, d) {
+  assert(pt[1] + d/2 <= cover_slope_y0, "平天面の穴が勾配の始点を越えて斜面にかかる");
+  translate([pt[0], pt[1], cover_top_z - 20])
+    cylinder(d = d, h = 40, $fn = 48);
+}
+
+// 屋根の斜面に六角メッシュ（ハニカム）を開ける。LED の実装位置が未定なので、窓を一点に
+// 決めずに斜面全体を透かして光をどこからでも逃がす。
+// 穴の軸は鉛直ではなく斜面の法線: rotate([-45,0,0]) がシリンダ軸 (0,0,1) を外向き法線
+// (0,√2/2,√2/2) に一致させ、同時に回転後のローカル xy が斜面そのものになる
+// （ローカル x = ワールド x、ローカル y = 稜線からの「斜距離」で +Y へ下る向き。
+//  ワールド y = cover_slope_y0 + v/√2 なので v = (ワールド y - cover_slope_y0)*√2）。
+// 六角は $fn=6 の circle なので頂点が ±ローカル x、平らな辺が ±ローカル y に向く。
+// 天面を伏せて刷るとローカル -y が上になるので、穴の天井は 45° の斜面上にある水平な辺
+// ＝ 45° のオーバーハングになり、ブリッジは発生しない。
+// 開ける範囲は稜線・+Y 内壁・±X 内壁から cover_mesh_margin を残した帯。+Y 側の基準を
+// 外面（cover_y1 + cover_wall）ではなく内面（cover_y1）に取るのは、屋根が板として自立
+// しているのがそこまでで、その先は +Y 壁の肉に載っているため。
+module cover_mesh_cut() {
+  p  = cover_mesh_af + cover_mesh_web;   // 六角中心の格子間隔（対辺の法線方向）
+  rc = cover_mesh_af/sqrt(3);            // 外接円半径（circle(r) に渡す値）
+  u0 = cover_x0 + cover_mesh_margin;   u1 = cover_x1 - cover_mesh_margin;
+  v0 = cover_mesh_margin;
+  v1 = (cover_y1 - cover_slope_y0)*sqrt(2) - cover_mesh_margin;
+  uc = (u0 + u1)/2;   vc = (v0 + v1)/2;
+  // 三角格子。列を p*√3/2 ごとに並べ、隣の列は p/2 ずらす。どの隣接方向でも中心間距離が
+  // p になるので、平らな辺どうしの間に残る桟はどこも cover_mesh_web ちょうどになる。
+  mmax = ceil((u1 - u0)/(p*sqrt(3))) + 1;
+  nmax = ceil((v1 - v0)/(2*p)) + 2;
+  // 六角の外接矩形（±rc × ±cover_mesh_af/2）が帯に収まるものだけ残す。半端に切られた
+  // 六角は縁ぞいに極細のスライバを作るので、まるごと落とす方が安全。
+  pts = [for (m = [-mmax : mmax], n = [-nmax : nmax])
+           let (u = uc + m*p*sqrt(3)/2, v = vc + n*p + m*p/2)
+           if (u - rc >= u0 && u + rc <= u1 &&
+               v - cover_mesh_af/2 >= v0 && v + cover_mesh_af/2 <= v1)
+             [u, v]];
+  assert(len(pts) > 0, "ハニカムの穴が 1 個も置けない");
+  translate([0, cover_slope_y0, cover_top_z])
     rotate([-45, 0, 0])
-      translate([0, 0, -20])
-        cylinder(d = d, h = 40, $fn = 48);
+      linear_extrude(height = 20, center = true)
+        for (q = pts) translate(q) circle(r = rc, $fn = 6);
 }
 
 // USB 切欠き（+X 壁を厚み方向に貫く角穴）
