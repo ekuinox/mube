@@ -16,6 +16,7 @@ const port = Number(process.env.PORT ?? "8765");
 const parts = [
   "body", "pedestal", "socket", "tray", "cover", "assembly",
   "asm_body", "asm_pedestal", "asm_socket", "asm_tray", "asm_cover",
+  "sw_mount_coupon",
 ];
 
 for (const part of parts) {
