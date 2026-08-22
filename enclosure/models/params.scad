@@ -211,9 +211,10 @@ ped_curb_tray_gap = 1.0; // 受けカーブ外周 → トレイ床下端に要�
 // プレート上面リブ（手持ち時の剛性・印刷反り対策。ドア面はフラット維持）。
 // 横桟はプレート全幅に走るのでカバーの -X/+X 側壁の真下を貫いてしまい、カバーが座らない。
 // よって全廃し、剛性は M2 留めされたカバーが肩代わりする。残るのはカバー固定ボス
-// （cover_ear_pts の4点。-Y 側の2隅＋±X 壁上の2点）を逃がした外周リブ（＝閉じた一周
-// ではなく4本の直線区間）で、これがカバー裾の外面を受ける（plate_margin 参照。
-// 詳細は body.scad の plate_ribs() 参照）。
+// （cover_ear_pts の4点。-Y 側の2隅＋±X 壁上の2点）を逃がした周回リブ（＝閉じた一周
+// ではなく4本の直線区間）で、これがカバー裾の外面を受ける（plate_rib_* / plate_margin 参照。
+// 詳細は body.scad の plate_ribs() 参照）。リブの通り道はカバー裾に貼り付いた寸法なので、
+// プレート外形とは別の矩形（plate_rib_x0 …）で持つ。
 plate_rib_h  = 4;            // リブ高（床上面から）
 plate_rib_w  = 2;            // リブ幅
 plate_rib_ys = [];           // 横桟なし（ワールド y のリスト。空＝外周リブのみ）
@@ -225,10 +226,11 @@ cover_x0 = -(ped_curb_ro + cover_clear);   // -28.7（受けカーブが支配�
 cover_x1 = tray_x1 + cover_clear;          // 46.5
 cover_y0 = -(ped_curb_ro + cover_clear);   // -28.7
 cover_y1 = tray_y1 + cover_clear;          // 91.9
-// 外形角の丸め半径。カバー裾（cover.scad の cover_outline_2d / cover_ear_webs）と
-// プレート外形（body.scad の plate_outline_2d）が同じ offset(r) offset(-r) の書き方で
-// 共有する。プレートはカバー裾を追従する輪郭なので、両者がずれると耳とラグの位置
-// 関係（下のラグ分離ガードの前提）が崩れる。1 箇所で持つ。
+// 外形角の丸め半径。カバー裾（cover.scad の cover_outline_2d / cover_ear_webs /
+// cover_ear_gussets）とプレート外形・外周リブ（body.scad の plate_outline_2d /
+// plate_rib_outline_2d）が同じ offset(r) offset(-r) の書き方で共有する。-Y 隅の耳の
+// ウェブとガセットは「角の丸め円が裾の実体そのもの」という前提で寸法を出しているので、
+// ここがずれると両方の接地がずれる。1 箇所で持つ。
 cover_round_r = 2;
 
 // カバーの高さと勾配。天面をベッドに伏せて刷るので屋根に水平な段を作らない
@@ -330,19 +332,18 @@ sw_tip_z  = sw_face_z - sw_depth;     // 49.73
 //    servo_shaft_offset + servo_tab_l/2 = 21.5。柱の -X 端 26.25 との余裕は 4.75。
 // 3 本とも cover_test.scad の assert が守る。
 
-// --- プレート外形 ---
-// カバー裾の外面を外周リブの内面で受ける。プレート端 = 裾外面 + リブ幅 + 嵌合すきま。
+// --- 外周リブ（カバー裾の位置決めリップ）の矩形 ---
+// カバー裾の外面を外周リブの内面で受ける。リブ帯の外縁 = 裾外面 + リブ幅 + 嵌合すきま。
+// この矩形は「カバー裾に貼り付いた寸法」なので、下のプレート外形が広がっても動かさない。
+// 動かすとリップが裾から離れ、カバーの XY 位置決めが効かなくなる（プレート外形に追従
+// させると現行値で 5.3mm も離れる）。
 cover_lip_fit = 0.3;
 plate_margin  = plate_rib_w + cover_lip_fit;   // 2.3
-plate_x0 = cover_x0 - cover_wall - plate_margin;   // -33.0
-plate_x1 = cover_x1 + cover_wall + plate_margin;   //  50.8
-plate_y0 = cover_y0 - cover_wall - plate_margin;   // -33.0
-plate_y1 = cover_y1 + cover_wall + plate_margin;   //  96.2
-body_l   = plate_x1 - plate_x0;        // 83.8
-body_w   = plate_y1 - plate_y0;        // 129.2
-center_x = (plate_x0 + plate_x1)/2;    // 8.9
-center_y = (plate_y0 + plate_y1)/2;    // 31.6
-// カバー固定の耳／ラグ。-Y 側は裾の外角から対角方向へ各軸 cover_ear_off ずらし、
+plate_rib_x0 = cover_x0 - cover_wall - plate_margin;   // -33.0
+plate_rib_x1 = cover_x1 + cover_wall + plate_margin;   //  50.8
+plate_rib_y0 = cover_y0 - cover_wall - plate_margin;   // -33.0
+plate_rib_y1 = cover_y1 + cover_wall + plate_margin;   //  96.2
+// カバー固定の耳。-Y 側は裾の外角から対角方向へ各軸 cover_ear_off ずらし、
 // 円（tray_sleeve_od）が裾の角にちょうど接するようにする。
 // +Y 側は角ではなく ±X 壁の y = tray_fix_y_hi（トレイ +Y 固定点と同じ y）に置く。
 // +Y の角（y = 96.7）に置くと、耳の天面（12.2）が耳の +Y リム（96.7 + 3.9 = 100.6）での
@@ -374,22 +375,40 @@ cover_ear_top_z = wall + tray_boss_h + tray_cap_t;   // 12.2
 cover_gusset_h_wall   = cover_ear_off + tray_sleeve_od/2;   // 6.7
 cover_gusset_h_corner = (cover_ear_off + cover_round_r)*sqrt(2)
                         + tray_sleeve_od/2 - cover_round_r; // 8.688
-plate_lug_d = 9;   // プレート側ラグの円径（スリーブ od 7.8 を内包）
-assert(plate_lug_d > tray_sleeve_od, "ラグ径がスリーブ外径以下");
-assert(max([for (p = cover_ear_pts) max(-p[0], -p[1])]) + plate_lug_d/2
-       <= min(clear_left, clear_down), "固定ラグがドアクリアランスを超える");
+
+// --- プレート外形 ---
+// 素の角丸矩形。旧版は矩形＋耳位置の φ9 ラグを角R で融合させていたが、ラグ込みの実測
+// バウンディングボックス（93.8 × 134.2）まで矩形を張り出させても外形封筒は 1mm も増えず、
+// 増えるのは四隅の空き地ぶん（実測 +5.0g）だけなので素の矩形へ統合した。細い張り出しが
+// 折れる心配と「ラグが本体矩形から離れて別体の円盤になる」破綻モードがまとめて消える。
+// TASK-6（上部が重く面ファスナーが剥がれる）は実機で想定よりずっと保っていることが
+// 確認できたので、この +5g は許容する。
+plate_ear_pad = 0.6;                              // 耳（スリーブ外径）のまわりに残す肉
+plate_ear_r   = tray_sleeve_od/2 + plate_ear_pad; // 4.5
+// 0.4 = ノズル 1 パス。これを割ると耳のまわりに肉が乗らず、M2 がプレートの縁を噛む。
+assert(plate_ear_pad >= 0.4, "耳のまわりに残るプレートの肉がノズル幅未満");
+// 外形はリブ矩形と「耳＋肉」の両方を包む。-X/-Y/+X は耳が、+Y はリブ矩形が決める。
+plate_x0 = min(plate_rib_x0, min([for (p = cover_ear_pts) p[0]]) - plate_ear_r);   // -38.0
+plate_x1 = max(plate_rib_x1, max([for (p = cover_ear_pts) p[0]]) + plate_ear_r);   //  55.8
+plate_y0 = min(plate_rib_y0, min([for (p = cover_ear_pts) p[1]]) - plate_ear_r);   // -38.0
+plate_y1 = max(plate_rib_y1, max([for (p = cover_ear_pts) p[1]]) + plate_ear_r);   //  96.2
+body_l   = plate_x1 - plate_x0;        // 93.8
+body_w   = plate_y1 - plate_y0;        // 134.2
+center_x = (plate_x0 + plate_x1)/2;    // 8.9
+center_y = (plate_y0 + plate_y1)/2;    // 29.1
 // cover_ear_off の下限・上限ガード（対）。
 // 下限: 「円（tray_sleeve_od）が裾の角にちょうど接する」という上のコメントの設計意図。
-// cover_ear_off が小さすぎるとラグ内のスリーブが裾の角に食い込む。
+// cover_ear_off が小さすぎると耳のスリーブが裾の角に食い込む。
 assert(cover_ear_off*sqrt(2) >= tray_sleeve_od/2,
-       "cover_ear_off が小さく、ラグ内のスリーブが裾の角に食い込む");
-// 上限: cover_ear_off が大きすぎるとラグが本体矩形の丸め offset で橋渡しされず、
-// 4枚の独立した円盤に分離してしまう（offset(r=cover_round_r) offset(r=-cover_round_r) は
-// 非連結形状を繋がない）。
-assert((cover_ear_off - plate_margin + cover_round_r)*sqrt(2) - cover_round_r < plate_lug_d/2,
-       "ラグが本体矩形から離れて別体になる");
+       "cover_ear_off が小さく、耳のスリーブが裾の角に食い込む");
+// 上限: ±X 壁上の耳は「円が裾の外面へ食い込む」ことでウェブ無しに裾と繋がり、ガセットも
+// その食い込み部で裾に着地する。食い込みが消えると耳もガセットも裾から浮く。
+// 0.8 = ノズル 2 パス（食い込み帯がこれ以下だと繋がったとは言えない）。現在値の食い込みは
+// 3.9 - 2.8 = 1.1。
+assert(tray_sleeve_od/2 - cover_ear_off >= 0.8,
+       "±X 壁上の耳が裾の外面へ食い込まず、裾から浮く");
 // -Y の耳は角丸めのぶん裾から浮くので cover_ear_webs() が橋を架ける。その橋はリブ天面より
-// 上の z 帯（wall + plate_rib_h + fit_clearance 〜 wall + tray_boss_h + tray_cap_t）に張るので、
+// 上の z 帯（wall + plate_rib_h + fit_clearance 〜 cover_ear_top_z）に張るので、
 // リブが高くなると帯が消えて linear_extrude が負の高さになり、耳が黙って分離する。
 assert(plate_rib_h + fit_clearance < tray_boss_h + tray_cap_t,
        "リブが高すぎて耳ウェブの z 帯が消える");
