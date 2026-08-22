@@ -89,6 +89,31 @@ else if (part == "floor_coupon")
     linear_extrude(height = wall + 8)
       square([300, 300], center = true);
   }
+// スイッチ（PS21B-1）取付部だけを切り出したクーポン（カバー全体を刷る前の座り確認用）。
+// 本物の cover() から intersection で切り出すので、穴径 φsw_panel_d も平天面の板厚
+// （cover_top_z - cover_inner_top = cover_wall*√2 = 2.83）も実物とそのまま同じ値になる。
+// 印刷向きも本物と同じ「平天面をベッドに伏せる」（part="cover" と同じ反転を掛ける）ので、
+// 穴は実物とまったく同じ条件で刷られる。
+// 見るところ:
+//  - φ12.0 の穴に φ11.5 のネジ部が入るか（印刷公差 0.5 で足りているか、渋いか、ガタか）
+//  - 板厚 2.83 を挟んでもネジ部 8.3 の残り 5.47 でナットが十分に噛むか、締めたとき
+//    フランジ φ18.7 が平天面へ隙間なく座るか（座面 φ19 の範囲が反りで浮いていないか）
+else if (part == "sw_mount_coupon") {
+  hw = sw_seat_d/2 + 4;        // 切り出し半幅（座面のまわりに 4mm の余白＝指で摘める幅）
+  z0 = cover_inner_top - 1;    // 平天面のスラブを上下 1mm ずつ余して挟む
+  z1 = cover_top_z + 1;
+  // 切り出し箱が平天面の内側（±X 内壁 / -Y 内壁 / 勾配の始点）に収まること。はみ出すと
+  // 壁や斜面を巻き込んで「板厚 2.83 の平板」でなくなり、実物と同じ条件の確認にならない。
+  assert(sw_pt[0] - hw >= cover_x0 && sw_pt[0] + hw <= cover_x1 &&
+         sw_pt[1] - hw >= cover_y0 && sw_pt[1] + hw <= cover_slope_y0,
+         "スイッチクーポンの切り出し箱が平天面をはみ出す");
+  translate([0, 0, cover_top_z]) rotate([180, 0, 0])
+    intersection() {
+      cover();
+      translate([sw_pt[0], sw_pt[1], (z0 + z1)/2])
+        cube([2*hw, 2*hw, z1 - z0], center = true);
+    }
+}
 else if (part == "asm_body") color("SteelBlue") body();
 else if (part == "asm_socket")
   color("SandyBrown")

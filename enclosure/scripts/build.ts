@@ -13,6 +13,7 @@ const smartlock = join(modelsDir, "smartlock.scad");
 // smartlock.scad から -D part= で切り出す部品（asm_* は組立プレビュー）
 const parts = [
   "body", "pedestal", "socket", "tray", "cover",
+  "sw_mount_coupon",
   "asm_body", "asm_pedestal", "asm_socket", "asm_tray", "asm_cover",
 ];
 // 単体 scad の実測補助ゲージ・テストクーポン
