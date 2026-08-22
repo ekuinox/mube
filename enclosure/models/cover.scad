@@ -9,13 +9,15 @@ module cover() {
   difference() {
     union() {
       cover_shell();
-      // 固定耳（裾の外へ張り出す。プレートのラグ上のボスに被さる）
+      // 固定耳（裾の外へ張り出す。プレート上面のボスに被さる）
       for (p = cover_ear_pts)
         translate([p[0], p[1], wall]) m2_sleeve_solid();
       cover_ear_webs();
+      cover_ear_gussets();
     }
     for (p = cover_ear_pts)
       translate([p[0], p[1], wall]) m2_sleeve_cuts();
+    cover_ear_driver_bores();
     cover_usb_cut();
     cover_mesh_cut();
     flat_top_hole(sw_pt, sw_panel_d);
@@ -39,7 +41,7 @@ module cover_ear_webs() {
   y0 = cover_y0 - cover_wall;   y1 = cover_y1 + cover_wall;
   difference() {
     translate([0, 0, z0])
-      linear_extrude(height = wall + tray_boss_h + tray_cap_t - z0)
+      linear_extrude(height = cover_ear_top_z - z0)
         difference() {
           for (p = cover_ear_pts)
             if ((p[0] < x0 + cover_round_r || p[0] > x1 - cover_round_r) &&
@@ -56,6 +58,82 @@ module cover_ear_webs() {
     // 屋根面より上へはみ出させない（+Y 側は屋根がこの高さまで降りてくる）
     cover_roof_cut(cover_top_z);
   }
+}
+
+// 固定耳のガセット（45°）。耳の天面（cover_ear_top_z）から裾の外面へ 45° で立ち上がる。
+// 天面をベッドに伏せて刷るので、耳の天面はワールドで「上に何も無い」＝印刷では下向きの
+// 水平面として、裾の外面から 6.7mm 片持ちで宙に現れる（ガセット無しの実測で 4 個 149mm²）。
+// ガセットがあると耳は「先に刷られた裾の肉」から 45° で生えてくるので水平な張り出しが消え、
+// ついでに耳の根元（φ7.8 の棒が厚さ 2.0 の壁から出ている所）が実際に太くなる。
+// 形は「その高さでの裾外面の外側オフセット」で切った断面の積み重ね:
+//   z = cover_ear_top_z + t の断面 = 耳のフットプリント ∩ offset(裾の外面, H - t)
+// オフセットは凸な相手（直線壁 / 角の丸め円）に向かって単調に縮むので、どの層も 45° 以内で
+// 内側へ寄る。t = H で断面が裾の肉そのものと一致して終わる＝ガセットの天は裾に載る。
+//  - ±X 壁上の 2 点: 相手は直線の壁外面 → オフセットは平面なので 45° の斜め半空間で削ぐ。
+//  - -Y の 2 隅:     相手は角の丸め円   → オフセットは同心円なので 45° のコーンで削ぐ。
+//    こちらはウェブ（cover_ear_webs）も一緒に支える必要があるので、断面は耳の円ではなく
+//    「角の丸め円 ⇔ 耳の円」の凸包（＝ウェブと同じフットプリント）を使う。
+// z 帯はウェブの上端（cover_ear_top_z）から始まるのでウェブとは面で繋がるだけ。プレート側の
+// 外周リブ（天面 wall + plate_rib_h = 6.4）とカバー固定ボス（天面 8.4）はどちらもこの帯より
+// 下なので当たらない。
+module cover_ear_gussets() {
+  x0 = cover_x0 - cover_wall;   x1 = cover_x1 + cover_wall;
+  y0 = cover_y0 - cover_wall;   y1 = cover_y1 + cover_wall;
+  difference() {
+    for (p = cover_ear_pts) {
+      cx = p[0] < (x0 + x1)/2 ? x0 + cover_round_r : x1 - cover_round_r;
+      cy = p[1] < (y0 + y1)/2 ? y0 + cover_round_r : y1 - cover_round_r;
+      wx = p[0] < (x0 + x1)/2 ? x0 : x1;          // 相手になる壁の外面
+      s  = p[0] < (x0 + x1)/2 ? 1 : -1;           // 壁から見た耳の向き（+X が 1）
+      if ((p[0] < x0 + cover_round_r || p[0] > x1 - cover_round_r) &&
+          (p[1] < y0 + cover_round_r || p[1] > y1 - cover_round_r))
+        intersection() {
+          translate([0, 0, cover_ear_top_z])
+            linear_extrude(height = cover_gusset_h_corner)
+              difference() {
+                hull() {
+                  translate([cx, cy]) circle(r = cover_round_r);
+                  translate(p) circle(d = tray_sleeve_od);
+                }
+                cover_outline_2d(cover_wall);   // 内腔は塞がない
+              }
+          // 角の丸め円と同心のコーン。底面 r = 丸め半径 + H、天面 r = 丸め半径ちょうど
+          // （＝角の実体そのもの）なので、天面が裾へそのまま載る。
+          translate([cx, cy, cover_ear_top_z])
+            cylinder(r1 = cover_round_r + cover_gusset_h_corner, r2 = cover_round_r,
+                     h = cover_gusset_h_corner);
+        }
+      else
+        intersection() {
+          translate([0, 0, cover_ear_top_z])
+            linear_extrude(height = cover_gusset_h_wall)
+              difference() {
+                translate(p) circle(d = tray_sleeve_od);
+                cover_outline_2d(cover_wall);
+              }
+          // 壁の外面から H だけ外に出た所を起点に、+z へ 45° で壁側へ倒れる半空間。
+          // rotate([0,45,0]) はローカル +x を (1,0,-1)/√2 に向けるので、ローカル x>=0 の
+          // 立方体が「x - wx + H >= z - cover_ear_top_z」側（= 支えのある側）になる。
+          translate([wx - s*cover_gusset_h_wall, p[1], cover_ear_top_z])
+            rotate([0, s > 0 ? 45 : 135, 0])
+              translate([0, -200, -200]) cube([400, 400, 400]);
+        }
+    }
+    // 屋根面より上へはみ出させない（params.scad の「+Y の耳／ガセットが屋根を突き抜ける」
+    // assert が守るので現在値では何も削らないが、保険として掛けておく）
+    cover_roof_cut(cover_top_z);
+  }
+}
+
+// ガセットを貫くドライバ穴。M2 は耳の天面から真下へ入るので、頭ザグリ（φtray_head_d）を
+// ガセットの上まで真っ直ぐ延長して軸上を空けておく。径をザグリより広げると、その段差が
+// 耳の天面に水平な張り出しとして戻ってくる（ガセットで消した分が復活する）ので同径に保つ。
+// 穴は耳の中心から半径 tray_head_d/2 = 2.1 しかなく、裾の外面までは 2.8 あるので裾は削らない。
+module cover_ear_driver_bores() {
+  for (p = cover_ear_pts)
+    translate([p[0], p[1], cover_ear_top_z - 0.1])
+      cylinder(d = tray_head_d,
+               h = max(cover_gusset_h_wall, cover_gusset_h_corner) + 0.2);
 }
 
 // 殻（外形 − 内腔）

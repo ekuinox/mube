@@ -359,6 +359,21 @@ cover_ear_pts = [
   [cover_x0 - cover_wall - cover_ear_off, tray_fix_y_hi],
   [cover_x1 + cover_wall + cover_ear_off, tray_fix_y_hi],
 ];  // (-33.5, -33.5) / (51.3, -33.5) / (-33.5, 86.9) / (51.3, 86.9)
+// 耳の天面（= スリーブの全高 = M2 頭の座面）。ガセット・ドライバ穴・屋根まわりの assert が
+// この 1 点を共有する。
+cover_ear_top_z = wall + tray_boss_h + tray_cap_t;   // 12.2
+
+// 耳のガセット（cover.scad の cover_ear_gussets）。カバーは天面をベッドに伏せて刷るので、
+// 耳の天面はワールドで「上に何も無い」＝印刷では下向きの水平面として、裾の外面から片持ちで
+// 宙に現れる（実測 4 個で 149mm²）。天面から裾へ 45° で立ち上がる補強を足して、耳が
+// 「先に刷られた裾の肉」から生えるようにする。
+// 高さ = 耳のフットプリントが「相手の面」からいちばん遠い点までの距離。それだけ登れば
+// 断面が裾の肉と一致して終わる（= どの層も 45° 以内で内へ縮む）。
+//  - ±X 壁上の耳: 相手は直線の壁外面。距離 = cover_ear_off + 耳の半径。
+//  - -Y 隅の耳:   相手は角の丸め円。距離 = 中心間距離 + 耳の半径 - cover_round_r。
+cover_gusset_h_wall   = cover_ear_off + tray_sleeve_od/2;   // 6.7
+cover_gusset_h_corner = (cover_ear_off + cover_round_r)*sqrt(2)
+                        + tray_sleeve_od/2 - cover_round_r; // 8.688
 plate_lug_d = 9;   // プレート側ラグの円径（スリーブ od 7.8 を内包）
 assert(plate_lug_d > tray_sleeve_od, "ラグ径がスリーブ外径以下");
 assert(max([for (p = cover_ear_pts) max(-p[0], -p[1])]) + plate_lug_d/2
@@ -379,20 +394,19 @@ assert((cover_ear_off - plate_margin + cover_round_r)*sqrt(2) - cover_round_r < 
 assert(plate_rib_h + fit_clearance < tray_boss_h + tray_cap_t,
        "リブが高すぎて耳ウェブの z 帯が消える");
 // +Y の耳（cover_ear_pts の y = tray_fix_y_hi、実体は m2_sleeve_solid() = φ tray_sleeve_od）
-// は屋根勾配の途中に直接載る。耳の天面（wall + tray_boss_h + tray_cap_t）が、耳の半径ぶん
-// +Y に張り出した最外点（tray_fix_y_hi + tray_sleeve_od/2）でもその y での屋根外面より
-// 上に出ると、伏せ印刷時にベッドから浮いた孤立島になり刷れない（Task 3 で踏んだ地雷）。
-// 将来 tray_fix_y_hi を +Y へ動かす変更に対するガード。中心 tray_fix_y_hi だけで見て
-// 最外点を見落とす失敗パターンは Ruling 9 参照（この assert 自体も一度その形で書いていた）。
-// 支配関係の注記: 現在値では下の assert（屋根がトレイ +Y 固定スリーブの天面に当たる。
-// cover_tray_gap ぶんの追加マージン込み）の方が必ず先に落ちるため、この assert は単独では
-// 発火しない（cover_top_z 基準 vs cover_inner_top+cover_tray_gap 基準の差ぶん、この assert
-// の方が常に緩い）。それでも削除しない: メッセージが「耳が孤立島になる」という cover.scad
-// 側の固有の破綻モードを名指ししており、下の assert（「屋根がスリーブ天面に当たる」という
-// 干渉そのもの）とは診断上の役割が違う。将来どちらかを変更・削除する際の判断材料として残す。
+// は屋根勾配の途中に直接載る。耳の天面とその上のガセット（cover_gusset_h_wall）が、耳の
+// 半径ぶん +Y に張り出した最外点（tray_fix_y_hi + tray_sleeve_od/2）でもその y での屋根外面
+// より上に出ると、伏せ印刷時にベッドから浮いた孤立島になり刷れない（Task 3 で踏んだ地雷）。
+// 中心 tray_fix_y_hi だけで見て最外点を見落とす失敗パターンは Ruling 9 参照（この assert
+// 自体も一度その形で書いていた）。y とガセット高の両方を同時に極値へ振った保守側の評価で、
+// 実形状（リムでのガセット高は耳の半径ぶん 3.9 までしか伸びない）より 2.8mm 厳しい。
+// 支配関係の注記: ガセットを足す前は下の assert（屋根がトレイ +Y 固定スリーブの天面に当たる）
+// の方が常に先に落ちる緩い assert だったが、いまは逆で、こちらの方が 2.87mm 厳しい
+// （LHS の差 cover_top_z - cover_inner_top = 2.83 に対し RHS の差が
+//  cover_gusset_h_wall - cover_tray_gap = 5.7）。現在の余裕は 0.93。
 assert(cover_top_z - (tray_fix_y_hi + tray_sleeve_od/2 - cover_slope_y0)
-       >= wall + tray_boss_h + tray_cap_t,
-       "+Y の耳の天面が屋根を突き抜ける（伏せ印刷で孤立島になる）");
+       >= cover_ear_top_z + cover_gusset_h_wall,
+       "+Y の耳／ガセットが屋根を突き抜ける（伏せ印刷で孤立島になる）");
 // cover_slope_y0（手置き定数）が守るべき3つの下限。cover_slope_y0 自体を導出式にすると
 // 下限とそれを検証する assert が同じ式になって恒真化するので、ここで独立に検証する
 // （Ruling 10）。
