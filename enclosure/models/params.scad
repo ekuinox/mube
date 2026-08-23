@@ -31,21 +31,10 @@ horn_stub_d     = 4.6;      // 中心突起の径。ホーン socket 側の中�
 // 抜け止めネジは不要（軸方向はドア↔サーボ間でソケットが挟持されるため）。回り止めは一文字バーポケットのキー嵌合＋中心突起で担う。
 
 // --- Raspberry Pi Pico W ---
+// 基板上にメスソケットで載せる Pico の外形（配置検証用）。
 pico_l        = 51.0;
 pico_w        = 21.0;
 pico_h        = 1.0;
-pico_hole_d   = 2.1;
-pico_hole_dx  = 47.0;   // mounting hole spacing along length
-pico_hole_dy  = 11.4;   // mounting hole spacing across width
-// GPIO ヘッダは両長辺・両面にピンが出るため、縁は掴めない。ヘッダより内側にある
-// 四隅の φ2.1 マウント穴で固定する。下側ピンが基板下面から pico_pin_drop 突き出すので、
-// 四隅スタンドオフで基板を浮かせて床から逃がし、上から M2 セルフタップで留める。
-pico_pin_drop = 6.0;    // 下側 GPIO ピンの基板下面からの突き出し（実測=6, 暫定）
-pico_boss_d   = 5.0;    // 四隅スタンドオフ外径
-pico_boss_h   = pico_pin_drop + 0.5;  // スタンドオフ高（下ピン先端が床上 0.5mm で浮く）= 6.5
-pico_screw_pilot = 2.1; // M2 セルフタップ下穴径（tray と同仕様。A1 mini 補正込みの実績値）
-pico_screw_grip  = 5;   // セルフタップ効き深さ（スタンドオフ上面から）
-
 
 // --- Door-fit clearances from the thumb-turn axis (origin = rosette center) ---
 clear_left  = 50;   // -X to door edge/frame（実測: ~50 未満の上限。精密値は未確定）
@@ -107,73 +96,15 @@ sock_claw_side    = 0.8;  // 爪の左右逃がし
 sock_claw_back    = 1.5;  // 梁背面の撓みしろ
 sock_claw_lead    = 1.6;  // 差し込みガイド高
 
-// --- Interior extents from the axis at origin (mm) ---
-// -X/-Y はドアクリアランスの硬い制約で不変。BB を収めるため +X/+Y に拡大する。
-// （後続の Pico 配置・BB・トレイ定数が参照するため、依存順でここに置く）
-ext_left  = 27;    // -X toward frame; <= clear_left
-ext_right = 86;    // +X; BB ポケット右(76.5) + 固定ポスト + トレイ床(+X端84.5)に 1.5mm 余裕
-ext_down  = 26;    // -Y toward handle; <= clear_down
-ext_up    = 122.3; // +Y free; BB ポケット上端(120.55) + 余白。BB 系のカーブ逃げ +2.3 シフト
-                   // (bb_off_y のアンカー変更) と同量を足し、Pico(ext_up 基準)も +2.3 の剛体
-                   // シフトになるようにしてトレイ単体の形状を不変に保つ
-
-// プレート外形（旧・箱外形と同じ footprint。壁は無いが名前は互換のため維持）
-body_l = ext_left + ext_right + 2*wall;   // 115.8
-body_w = ext_down + ext_up  + 2*wall;     // 153.1
-
-// body center relative to the axis (axis sits low-left, body grows up-right)
-center_x = (ext_right - ext_left) / 2;   // 28.5
-center_y = (ext_up - ext_down) / 2;      // 48.15
-
-// --- Pico placement in the +Y free space ---
-// Pico の配置。pico_usb_gap は「Pico USB 端 → プレート +Y 端（旧内壁線 ext_up）の余白」で、
-// USB プラグの抜き差しスペースとして維持する（壁開口は廃止済み・オープン構成）。
-pico_usb_gap = 11;
-pico_x = 0;
-pico_y = ext_up - pico_usb_gap - pico_l/2;    // 85.8
 pedestal_outer = rosette_d/2 + pedestal_wall_t + fit_clearance;  // 25.4
 
-// ペデスタル受けカーブの半径系（BB/トレイの -Y アンカーが参照するため、依存順でここに定義。
+// ペデスタル受けカーブの半径系（基板・トレイの -Y アンカーが参照するため、依存順でここに定義。
 // カーブ本体・ローブ等の残りのペデスタル定数は後段の「ペデスタルのボルトオン分離」ブロック）
 pedestal_fit   = 0.3;    // フランジ⇔受けカーブの横嵌めすき間（フェーズ2でクーポン実測して確定）
 ped_curb_wt    = 2.0;    // 受けカーブ壁厚
 ped_base_d     = 2*(rosette_d/2 + pedestal_wall_t + fit_clearance);  // フランジ基礎円 = 筒外径 50.8
 ped_curb_ri    = ped_base_d/2 + pedestal_fit;    // カーブ内半径 25.7
 ped_curb_ro    = ped_curb_ri + ped_curb_wt;      // カーブ外半径 27.7
-
-// --- Breadboard (half-size, 実測 85.5 x 54.5mm) ---
-// 浅い囲い壁ポケットへ落とし込む。厚み bb_t は形状に使わない（壁高で位置決め）。
-bb_l = 85.5;              // long side (along Y)
-bb_w = 54.5;              // short side (along X)
-bb_t = 9.6;              // 実測厚（両面テープ込み）。押さえタブのフック高がこの値に依存
-bb_clearance     = 0.5;   // BB 外形 → ポケット内壁のすき間
-bb_pocket_wt     = 2.0;   // ポケット壁厚
-bb_pocket_wall_h = 5.0;   // ポケット壁高（BB 下部を囲って位置決め）
-// BB 押さえレール（上下短辺の囲い壁を BB 上面まで立て、内側へリップで浮き止め）
-bb_rail_hook  = 1.5;      // リップの内側 overhang（BB 上端短辺へのかぶさり）
-bb_rail_lip_h = 1.5;      // リップの縦厚（上面テーパーで傾け差し込みガイド）
-pico_bb_gap      = 4;     // Pico 右端 → ポケット外壁左のすき間（ジャンパ差込）
-bb_ped_gap       = 2.35;  // ポケット外壁下端 → 受けカーブ外周のすき間
-
-// BB 中心（ワールド座標）。ポケット外壁の左端が Pico 右端から pico_bb_gap、
-// 下端が受けカーブ外周（ped_curb_ro。ペデスタル系で最も +Y に張り出す本体形状）から
-// bb_ped_gap だけ離れるように置く。旧アンカーは筒外周 pedestal_outer(25.4) だったが、
-// カーブ(27.7)の方が外にあり実機でトレイ床前縁が乗り上げたため、カーブ基準に変更（+2.3 シフト）。
-bb_off_x = pico_x + pico_w/2 + pico_bb_gap + bb_pocket_wt + bb_clearance + bb_w/2;  // 44.25
-bb_off_y = ped_curb_ro + bb_ped_gap + bb_pocket_wt + bb_clearance + bb_l/2;         // 75.3
-
-// BB ポケット内壁の端（BB 外形＋クリアランス）。Pico すき間を保つため -X（Pico 側）は
-// 動かさず、反対の +X（ツメ2つの下辺）側だけ bb_ext_farx ぶん外へ広げる。
-bb_ext_farx = 2.5;   // Pico と反対側(+X)へポケット内寸を拡張する量（Pico すき間 4mm を保つ）
-pocket_inner_left   = bb_off_x - bb_w/2 - bb_clearance;                 // 16.5（元通り＝gap 保持）
-pocket_inner_right  = bb_off_x + bb_w/2 + bb_clearance + bb_ext_farx;   // 74.5
-pocket_inner_bottom = bb_off_y - bb_l/2 - bb_clearance;                 // 32.05
-pocket_inner_top    = bb_off_y + bb_l/2 + bb_clearance;                 // 118.55
-// ポケット外形の端（アサート・床範囲・固定ポスト配置の基準）
-pocket_outer_left   = pocket_inner_left   - bb_pocket_wt;  // 14.5（元通り）
-pocket_outer_right  = pocket_inner_right  + bb_pocket_wt;  // 76.5
-pocket_outer_bottom = pocket_inner_bottom - bb_pocket_wt;  // 30.05
-pocket_outer_top    = pocket_inner_top    + bb_pocket_wt;  // 120.55
 
 // --- Electronics carrier tray ---
 tray_t           = 2.4;    // tray floor thickness
@@ -197,49 +128,334 @@ tray_cap_t     = 3.8;
 tray_sleeve_id = tray_boss_d + 2*boss_fit;             // ボア径（ボス逃げ）= 5.8
 tray_sleeve_od = tray_sleeve_id + 2*tray_sleeve_wt;    // スリーブ外径 = 7.8
 
-tray_fix_gap     = 1;      // ポケット外壁 → 右スリーブのすき間
-tray_fix_x_left  = -20;    // 左スリーブ列（Pico 左 -10.5 と壁 -27 の間）
-tray_fix_x_right = pocket_outer_right + tray_fix_gap + tray_sleeve_od/2;  // 81.4
-tray_fix_y_lo    = 42.3;   // 旧40。BB系のカーブ逃げ+2.3シフトに追従（トレイ形状不変）
-tray_fix_y_hi    = 102.3;  // 旧100。同上
+// --- ユニバーサル基板 P-03229（秋月 C タイプ, 片面めっき） ---
+// 横置き（長辺 72 を X 方向）。Pico はメスソケットで基板の上に重なるので、
+// 電子部品エリアのフットプリントはこの 1 枚ぶんで足りる。
+// （Z 積み上げが tray_t を、トレイ床範囲が tray_sleeve_od を参照するため、
+//   受けカーブ系ではなくトレイ定数の直後＝依存順でここに置く）
+pcb_l = 72;      // X 方向（長辺）
+pcb_w = 47;      // Y 方向（短辺）
+pcb_t = 1.6;
+assert(pico_l <= pcb_l && pico_w <= pcb_w, "Pico がユニバーサル基板の外形に収まらない");
+pcb_hole_d  = 3.2;   // 既製マウント穴（M2 は頭で押さえる。ネジ山は効かない）
+pcb_hole_dx = 66;    // 長辺方向の穴ピッチ
+pcb_hole_dy = 41;    // 短辺方向の穴ピッチ
+// 基板 -Y 端(35.3) は -Y 側トレイ固定スリーブの上端(30.7+3.9) を 0.7 かわす位置。
+// その固定点自体がペデスタルのフランジローブ(45°/135°, 先端 y=26.21)から
+// トレイ床を逃がした結果ここまで上がっている。
+pcb_ped_gap = 7.6;   // 基板 -Y 端 ⇔ 受けカーブ外周
+pcb_off_y   = ped_curb_ro + pcb_ped_gap + pcb_w/2;   // 58.8
+// 基板 -X 端を受けカーブ外周とほぼ同じ x（-27）に揃え、プレート -X 端を最小にする
+pcb_off_x   = -27 + pcb_l/2;                          // 9
+pcb_hole_pts = [for (sx = [-1, 1], sy = [-1, 1])
+                 [pcb_off_x + sx*pcb_hole_dx/2, pcb_off_y + sy*pcb_hole_dy/2]];
+
+pcb_standoff_h = 5;    // 支柱高（基板裏のハンダ足逃げ）
+pcb_standoff_d = 5;    // 支柱外径（tray_boss_d に倣う）
+pcb_screw_grip = 4;    // セルフタップ効き深さ（支柱高より浅く）
+
+// 基板上の Z（積み上げ）
+pcb_z0    = wall + tray_t + pcb_standoff_h;   // 基板下面 9.8
+pcb_top_z = pcb_z0 + pcb_t;                   // 基板上面 11.4
+pcb_stack_pico = 9.5;    // 基板上面 → Pico 上面（メスソケット 8.5 + Pico 1.0）
+pcb_stack_usb  = 12.0;   // 基板上面 → USB コネクタ上端
+pcb_stack_tall = 16.0;   // 基板上面 → 最高部品（TO-220 立て）上端
+// 基板上面 → 低背部品（抵抗・ダイオード）上端。
+// 注意: この定数を読む assert はもう無い（唯一の読み手だった cover_test.scad の
+// 「屋根が基板 +Y 端に当たる」は、同じ評価点で pcb_stack_mid + 2 を要求する
+// params.scad の assert に完全に包含されるので削除した）。実効的なガードは
+// pcb_stack_mid 側が担っており、これは部品高さのバジェットを文書として残すためのもの。
+// つまりこの値を編集しても検証結果は何も変わらない。
+pcb_stack_low  = 3.0;
+// +Y 側の中背部品の上端。実物で一番背が高いのは C1（470µF 16V ルビコン PX
+// 16PX470MEFC8X11.5 = φ8 × 11.5、リードピッチ 3.5）で、次が D1 の 2 色 LED（φ5 × 8.6）。
+// 11.5 を 12.0 へ丸めて予算として持つ。屋根は +Y ほど低いので、この値が「基板のどこに
+// 中背部品を置いてもよいか」を決める（Sanity セクションの assert 参照）。
+pcb_stack_mid  = 12.0;
+
+tray_fix_x_left  = -22;
+tray_fix_x_right = 40;
+// -Y 側の下限を決めるのはペデスタルのフランジローブ（45°/135°）。ローブ先端円は
+// (±21.21, 21.21) 中心・半径 ped_lobe_w/2=5 なので上端が y=26.21 まで来る。トレイ床
+// (tray_y0 = ここ - 3.9 - 0.1) がこれに 0.3 のマージンで乗らない下限は y=30.513。
+// 採用値 30.7 の余裕は 0.187 しかないので、この 3 定数はどれも動かすと assert が鳴る。
+// スリーブ中心間もローブ半幅込みの下限 9.4 に対し 9.519（余裕 0.119）とやはり詰まっている。
+tray_fix_y_lo    = 30.7;   // 基板 -Y 端(35.3) の下
+tray_fix_y_hi    = 86.9;   // 基板 +Y 端(82.3) の上
 tray_fix_pts = [
   [tray_fix_x_left,  tray_fix_y_lo], [tray_fix_x_left,  tray_fix_y_hi],
   [tray_fix_x_right, tray_fix_y_lo], [tray_fix_x_right, tray_fix_y_hi],
 ];
+tray_x0 = pcb_off_x - pcb_l/2 - 0.5;                  // -27.5
+tray_x1 = pcb_off_x + pcb_l/2 + 0.5;                  // 45.5
+tray_y0 = tray_fix_y_lo - tray_sleeve_od/2 - 0.1;     // 26.7
+tray_y1 = tray_fix_y_hi + tray_sleeve_od/2 + 0.1;     // 90.9
+tray_ped_notch_r = ped_curb_ro + 1.3;                 // 29。床が受けカーブをまたぐ逃げ
 
-// トレイ床 X 範囲（スリーブ外径基準）。右は +X 壁が近いのでスリーブ外周に flush（余白0）。
-tray_x0 = tray_fix_x_left  - tray_sleeve_od/2 - 1;   // -24.9
-tray_x1 = tray_fix_x_right + tray_sleeve_od/2;        // 85.3
-tray_y0 = pocket_outer_bottom - 0.75;            // 29.3
-tray_y1 = pocket_outer_top    + 0.25;            // 120.8
+// --- サーボ上端（カバー天井の根拠） ---
+servo_top_z = pedestal_top_z + servo_body_h;   // 70.9
 
 // ペデスタルのボルトオン分離（プレート受けカーブ＋底フランジ、天面 M2 留め）。
 // トレイと同じボス/スリーブ/ファンネル構造を流用。フランジ基礎円が受けカーブに落ちて軸センタ
 // リング、対角4ローブがカーブ切り欠きと噛んでサーボ反力トルクの回り止め、M2×4 は抜け止め専任。
 ped_flange_t   = 2.4;    // 底フランジ厚（トレイ床と同厚＝スリーブ構造を無改造で流用）
-ped_fix_r      = 30;     // 固定ボス配置半径。対角4点で -X/-Y プレート端(26/27)とトレイ床(y>=29.3)を回避
+ped_fix_r      = 30;     // 固定ボス配置半径。対角4点で -X/-Y プレート端とトレイ床(y>=26.7)を回避
 ped_fix_angles = [45, 135, 225, 315];
 ped_fix_pts    = [for (a = ped_fix_angles) [ped_fix_r*cos(a), ped_fix_r*sin(a)]];
 ped_curb_h     = ped_flange_t;   // カーブ高（フランジ上面と面一）
 ped_lobe_w     = 10;     // フランジローブ幅（スリーブ od 7.8 を内包し、カーブ切り欠きと噛む）
-// （pedestal_fit / ped_curb_wt / ped_base_d / ped_curb_ri / ped_curb_ro は BB アンカーが
-//   参照するため前方の「受けカーブの半径系」ブロックで定義済み）
+// （pedestal_fit / ped_curb_wt / ped_base_d / ped_curb_ri / ped_curb_ro は基板・トレイの
+//   -Y アンカーが参照するため前方の「受けカーブの半径系」ブロックで定義済み）
 ped_curb_tray_gap = 1.0; // 受けカーブ外周 → トレイ床下端に要求する最小すき間（干渉ガード用）
 
 // プレート上面リブ（手持ち時の剛性・印刷反り対策。ドア面はフラット維持）。
-// 横桟はトレイ床(y>=tray_y0=29.3)とペデスタルスリーブ帯(対角 y≈17.3〜25.1)を避けた位置に置く。
+// 横桟はプレート全幅に走るのでカバーの -X/+X 側壁の真下を貫いてしまい、カバーが座らない。
+// よって全廃し、剛性は M2 留めされたカバーが肩代わりする。残るのはカバー固定ボス
+// （cover_ear_pts の4点。-Y 側の2隅＋±X 壁上の2点）を逃がした周回リブ（＝閉じた一周
+// ではなく4本の直線区間）で、これがカバー裾の外面を受ける（plate_rib_* / plate_margin 参照。
+// 詳細は body.scad の plate_ribs() 参照）。リブの通り道はカバー裾に貼り付いた寸法なので、
+// プレート外形とは別の矩形（plate_rib_x0 …）で持つ。
 plate_rib_h  = 4;            // リブ高（床上面から）
 plate_rib_w  = 2;            // リブ幅
-plate_rib_ys = [-14, 14];    // 横桟の y（ワールド y＝ロゼット軸基準。プレート中心基準ではない）（受けカーブとの交差は差し引きで自動処理）
+plate_rib_ys = [];           // 横桟なし（ワールド y のリスト。空＝外周リブのみ）
+
+// --- カバー内面（プレート外形の起点。カバー本体は Task 3 の cover.scad） ---
+cover_wall  = 2.0;
+cover_clear = 1.0;    // 内面 ⇔ 中身のすきま
+cover_x0 = -(ped_curb_ro + cover_clear);   // -28.7（受けカーブが支配）
+cover_x1 = tray_x1 + cover_clear;          // 46.5
+cover_y0 = -(ped_curb_ro + cover_clear);   // -28.7
+cover_y1 = tray_y1 + cover_clear;          // 91.9
+// 外形角の丸め半径。カバー裾（cover.scad の cover_outline_2d / cover_ear_webs /
+// cover_ear_gussets）とプレート外形・外周リブ（body.scad の plate_outline_2d /
+// plate_rib_outline_2d）が同じ offset(r) offset(-r) の書き方で共有する。-Y 隅の耳の
+// ウェブとガセットは「角の丸め円が裾の実体そのもの」という前提で寸法を出しているので、
+// ここがずれると両方の接地がずれる。1 箇所で持つ。
+cover_round_r = 2;
+
+// カバーの高さと勾配。天面をベッドに伏せて刷るので屋根に水平な段を作らない
+// （段は第 1 層より下に宙で現れて垂れる）。+Y への単一勾配 45°。
+cover_head_clear = 2.0;                                    // サーボ上端 ⇔ 内面天井
+cover_inner_top  = servo_top_z + cover_head_clear;         // 72.9
+// 斜面で壁厚 cover_wall を「垂直」に確保するには、天面との垂直差が √2 倍要る。
+// 平天面の厚みは cover_wall*sqrt(2) = 2.83 になる（ベッド面なので厚い方が都合が良い）。
+cover_top_z      = cover_inner_top + cover_wall*sqrt(2);   // 75.73
+// カバー内面とトレイ固定スリーブ天面に要求する最小すきま。勾配開始 y の下限と
+// cover_test.scad の検証の両方がこの 1 個を参照する（別々に書くと値がずれる。
+// 実際に Ruling 8 で 0.5 と 1.0 の2つの値を書いて食い違わせた反省）。
+cover_tray_gap = 1.0;
+
+// 勾配の開始 y。手置き。下の3本の assert（Sanity セクション）が下限を守る。
+//  - ペデスタル域を全高で覆う下限: ped_curb_ro + cover_clear = 28.7
+//  - トレイ +Y 固定スリーブの天面をかわす下限:
+//    (tray_fix_y_hi + tray_sleeve_od/2) - (cover_inner_top - (wall+tray_boss_h+tray_cap_t) - cover_tray_gap)
+//    = 31.1（スリーブは中心 tray_fix_y_hi から半径ぶん +Y に張り出すので、最外点 90.8 で
+//    評価する。式は Ruling 10 で assert 側へ移した参考値であり、この行の数値をコードが
+//    読むことはない）
+//  - 基板 +Y 端の上に中背部品を置いても +2 が残る下限（Ruling 12。現在の支配項）:
+//    (pcb_off_y + pcb_w/2) + pcb_stack_mid - (cover_inner_top - pcb_top_z - 2)
+//    = 82.3 + 12.0 - 59.5 = 34.8
+// 導出式のままだと下限とそれを検証する assert が同じ式になって恒真化するうえ、浮動小数の
+// 等号ぎりぎりで丸め次第で落ちるため、値は手で置いて 0.1 の余裕を持たせてある。
+// 31.2 → 34.9 は Ruling 12。基板が +5.3 動いた（Ruling 1/3）のに屋根は +2.5 しか上がって
+// おらず（Ruling 8/10）、+Y 側の C1/LED の頭上が他の屋根 assert が一律に要求する +2 を
+// 割っていた（LED 1.8 / C1 1.4）ので、その慣行に戻す。cover_top_z は変わらないので全高は
+// 不変で、増えるのは「平天面が +Y へ 3.7mm 伸び、斜面がそのぶん短くなる」ぶんと +Y 壁が
+// 3.7mm 高くなるぶん（実測で +2g 弱。Ruling 14 の重量表参照）。
+cover_slope_y0 = 34.9;
+// 屋根内面の高さ（y の関数）。干渉チェックの assert が参照する。
+function roof_in_z(y) = cover_inner_top - max(0, y - cover_slope_y0);
+// 背高部品（pcb_stack_tall）を置ける +Y 側の限界。roof_in_z(y) >= pcb_top_z + pcb_stack_tall + 2
+// を y について解いたもの。これより +Y は屋根が下がるので中背・低背部品だけ。基板は 82.3 まで
+// あるので、+Y 端 3.9mm（= 82.3 - pcb_tall_y_max）ほどは 16mm 級を置けない帯になる。
+// 注意: 屋根の斜面はハニカムで抜けているが、抜けているのは材料であって空間の余裕では
+// ないので、部品高さの予算はメッシュの有無に関わらずこの式のまま。
+pcb_tall_y_max = cover_slope_y0 + cover_inner_top - (pcb_top_z + pcb_stack_tall) - 2;  // 78.4
+assert(pcb_tall_y_max > pcb_off_y - pcb_w/2, "背高部品を置ける帯が基板上に存在しない");
+
+// 開口: USB 切欠き（+X 壁）
+cover_usb_y = pcb_off_y;                    // 58.8
+cover_usb_z = pcb_top_z + pcb_stack_pico + (pcb_stack_usb - pcb_stack_pico)/2;  // 22.15
+cover_usb_w = 14;    // Y 方向
+cover_usb_h = 10;    // Z 方向
+
+// 開口: 屋根斜面のハニカム（六角メッシュ）。LED 窓を廃した代わりの開口で、LED を基板の
+// どこに実装しても近くから光が抜けるようにする（実装位置が未定なので窓を一点に決められ
+// ない）。穴は斜面の法線方向に貫く（cover.scad の cover_mesh_cut）。
+// 開けるのは斜面だけ。平天面はベッド接地面（天面を伏せて刷る）なので、第 1 層を穴だら
+// けにすると剥がれ・反りを招く。ここを開けない代わりに斜面は基板の +Y 側を広く覆う。
+cover_mesh_af     = 5.0;   // 六角の対辺距離（across-flats）
+cover_mesh_web    = 3.0;   // 隣り合う六角の平らな辺どうしに残る桟の幅（=格子間隔 - 対辺距離）
+cover_mesh_margin = 4.0;   // 斜面の縁（稜線 / +Y 内壁 / ±X 内壁）から残すソリッドの幅
+// 六角の全体が上のマージン帯より内側に入るものだけを残す（縁で半端に切られた六角が
+// 極細のスライバを作るのを避ける）。判定は cover.scad 側。
+// 桟の下限はノズル 0.4 の 4 パス相当 = 1.6。これ未満に細ると印刷で繋がらない
+// （採用値 3.0 は 7 パス相当で、下限に 1.4 の余裕がある。2.0 では見た目に桟が細く
+//  頼りなかったので、レンダリングを見て 3.0 へ太らせた。格子間隔は 7.0 → 8.0）。
+assert(cover_mesh_web >= 4*0.4, "ハニカムの桟がノズル幅に対して細すぎる");
+// 稜線側のマージンは cover_wall より厚くなければならない。cover.scad の穴は法線方向の
+// プリズムなので、稜線から斜距離 v の位置にある穴は v <= cover_wall のとき平天面のスラブ
+// を貫く（プリズムを平天面のスラブに当てて解くとこの条件になる）。つまりマージンが
+// cover_wall まで下がると、上のコメントの「平天面は開けない」が黙って破れる。
+assert(cover_mesh_margin > cover_wall,
+       "メッシュのマージンが薄く、ベッド接地面（平天面）に穴が開く");
+// 斜面がメッシュを 1 個も置けないほど短くないこと（cover_slope_y0 を +Y へ寄せると縮む）。
+// 斜距離は屋根が板として自立している範囲＝稜線から +Y 内壁まで。
+assert((cover_y1 - cover_slope_y0)*sqrt(2) - 2*cover_mesh_margin >= cover_mesh_af,
+       "斜面が短すぎてハニカムが 1 行も入らない");
+assert((cover_x1 - cover_x0) - 2*cover_mesh_margin >= 2*cover_mesh_af/sqrt(3),
+       "斜面が狭すぎてハニカムが 1 列も入らない");
+
+// --- パネル取付スイッチ PS21B-1（秋月 P-04583, モーメンタリ OFF-(ON)） ---
+sw_thread_d = 11.5;   // ネジ部外径（実測 2026-08-16）
+sw_panel_d  = 12.0;   // 取付穴（すきま 0.5。印刷公差込み）
+sw_flange_d = 18.7;   // フランジ外径
+sw_seat_d   = 19.0;   // 座面として平面が要る径
+sw_thread_l = 8.3;    // ネジ部長さ（挟めるパネル厚の上限）
+sw_depth    = 26;     // パネル面より内側の奥行き（端子先端まで）
+sw_cap_d    = 14;     // キャップ外径
+sw_cap_h    = 7.6;    // パネル面より外への突出
+sw_body_d   = sw_thread_d;   // 本体（掃引体）の外径。実測が無いのでネジ部外径を保守的に流用
+// 取付中心（xy）。斜面ではなく「平天面のサーボの脇」。斜面はハニカムにしたので穴を
+// 置く平らな面が残らず、また平天面の方が奥行き 26mm を鉛直に落とせて素直。
+sw_pt       = [32, 0];
+// 取付点の天面外側 z と、鉛直に sw_depth 伸ばした本体先端の z。平天面なので
+// 斜面の頃と違い y に依存せず、軸を鉛直に取るので cos(45) の目減りも無い。
+sw_face_z = cover_top_z;              // 75.73
+sw_tip_z  = sw_face_z - sw_depth;     // 49.73
+// keep-out: 本体を φsw_body_d の鉛直円柱として sw_depth 掃引すると、ワールド
+// x 26.25〜37.75 / y -5.75〜5.75 / z 49.73〜75.73 の柱を占める。かわす相手は基板ではなく
+// （基板は y >= 35.3 なのでこの柱の外）、原点まわりのペデスタルとサーボ。
+//  - ペデスタル筒（半径 pedestal_outer = 25.4、天板上面 48.4）: 柱の底面 49.73 が天板を
+//    1.33 かわす。加えて柱の軸に最も近い点も原点から 26.25 あり、筒の 25.4 を 0.85 かわす。
+//  - サーボ（z 48.4〜70.9 で柱と z が重なる）: +X の極値は本体（16.65）ではなく耳の先端
+//    servo_shaft_offset + servo_tab_l/2 = 21.5。柱の -X 端 26.25 との余裕は 4.75。
+// 3 本とも cover_test.scad の assert が守る。
+
+// --- 外周リブ（カバー裾の位置決めリップ）の矩形 ---
+// カバー裾の外面を外周リブの内面で受ける。リブ帯の外縁 = 裾外面 + リブ幅 + 嵌合すきま。
+// この矩形は「カバー裾に貼り付いた寸法」なので、下のプレート外形が広がっても動かさない。
+// 動かすとリップが裾から離れ、カバーの XY 位置決めが効かなくなる（プレート外形に追従
+// させると現行値で 5.3mm も離れる）。
+cover_lip_fit = 0.3;
+plate_margin  = plate_rib_w + cover_lip_fit;   // 2.3
+plate_rib_x0 = cover_x0 - cover_wall - plate_margin;   // -33.0
+plate_rib_x1 = cover_x1 + cover_wall + plate_margin;   //  50.8
+plate_rib_y0 = cover_y0 - cover_wall - plate_margin;   // -33.0
+plate_rib_y1 = cover_y1 + cover_wall + plate_margin;   //  96.2
+// カバー固定の耳。-Y 側は裾の外角から対角方向へ各軸 cover_ear_off ずらし、
+// 円（tray_sleeve_od）が裾の角にちょうど接するようにする。
+// +Y 側は角ではなく ±X 壁の y = tray_fix_y_hi（トレイ +Y 固定点と同じ y）に置く。
+// +Y の角（y = 96.7）に置くと、耳の天面（12.2）が耳の +Y リム（96.7 + 3.9 = 100.6）での
+// 屋根外面（10.03）を突き抜け、天面をベッドに伏せる印刷でベッドから 63mm の孤立島に
+// なって刷れない。ここも中心（y 96.7、屋根外面 13.93）だけ見ると突き抜けが見えないので、
+// 必ずリムで評価する（下の assert も同じ理由でリムを使う）。
+// y = 86.9 なら屋根外面が 23.73（リム 90.8 でも 19.83）なので耳は壁の高さに収まり、
+// しかも直線の壁には角丸めの引っ込みが無いので耳の円が
+// 裾外面へ 1.1mm 食い込み、ウェブ無しで裾と繋がる（cover.scad の cover_ear_webs 参照）。
+cover_ear_off = 2.8;
+cover_ear_pts = [
+  [cover_x0 - cover_wall - cover_ear_off, cover_y0 - cover_wall - cover_ear_off],
+  [cover_x1 + cover_wall + cover_ear_off, cover_y0 - cover_wall - cover_ear_off],
+  [cover_x0 - cover_wall - cover_ear_off, tray_fix_y_hi],
+  [cover_x1 + cover_wall + cover_ear_off, tray_fix_y_hi],
+];  // (-33.5, -33.5) / (51.3, -33.5) / (-33.5, 86.9) / (51.3, 86.9)
+// 耳の天面（= スリーブの全高 = M2 頭の座面）。ガセット・ドライバ穴・屋根まわりの assert が
+// この 1 点を共有する。
+cover_ear_top_z = wall + tray_boss_h + tray_cap_t;   // 12.2
+
+// 耳のガセット（cover.scad の cover_ear_gussets）。カバーは天面をベッドに伏せて刷るので、
+// 耳の天面はワールドで「上に何も無い」＝印刷では下向きの水平面として、裾の外面から片持ちで
+// 宙に現れる（実測 4 個で 149mm²）。天面から裾へ 45° で立ち上がる補強を足して、耳が
+// 「先に刷られた裾の肉」から生えるようにする。
+// 高さ = 耳のフットプリントが「相手の面」からいちばん遠い点までの距離。それだけ登れば
+// 断面が裾の肉と一致して終わる（= どの層も 45° 以内で内へ縮む）。
+//  - ±X 壁上の耳: 相手は直線の壁外面。距離 = cover_ear_off + 耳の半径。
+//  - -Y 隅の耳:   相手は角の丸め円。距離 = 中心間距離 + 耳の半径 - cover_round_r。
+cover_gusset_h_wall   = cover_ear_off + tray_sleeve_od/2;   // 6.7
+cover_gusset_h_corner = (cover_ear_off + cover_round_r)*sqrt(2)
+                        + tray_sleeve_od/2 - cover_round_r; // 8.688
+
+// --- プレート外形 ---
+// 素の角丸矩形。旧版は矩形＋耳位置の φ9 ラグを角R で融合させていたが、ラグ込みの実測
+// バウンディングボックス（93.8 × 134.2）まで矩形を張り出させても外形封筒は 1mm も増えず、
+// 増えるのは四隅の空き地ぶん（実測 +5.0g）だけなので素の矩形へ統合した。細い張り出しが
+// 折れる心配と「ラグが本体矩形から離れて別体の円盤になる」破綻モードがまとめて消える。
+// TASK-6（上部が重く面ファスナーが剥がれる）は実機で想定よりずっと保っていることが
+// 確認できたので、この +5g は許容する。
+plate_ear_pad = 0.6;                              // 耳（スリーブ外径）のまわりに残す肉
+plate_ear_r   = tray_sleeve_od/2 + plate_ear_pad; // 4.5
+// 0.4 = ノズル 1 パス。これを割ると耳のまわりに肉が乗らず、M2 がプレートの縁を噛む。
+assert(plate_ear_pad >= 0.4, "耳のまわりに残るプレートの肉がノズル幅未満");
+// 外形はリブ矩形と「耳＋肉」の両方を包む。-X/-Y/+X は耳が、+Y はリブ矩形が決める。
+plate_x0 = min(plate_rib_x0, min([for (p = cover_ear_pts) p[0]]) - plate_ear_r);   // -38.0
+plate_x1 = max(plate_rib_x1, max([for (p = cover_ear_pts) p[0]]) + plate_ear_r);   //  55.8
+plate_y0 = min(plate_rib_y0, min([for (p = cover_ear_pts) p[1]]) - plate_ear_r);   // -38.0
+plate_y1 = max(plate_rib_y1, max([for (p = cover_ear_pts) p[1]]) + plate_ear_r);   //  96.2
+body_l   = plate_x1 - plate_x0;        // 93.8
+body_w   = plate_y1 - plate_y0;        // 134.2
+center_x = (plate_x0 + plate_x1)/2;    // 8.9
+center_y = (plate_y0 + plate_y1)/2;    // 29.1
+// cover_ear_off の下限・上限ガード（対）。
+// 下限: 「円（tray_sleeve_od）が裾の角にちょうど接する」という上のコメントの設計意図。
+// cover_ear_off が小さすぎると耳のスリーブが裾の角に食い込む。
+assert(cover_ear_off*sqrt(2) >= tray_sleeve_od/2,
+       "cover_ear_off が小さく、耳のスリーブが裾の角に食い込む");
+// 上限: ±X 壁上の耳は「円が裾の外面へ食い込む」ことでウェブ無しに裾と繋がり、ガセットも
+// その食い込み部で裾に着地する。食い込みが消えると耳もガセットも裾から浮く。
+// 0.8 = ノズル 2 パス（食い込み帯がこれ以下だと繋がったとは言えない）。現在値の食い込みは
+// 3.9 - 2.8 = 1.1。
+assert(tray_sleeve_od/2 - cover_ear_off >= 0.8,
+       "±X 壁上の耳が裾の外面へ食い込まず、裾から浮く");
+// -Y の耳は角丸めのぶん裾から浮くので cover_ear_webs() が橋を架ける。その橋はリブ天面より
+// 上の z 帯（wall + plate_rib_h + fit_clearance 〜 cover_ear_top_z）に張るので、
+// リブが高くなると帯が消えて linear_extrude が負の高さになり、耳が黙って分離する。
+assert(plate_rib_h + fit_clearance < tray_boss_h + tray_cap_t,
+       "リブが高すぎて耳ウェブの z 帯が消える");
+// +Y の耳（cover_ear_pts の y = tray_fix_y_hi、実体は m2_sleeve_solid() = φ tray_sleeve_od）
+// は屋根勾配の途中に直接載る。耳の天面とその上のガセット（cover_gusset_h_wall）が、耳の
+// 半径ぶん +Y に張り出した最外点（tray_fix_y_hi + tray_sleeve_od/2）でもその y での屋根外面
+// より上に出ると、伏せ印刷時にベッドから浮いた孤立島になり刷れない（Task 3 で踏んだ地雷）。
+// 中心 tray_fix_y_hi だけで見て最外点を見落とす失敗パターンは Ruling 9 参照（この assert
+// 自体も一度その形で書いていた）。y とガセット高の両方を同時に極値へ振った保守側の評価で、
+// 実形状（リムでのガセット高は耳の半径ぶん 3.9 までしか伸びない）より 2.8mm 厳しい。
+// 支配関係の注記: ガセットを足す前は下の assert（屋根がトレイ +Y 固定スリーブの天面に当たる）
+// の方が常に先に落ちる緩い assert だったが、いまは逆で、こちらの方が 2.87mm 厳しい
+// （LHS の差 cover_top_z - cover_inner_top = 2.83 に対し RHS の差が
+//  cover_gusset_h_wall - cover_tray_gap = 5.7）。現在の余裕は 0.93。
+assert(cover_top_z - (tray_fix_y_hi + tray_sleeve_od/2 - cover_slope_y0)
+       >= cover_ear_top_z + cover_gusset_h_wall,
+       "+Y の耳／ガセットが屋根を突き抜ける（伏せ印刷で孤立島になる）");
+// cover_slope_y0（手置き定数）が守るべき3つの下限。cover_slope_y0 自体を導出式にすると
+// 下限とそれを検証する assert が同じ式になって恒真化するので、ここで独立に検証する
+// （Ruling 10）。
+assert(cover_slope_y0 >= ped_curb_ro + cover_clear,
+       "勾配開始がペデスタル域に食い込む");
+// スリーブは中心 tray_fix_y_hi ではなく半径ぶん +Y に張り出した最外点で評価する
+// （中心だけを見て実干渉を1回見落とした。clash.ts の cover×tray ペアが検出した）。
+assert(roof_in_z(tray_fix_y_hi + tray_sleeve_od/2)
+       >= wall + tray_boss_h + tray_cap_t + cover_tray_gap,
+       "屋根がトレイ +Y 固定スリーブの天面に当たる");
+// 基板 +Y 端の上に中背部品（C1 φ8x11.5 / LED φ5x8.6）を置いても、他の屋根 assert と同じ
+// +2 のマージンが残ること（Ruling 12）。評価点を特定の部品座標ではなく基板の +Y 端
+// （= 基板上で屋根が最も低くなる位置）に取っているのは、基板上の部品配置がモデル化されて
+// おらず（はんだ実装は TASK-4 でこれからやる）、配置が動いても書き換えずに済ませたいため。
+// 「12mm 以下の部品なら基板のどこに置いてもよい」という不変条件として読む。
+// これが cover_slope_y0 の現在の支配項で、34.9 に対し余裕は 0.1（25.5 >= 25.4）。
+assert(roof_in_z(pcb_off_y + pcb_w/2) >= pcb_top_z + pcb_stack_mid + 2,
+       "屋根が基板 +Y 側の中背部品（C1/LED）に当たる");
+
+// 旧 ext_* は「軸原点から内寸の端まで」の意味。既存 assert と互換のため導出で残す。
+ext_left  = -plate_x0 - wall;
+ext_right =  plate_x1 - wall;
+ext_down  = -plate_y0 - wall;
+ext_up    =  plate_y1 - wall;
 
 // --- Sanity / clearance checks ---
 assert(wall > 0, "wall must be positive");
 assert(fit_clearance >= 0, "fit_clearance must be >= 0");
 assert(ext_left <= clear_left, "left extent exceeds door clearance");
 assert(ext_down <= clear_down, "down extent exceeds handle clearance");
-// Realized outer extents: body outer edge from origin = body_l/2 - center_x (-X) and body_w/2 - center_y (-Y)
-assert(body_l/2 - center_x <= clear_left, "realized left extent exceeds door clearance");
-assert(body_w/2 - center_y <= clear_down, "realized down extent exceeds handle clearance");
 assert(knob_w_top <= knob_w_base, "knob tapers base->top");
 assert(knob_engage < knob_h, "engagement shallower than protrusion");
 
@@ -277,42 +493,65 @@ assert(sock_claw_bar_hw > knob_t/2 + fit_clearance + 0.4, "爪の根元の直下
 assert(sock_claw_root <= socket_oh, "爪の根元がソケット全高を超える");
 assert(sock_claw_preload < sock_claw_hk/2, "予圧がくさび勾配に対して過大（坂が急になり自己ロックが崩れる）");
 
-// --- Electronics tray / breadboard layout checks ---
-// Pico が +Y 天井壁寄りでペデスタルをクリア
-assert(pico_y - pico_l/2 > pedestal_outer, "Pico -Y 端がペデスタルに干渉");
-assert(pico_y + pico_l/2 <= ext_up, "Pico +Y 端が内寸を超える");
-// Pico 四隅スタンドオフ: 下ピンを床から逃がし、下穴がスタンドオフ内に収まる
-assert(pico_boss_h >= pico_pin_drop, "スタンドオフ高が下ピン突出を逃がせない");
-assert(pico_screw_grip < pico_boss_h, "ネジ下穴 grip がスタンドオフ高を超える");
-assert(pico_boss_d > pico_screw_pilot + 1.6, "スタンドオフ肉厚が下穴に対して薄すぎる");
-// BB ポケットが内寸に収まる（+X/+Y 壁・ペデスタルをクリア）
-assert(pocket_outer_right <= ext_right, "BB ポケット右端がプレート端(+X)を超える");
-assert(pocket_outer_top   <= ext_up,    "BB ポケット上端がプレート端(+Y)を超える");
-assert(pocket_outer_bottom >= pedestal_outer, "BB ポケット下端がペデスタルに干渉");
-assert(bb_rail_hook > bb_clearance, "BB レールリップの overhang がクリアランス以下（掴めない）");
-assert(pocket_outer_left  >= pico_x + pico_w/2 + pico_bb_gap - 0.001, "Pico↔BB ポケットのすき間不足");
+// --- Electronics tray layout checks ---
 assert(tray_boss_d > tray_screw_pilot + 1.6, "ボス肉厚が下穴に対して薄すぎる");
 assert(tray_screw_grip < tray_boss_h, "ネジ下穴 grip がボス高を超える（床貫通の恐れ）");
 assert(tray_cap_t > tray_head_h, "キャップ厚が頭ザグリ深さ以下（頭が座らない）");
 // ファンネルがボア全径→ネジ穴を 45°以内で絞れること（平らな張り出し=ブリッジを作らず塞がらない）
 assert(tray_cap_t - tray_head_h - 0.3 >= (tray_sleeve_id - tray_screw_clear)/2, "ファンネルが 45°より急（自己サポート不可でネジ穴が塞がる）");
-assert(tray_fix_x_right - tray_sleeve_od/2 >= pocket_outer_right, "右スリーブが BB ポケットに食い込む");
-assert(tray_fix_x_right + tray_sleeve_od/2 <= ext_right, "右スリーブがプレート端(+X)を超える");
-assert(tray_fix_x_left  + tray_sleeve_od/2 <= pico_x - pico_w/2, "左スリーブが Pico に食い込む");
-assert(tray_fix_x_left  - tray_sleeve_od/2 >= -ext_left, "左スリーブがプレート端(-X)を超える");
-// トレイ床が内寸に収まる（ドロップイン可能）
-assert(tray_x1 <= ext_right && tray_x0 >= -ext_left, "トレイ床 X が内寸を超える");
-assert(tray_y1 <= ext_up && tray_y0 >= -ext_down, "トレイ床 Y が内寸を超える");
-assert(tray_y0 >= pedestal_outer - 1, "トレイ床下端がペデスタルに寄りすぎ");
 // ペデスタル・ボルトオンの配置ガード
+// この対（ペデスタル固定点 × トレイ床 -Y 端）で先に当たるのはスリーブ（od 7.8）ではなく
+// フランジローブ（幅 ped_lobe_w = 10）で、後段の「トレイ床 -Y 端がペデスタルのフランジ
+// ローブに乗る」assert が同じ対を 25.113 ではなく 26.513 の下限で見ている＝常にそちらが
+// 先に落ちる。この行はスリーブについての言明としては真なので残すが、支配的なのは後段の方。
+// 将来どちらかを整理するならこちらを消す。
 assert(ped_fix_r*sin(45) + tray_sleeve_od/2 <= tray_y0, "ペデスタルスリーブがトレイ床に食い込む");
-assert(ped_fix_r*cos(45) + tray_sleeve_od/2 <= min(ext_left, ext_down), "ペデスタルスリーブがプレート端を超える");
+// -X/-Y 端に一番近づくのはスリーブ（od 7.8）ではなくフランジのローブ（幅 ped_lobe_w=10）。
+// ローブは線分 p/2→p の全長に太さ ped_lobe_w で存在するので、外への張り出しは
+// ped_lobe_w/2 = 5 で見る。スリーブ半径 3.9 で見ると 1.1mm 見落とす（トレイ側の
+// 「ローブに食い込む」assert と同じ盲点）。
+assert(ped_fix_r*cos(45) + ped_lobe_w/2 <= min(ext_left, ext_down), "ペデスタルのフランジローブがプレート端を超える");
 assert(ped_curb_ro <= min(ext_left, ext_down) + wall - 0.2, "受けカーブがプレート端に寄りすぎ");
 assert(ped_fix_r - tray_sleeve_od/2 > rosette_d/2 + fit_clearance, "ペデスタルボスがロゼット開口に食い込む");
 assert(ped_lobe_w > tray_sleeve_od, "ローブ幅がスリーブ外径より細い（スリーブがローブから食み出す）");
 assert(ped_flange_t < tray_boss_h, "フランジ厚がボス高以上（ボスがスリーブに届かない）");
-// 受けカーブはペデスタル系で最も +Y に張り出す本体形状。トレイ床前縁が乗り上げた実機不具合
-// (2026-07-17) の再発防止。体積干渉は scad/clash.ts でも検出する
-assert(tray_y0 >= ped_curb_ro + ped_curb_tray_gap, "受けカーブがトレイ床に近すぎる（bb_ped_gap か ext_up を見直す）");
-assert(max(plate_rib_ys) + plate_rib_w/2 < tray_y0, "横桟がトレイ床に食い込む");
-assert(max(plate_rib_ys) + plate_rib_w/2 <= ped_fix_r*sin(45) - tray_sleeve_od/2, "横桟がペデスタルスリーブに食い込む");
+
+// --- 基板・トレイのレイアウトチェック ---
+// ここに置く assert は「入力パラメータを手で変えたときに落ちうる」ものだけにする。
+// 同じ定義式から導いた値どうしの比較（例: tray_x0 <= pcb -X 端。tray_x0 の定義がまさに
+// それ -0.5）は恒真でガードとして働かないので置かない。
+//
+// 基板 -Y 端を受けカーブから 1mm 以上逃がす、という設計意図の表明。
+// pcb_off_y の定義に代入すると pcb_ped_gap >= 1 に縮退するので、そのまま直に書く。
+assert(pcb_ped_gap >= 1, "基板 -Y 端が受けカーブに近すぎる");
+// -X 端はカバー内面（受けカーブ支配の -28.7）に対して独立に置いているので実効ガード。
+// +X 側は cover_x1 が tray_x1 = 基板 +X 端 +0.5 から導出＝恒真なので置かない。
+assert(pcb_off_x - pcb_l/2 >= cover_x0, "基板 -X 端がカバー内面を超える");
+assert(pcb_screw_grip < pcb_standoff_h, "支柱の下穴 grip が支柱高を超える");
+assert(pcb_standoff_d > tray_screw_pilot + 1.6, "支柱の肉厚が下穴に対して薄すぎる");
+assert(tray_fix_y_lo + tray_sleeve_od/2 <= pcb_off_y - pcb_w/2, "-Y 固定スリーブが基板に食い込む");
+assert(tray_fix_y_hi - tray_sleeve_od/2 >= pcb_off_y + pcb_w/2, "+Y 固定スリーブが基板に食い込む");
+// 基板支柱と固定スリーブはどちらも tray() の union の中なので、食い込んでも融合して
+// 黙って印刷される（clash.ts は部品「間」しか見ないので検出できない）。ここで殺す。
+assert(min([for (s = pcb_hole_pts, t = tray_fix_pts) norm(s - t)])
+       >= (pcb_standoff_d + tray_sleeve_od)/2 + 0.5,
+       "基板支柱がトレイ固定スリーブに食い込む");
+assert(min([for (p = tray_fix_pts) norm(p)]) >= ped_curb_ro + tray_sleeve_od/2 + 0.5,
+       "固定スリーブが受けカーブに食い込む");
+// トレイ固定スリーブとペデスタル底フランジの共倒れガード。
+// 旧レイアウトで実際に 4.36mm まで接近して食い込んでいたので必ず入れる。
+// トレイスリーブに先に当たるのはペデスタルの「スリーブ」ではなく「ローブ」。ローブは
+// 線分 p/2→p の全長に太さ ped_lobe_w=10 で存在し、z 帯もスリーブと確実に重なるので、
+// 必要な中心間距離は od/2 + ped_lobe_w/2。スリーブ外径だけで見ると 0.6mm 見落とす。
+assert(min([for (t = tray_fix_pts, q = ped_fix_pts) norm(t - q)])
+       >= tray_sleeve_od/2 + ped_lobe_w/2 + 0.5,
+       "トレイ固定スリーブがペデスタルのフランジローブに食い込む");
+// 同じローブが y 方向でトレイ床の -Y 端にも当たる（先端円の上端 y = 21.21 + 5）。
+assert(tray_y0 >= ped_fix_r*sin(45) + ped_lobe_w/2 + 0.3, "トレイ床 -Y 端がペデスタルのフランジローブに乗る");
+assert(tray_ped_notch_r >= ped_curb_ro + ped_curb_tray_gap, "トレイ床の逃げが受けカーブに近すぎる");
+// -X/-Y 側だけ実効（+X/+Y 側は cover_x1/cover_y1 が tray_x1/tray_y1 から導出＝恒真）。
+assert(tray_x0 >= cover_x0, "トレイ床 -X 端がカバー内面を超える");
+assert(tray_y0 >= cover_y0, "トレイ床 -Y 端がカバー内面を超える");
+// --- プレートのドアクリアランス ---
+assert(-plate_x0 <= clear_left, "プレート -X 端がドアクリアランスを超える");
+assert(-plate_y0 <= clear_down, "プレート -Y 端がドアクリアランスを超える");

@@ -8,8 +8,19 @@ export async function startTunnel(
 ): Promise<{ proc: ReturnType<typeof Bun.spawn>; url: string }> {
   let proc: ReturnType<typeof Bun.spawn>;
   try {
+    // この 2 つのフラグはセットで必須。片方だけだと別々の症状で壊れる。
+    //  --config /dev/null : ~/.cloudflared/config.yml があると、クイックトンネルが
+    //    そちらの ingress 定義に乗っ取られ、URL は発行されるのに全リクエストが 404 になる。
+    //  --protocol http2   : QUIC が塞がれた環境だと接続が 0 本になり、URL は発行されるのに
+    //    ホスト名が DNS に載らない（NXDOMAIN）。config.yml 側の protocol: http2 に頼っていると
+    //    --config /dev/null で一緒に捨ててしまうので、ここで明示する。
     proc = Bun.spawn(
-      ["cloudflared", "tunnel", "--no-autoupdate", "--url", `http://127.0.0.1:${port}`],
+      [
+        "cloudflared", "tunnel", "--no-autoupdate",
+        "--config", "/dev/null",
+        "--protocol", "http2",
+        "--url", `http://127.0.0.1:${port}`,
+      ],
       { stdout: "ignore", stderr: "pipe" },
     );
   } catch {

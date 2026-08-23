@@ -7,18 +7,18 @@
 
 Pico W が WiFi 接続後に HTTP ポート 80 で WebUI と JSON API を配信し、サーボがサムターンを回して施錠/解錠する。
 ブラウザで `http://<pico-ip>/` を開くと施錠/解錠ボタンと現在状態が表示される。
-室内側のタクトスイッチでも手動でトグルでき、状態は外付けの二色 LED（施錠=赤/解錠=黄緑）で表示する。
+室内側の押しボタン（カバーにパネル取付）でも手動でトグルでき、状態は外付けの二色 LED（施錠=赤/解錠=黄緑）で表示する。
 
 | サブシステム | ディレクトリ | 役割 |
 | --- | --- | --- |
-| 筐体 | `enclosure/` | ドアに貼るベースプレートと、ボルトオンのサーボ台座、電子部品トレイ、サムターン受け |
+| 筐体 | `enclosure/` | ドアに貼るベースプレートと、ボルトオンのサーボ台座、電子部品トレイ、サムターン受け、全体を覆うカバー |
 | 回路 | `circuit/` | tscircuit で回路を記述し導通・ショート ERC で検証 |
 | ファーム | `crates/` | WiFi / HTTP / サーボ制御（mube-firmware）＋ ハード非依存ロジック（mube-core） |
 | WebUI | `crates/mube-webui/` | yew SPA（trunk でビルド）。firmware に埋め込まれ HTTP で配信される |
 | ビューア | `viewer/` | STL をブラウザで確認（cloudflared quick tunnel で共有可） |
 
 ロジック部（コマンド解釈、状態機械、角度変換）はハード非依存で、実機なしに host テストできる。
-回路はブレッドボード実機で、サーボと LED とスイッチを全部載せた同時動作まで検証済み。
+回路はブレッドボード実機で、サーボと LED とスイッチを全部載せた同時動作まで検証済み。筐体側はユニバーサル基板 P-03229 マウントへ移行済みで、はんだ実装は TASK-4 で行う。
 
 ## 開発環境
 
@@ -37,6 +37,7 @@ Pico W が WiFi 接続後に HTTP ポート 80 で WebUI と JSON API を配信�
 | 筐体ビルド（STL を enclosure/build/ へ） | `just enclosure` | `bun enclosure/scripts/build.ts` |
 | SCAD 単発レンダリング | `just render <scad> [out]` | `bun enclosure/scripts/render.ts <scad> [out]` |
 | 部品間の体積干渉チェック | `just clash` | `bun enclosure/scripts/clash.ts` |
+| 印刷パート5点の STL が単一連結ソリッドであることのチェック | `just components` | `bun enclosure/scripts/components.ts` |
 | enclosure ツールの単体テスト | `just test-enclosure` | `bun test enclosure/scripts/` |
 | 回路 ERC（導通・ショート） | `just erc` | `cd circuit && bun install --frozen-lockfile && bun test` |
 | WebUI ビルド（yew→dist） | `just webui` | `cd crates/mube-webui && trunk build --release` |

@@ -5,13 +5,16 @@
 // ループでは回さないこと（空を FAIL 扱いされる）。判定は必ず clash.ts 経由で行う。
 //
 // 載せる側の部品は組立位置から clash_eps だけ +Z に浮かせる。意図的な面接触（トレイ床/
-// フランジ底 vs プレート上面、ボス上面 vs ファンネル始端）は体積ゼロだが、intersection が
-// 縮退シェルとして面を出してしまい偽陽性になるため。clash_eps 以下の浅い食い込みや
-// 体積がほぼゼロの極薄スライバは検出できない代償があるが、実害レベルの食い込みは検出できる。
+// フランジ底 vs プレート上面、ボス上面 vs ファンネル始端、カバー耳下面 vs プレート上面、
+// カバー側ボス上面 vs カバー側ファンネル始端、カバー裾 vs 外周リブ）は体積ゼロだが、
+// intersection が縮退シェルとして面を出してしまい偽陽性になるため。clash_eps 以下の
+// 浅い食い込みや体積がほぼゼロの極薄スライバは検出できない代償があるが、実害レベルの
+// 食い込みは検出できる。
 include <params.scad>
 use <body.scad>
 use <tray.scad>
 use <pedestal.scad>
+use <cover.scad>
 
 clash_eps = 0.05;
 
@@ -31,4 +34,22 @@ intersection() {
 intersection() {
   translate([0, 0, wall]) tray();
   translate([0, 0, wall]) pedestal();
+}
+
+// cover × body（カバーを浮かせる）
+intersection() {
+  body();
+  translate([0, 0, clash_eps]) cover();
+}
+
+// cover × tray（どちらも組立位置。トレイは z=wall へ）
+intersection() {
+  translate([0, 0, wall]) tray();
+  translate([0, 0, clash_eps]) cover();
+}
+
+// cover × pedestal
+intersection() {
+  translate([0, 0, wall]) pedestal();
+  translate([0, 0, clash_eps]) cover();
 }

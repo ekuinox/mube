@@ -20,7 +20,7 @@ export const FOOTPRINTS: Record<string, Footprint> = {
   Rled: { pinOrder: ["pin1", "pin2"], edgeAffinity: null, label: "Rled", value: "330Ω" },
   Rled2:{ pinOrder: ["pin1", "pin2"], edgeAffinity: null, label: "Rled2", value: "330Ω" },
   D1:   { pinOrder: ["R", "G", "K"], edgeAffinity: "right", label: "D1",  value: "2-LED" },
-  SW1:  { pinOrder: ["pin1", "pin2"], edgeAffinity: "right", label: "SW1", value: "Tact" },
+  SW1:  { pinOrder: ["pin1", "pin2"], edgeAffinity: "right", label: "SW1", value: "PS21B-1" },
   C1:   { pinOrder: ["pin1", "pin2"], edgeAffinity: null, label: "C1",  value: "470uF", polarityPin: "pin1" },
   C2:   { pinOrder: ["pin1", "pin2"], edgeAffinity: null, label: "C2",  value: "100nF" },
   D2:   { pinOrder: ["cathode", "anode"], edgeAffinity: null, label: "D2", value: "Flyback", stripePin: "cathode" },

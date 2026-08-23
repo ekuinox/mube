@@ -49,6 +49,8 @@
     <option value="pedestal.stl">サーボ台座 (pedestal)</option>
     <option value="socket.stl">サムターンソケット (socket)</option>
     <option value="tray.stl">電子部品トレイ (tray)</option>
+    <option value="cover.stl">カバー (cover)</option>
+    <option value="sw_mount_coupon.stl">スイッチ嵌合クーポン (sw_mount_coupon)</option>
   </select>
   <div id="dims"></div>
   <div id="hint">ドラッグ=回転 / ホイール=ズーム / 右ドラッグ=平行移動</div>
@@ -92,11 +94,13 @@ scene.add(dir2);
 let grid = null, axes = null;
 const defaultMat = new THREE.MeshStandardMaterial({ color: 0x7fb2e6, metalness: 0.15, roughness: 0.55, flatShading: false });
 
+// 色は smartlock.scad の asm_* と揃えてある。カバーは中身を隠さないよう半透明。
 const assemblyParts = [
   { file: 'asm_body.stl',      color: 0x4682b4, name: '本体' },
   { file: 'asm_pedestal.stl',  color: 0xf0e68c, name: 'サーボ台座' },
   { file: 'asm_socket.stl',    color: 0xf4a460, name: 'ソケット' },
   { file: 'asm_tray.stl',      color: 0xdda0dd, name: 'トレイ' },
+  { file: 'asm_cover.stl',     color: 0xb0c4de, name: 'カバー', opacity: 0.35 },
 ];
 
 let meshes = [];
@@ -160,6 +164,10 @@ function loadPart(file) {
     Promise.all(assemblyParts.map(p =>
       loadSingle(p.file, new THREE.MeshStandardMaterial({
         color: p.color, metalness: 0.15, roughness: 0.55, flatShading: false,
+        transparent: p.opacity !== undefined,
+        opacity: p.opacity ?? 1,
+        depthWrite: p.opacity === undefined,
+        side: p.opacity !== undefined ? THREE.DoubleSide : THREE.FrontSide,
       }))
     )).then(loaded => {
       // 全パーツをまとめて bounding box 計算
@@ -194,9 +202,13 @@ function loadPart(file) {
       axes = new THREE.AxesHelper(maxDim * 0.6);
       scene.add(axes);
 
+      // 凡例は assemblyParts から組む（部品が増減しても取り残されないように）
+      const legend = assemblyParts.map(p =>
+        `<span style="color:#${p.color.toString(16).padStart(6, '0')}">■</span> ${p.name}`
+      ).join(' / ');
       dimsEl.innerHTML =
         `寸法 (mm): <b>${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}</b>` +
-        `<br><span style="color:#4682b4">■</span> 本体 / <span style="color:#3cb371">■</span> 蓋 / <span style="color:#f4a460">■</span> ソケット`;
+        `<br>${legend}`;
       statusEl.textContent = '表示中: assembly (色分け)';
     }).catch(err => {
       statusEl.textContent = '読み込み失敗: assembly';
