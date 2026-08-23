@@ -34,6 +34,10 @@ erc:
 perfboard:
     cd circuit && bun perfboard-build.ts
 
+# 配線見本をブラウザで見る（cloudflared quick tunnel で公開）
+perfboard-view:
+    cd circuit && bun perfboard-serve.ts
+
 # WebUI ビルド（yew → crates/mube-webui/dist）
 webui:
     cd crates/mube-webui && trunk build --release
