@@ -46,3 +46,20 @@ test("穴の割り当て漏れを検出する", () => {
   const problems = verifyLayout(minimal())
   expect(problems.some((p) => p.includes("穴が無い") && p.includes("M1.SIG"))).toBe(true)
 })
+
+// 目的: 両端以外の使用済みの穴をまたぐワイヤを検出すること。
+test("またぎを検出する", () => {
+  const layout = minimal()
+  // N7 から N9 まで真横に伸ばすと、途中の N8（SW1.pin2 の穴）を通ってしまう。
+  layout.wires.push({ from: "N7", to: "N9", net: "BTN", side: "solder" })
+  expect(layout.wires.some((w) => w.net === "BTN" && w.to === "N9")).toBe(true)
+  expect(verifyLayout(layout).some((p) => p.includes("またぎ"))).toBe(true)
+})
+
+// 目的: 穴の中心を通らない斜めのワイヤは咎めないこと。
+test("45度でない斜めのワイヤはまたぎ扱いしない", () => {
+  const layout = minimal()
+  // 列が 1、行が 2 動く斜め線は、行・列・45 度のどれでもないので穴の中心を通らない。
+  layout.wires.push({ from: "N7", to: "L8", net: "BTN", side: "solder" })
+  expect(verifyLayout(layout).some((p) => p.includes("またぎ"))).toBe(false)
+})

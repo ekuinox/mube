@@ -4,6 +4,10 @@
 //
 // 方位は室内側からドアを正面に見た向き。行 P が +Y（上）端、行 A が −Y（下）端、
 // 列 1 が +X（右）端。ピン列は 1〜20 番が行 L、21〜40 番が行 E。
+//
+// 穴の割り当てはこのファイルが最終的な正。設計書（決定 2 の表）は mm 単位のおおまかな
+// 配置意図であり、部品同士が近すぎて表の区画がそのまま同じ穴に重なることがある
+// （例: M1 と D2）。表とここがずれる場合はここを信用すること。
 
 import type { Layout } from "./verify"
 
@@ -24,8 +28,8 @@ export const LAYOUT: Layout = {
     "M1.VPLUS": "A11",
     "M1.SIG": "A12",
     "M1.GND": "A13",
-    "D2.cathode": "B12",
-    "D2.anode": "B13",
+    "D2.cathode": "B13",
+    "D2.anode": "B14",
     "Q1.S": "C13",
     "Q1.D": "C14",
     "Q1.G": "C15",
@@ -58,14 +62,14 @@ export const LAYOUT: Layout = {
     { from: "D17", to: "E18", net: "GND", side: "solder" },
 
     // サーボのリターン。Q1.D とサーボ GND と D2 のアノードで閉じる短いループ。
-    { from: "C14", to: "B13", net: "SERVO_RTN", side: "solder" },
-    { from: "B13", to: "A13", net: "SERVO_RTN", side: "solder" },
+    { from: "C14", to: "B14", net: "SERVO_RTN", side: "solder" },
+    { from: "B14", to: "A13", net: "SERVO_RTN", side: "solder" },
 
     // 5V。VBUS からバルクコンを経てサーボへ。
     { from: "E1", to: "B4", net: "V5", side: "solder" },
     { from: "B4", to: "C4", net: "V5", side: "solder" },
-    { from: "C4", to: "B12", net: "V5", side: "solder" },
-    { from: "B12", to: "A11", net: "V5", side: "solder" },
+    { from: "C4", to: "B13", net: "V5", side: "solder" },
+    { from: "B13", to: "A11", net: "V5", side: "solder" },
 
     // GND。Q1.S はバルクコンの負極へ直接返し、サーボのリターンを Pico の内部プレーン
     // だけに頼らせない。38 番ピンとバルクコンを繋ぐことで USB からの帰り道も閉じる。

@@ -5,7 +5,7 @@
 import { NETS } from "../parts"
 import { normaliseEndpoint } from "../breadboard/subcircuit"
 import { UnionFind } from "../breadboard/model"
-import { PICO_GND_PINS, PICO_PIN_OF_LABEL, holeId, pinHole } from "./board"
+import { PICO_GND_PINS, PICO_PIN_OF_LABEL, holeId, parseHole, pinHole, type Hole } from "./board"
 
 export type Wire = {
   from: string
@@ -30,6 +30,18 @@ function holeOf(layout: Layout, endpoint: string): string | undefined {
   return layout.legs[endpoint]
 }
 
+/** 両端以外に穴の中心を通る座標。行・列・45 度の直線だけが中心を通る。 */
+function holesOnSegment(from: Hole, to: Hole): Hole[] {
+  const dc = to.col - from.col
+  const dr = to.row - from.row
+  if (dc !== 0 && dr !== 0 && Math.abs(dc) !== Math.abs(dr)) return []
+  const steps = Math.max(Math.abs(dc), Math.abs(dr))
+  const out: Hole[] = []
+  for (let i = 1; i < steps; i++)
+    out.push({ col: from.col + (dc / steps) * i, row: from.row + (dr / steps) * i })
+  return out
+}
+
 export function verifyLayout(layout: Layout, allowUnconnected: string[] = []): string[] {
   const problems: string[] = []
   const uf = new UnionFind()
@@ -46,6 +58,16 @@ export function verifyLayout(layout: Layout, allowUnconnected: string[] = []): s
   for (const [leg, hole] of Object.entries(layout.legs)) {
     if (occupied[hole]) problems.push(`穴の重複: ${hole} に ${occupied[hole]} と ${leg}`)
     else occupied[hole] = leg
+  }
+
+  // またぎ。ワイヤが両端以外で使用済みの穴の中心を通ると、単面基板の裸線では
+  // そこに乗っている別ネットとぶつかる。行・列・45 度の直線だけを対象にする。
+  for (const w of layout.wires) {
+    const crossed = holesOnSegment(parseHole(w.from), parseHole(w.to))
+    for (const h of crossed) {
+      const id = holeId(h)
+      if (occupied[id]) problems.push(`またぎ: ${w.net} (${w.from}→${w.to}) が ${id} の ${occupied[id]} をまたぐ`)
+    }
   }
 
   // ネットごとの導通。
