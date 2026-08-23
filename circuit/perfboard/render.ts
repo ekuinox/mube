@@ -68,7 +68,7 @@ export function renderSvg(layout: Layout): string {
 
 export function renderTable(layout: Layout): string {
   const rows = layout.wires.map(
-    (w) => `| ${w.from} | ${w.to} | ${w.net} | ${w.side === "solder" ? "裏" : "表"} |`)
+    (w) => `| ${w.from} | ${w.to} | ${w.net} | ${w.side === "solder" ? "裏" : "表"} | ${w.insulated ? "被覆" : "裸"} |`)
   return [
     `<!-- circuit/perfboard-build.ts の生成物。手で編集しない。 -->`,
     ``,
@@ -76,9 +76,10 @@ export function renderTable(layout: Layout): string {
     ``,
     `方位は${VIEWPOINT}ドアを正面に見た向き。${axisWithLabel("+X")}が列 1、${axisWithLabel("-Y")}が行 A。`,
     `穴 ID は「行の letter + 列番号」。面の「裏」ははんだ面を通す線。`,
+    `線材の「被覆」は被覆線で引く区間（裸のすずめっき線だと他の線やランドに触れて短絡する）。`,
     ``,
-    `| from | to | ネット | 面 |`,
-    `| --- | --- | --- | --- |`,
+    `| from | to | ネット | 面 | 線材 |`,
+    `| --- | --- | --- | --- | --- |`,
     ...rows,
     ``,
   ].join("\n")

@@ -1,13 +1,12 @@
 // circuit/perfboard/layout.test.ts
 import { expect, test } from "bun:test"
-import { ALLOW_UNCONNECTED } from "../netlist"
 import { LAYOUT } from "./layout"
 import { verifyLayout } from "./verify"
 
 // 目的: 実際の配置データが NETS をすべて満たすこと。
-// 未接続・ショート・穴の重複・割り当て漏れのいずれも無い状態を配線見本の合格条件とする。
+// 未接続・ショート・穴の重複・割り当て漏れ・近接・交差・範囲外のいずれも無い状態を配線見本の合格条件とする。
 test("配置データが全ネットを満たす", () => {
-  expect(verifyLayout(LAYOUT, ALLOW_UNCONNECTED)).toEqual([])
+  expect(verifyLayout(LAYOUT)).toEqual([])
 })
 
 // 目的: 上下の役割分担が崩れていないこと。

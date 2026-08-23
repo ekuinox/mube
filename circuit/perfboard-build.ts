@@ -4,9 +4,8 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { LAYOUT } from "./perfboard/layout"
 import { renderSvg, renderTable } from "./perfboard/render"
 import { verifyLayout } from "./perfboard/verify"
-import { ALLOW_UNCONNECTED } from "./netlist"
 
-const problems = verifyLayout(LAYOUT, ALLOW_UNCONNECTED)
+const problems = verifyLayout(LAYOUT)
 if (problems.length) {
   console.error(problems.join("\n"))
   process.exit(1)

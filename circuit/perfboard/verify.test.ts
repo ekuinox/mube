@@ -47,19 +47,58 @@ test("穴の割り当て漏れを検出する", () => {
   expect(problems.some((p) => p.includes("穴が無い") && p.includes("M1.SIG"))).toBe(true)
 })
 
-// 目的: 両端以外の使用済みの穴をまたぐワイヤを検出すること。
-test("またぎを検出する", () => {
+// 目的: 両端以外の使用済みの穴に近づきすぎるワイヤを検出すること。45 度直線に限らない。
+test("近接を検出する", () => {
   const layout = minimal()
-  // N7 から N9 まで真横に伸ばすと、途中の N8（SW1.pin2 の穴）を通ってしまう。
+  // N7 から N9 まで真横に伸ばすと、途中の N8（SW1.pin2 の穴）の中心を通ってしまう。
   layout.wires.push({ from: "N7", to: "N9", net: "BTN", side: "solder" })
   expect(layout.wires.some((w) => w.net === "BTN" && w.to === "N9")).toBe(true)
-  expect(verifyLayout(layout).some((p) => p.includes("またぎ"))).toBe(true)
+  expect(verifyLayout(layout).some((p) => p.includes("近接"))).toBe(true)
 })
 
-// 目的: 穴の中心を通らない斜めのワイヤは咎めないこと。
-test("45度でない斜めのワイヤはまたぎ扱いしない", () => {
+// 目的: 被覆線（insulated）は他の穴に近づいても短絡しないので、近接の対象外にすること。
+test("被覆線は近接の対象外", () => {
   const layout = minimal()
-  // 列が 1、行が 2 動く斜め線は、行・列・45 度のどれでもないので穴の中心を通らない。
+  layout.wires.push({ from: "N7", to: "N9", net: "BTN", side: "solder", insulated: true })
+  expect(verifyLayout(layout).some((p) => p.includes("近接"))).toBe(false)
+})
+
+// 目的: 十分離れた斜めのワイヤは咎めないこと。
+test("穴から十分離れた斜めのワイヤは近接扱いしない", () => {
+  const layout = minimal()
+  // 列が 1、行が 2 動く斜め線は、途中のどの使用済み穴からも 0.5 グリッド単位以上離れる。
   layout.wires.push({ from: "N7", to: "L8", net: "BTN", side: "solder" })
-  expect(verifyLayout(layout).some((p) => p.includes("またぎ"))).toBe(false)
+  expect(verifyLayout(layout).some((p) => p.includes("近接"))).toBe(false)
+})
+
+// 目的: 裏面で異なるネットの裸線同士が端点を共有せずに交差したら検出すること。
+test("交差を検出する", () => {
+  const layout = minimal()
+  // BTN（N7→L8）と GND（N8→L7）は端点を共有せずに X 字に交差する。
+  layout.wires.push({ from: "N7", to: "L8", net: "BTN", side: "solder" })
+  layout.wires.push({ from: "N8", to: "L7", net: "GND", side: "solder" })
+  expect(verifyLayout(layout).some((p) => p.includes("交差"))).toBe(true)
+})
+
+// 目的: 片方でも被覆線なら交差を咎めないこと。
+test("被覆線は交差の対象外", () => {
+  const layout = minimal()
+  layout.wires.push({ from: "N7", to: "L8", net: "BTN", side: "solder", insulated: true })
+  layout.wires.push({ from: "N8", to: "L7", net: "GND", side: "solder" })
+  expect(verifyLayout(layout).some((p) => p.includes("交差"))).toBe(false)
+})
+
+// 目的: 端点を共有する 2 本（同じ穴で継ぐだけの配線）は交差扱いしないこと。
+test("端点を共有する線は交差扱いしない", () => {
+  const layout = minimal()
+  layout.wires.push({ from: "N7", to: "L8", net: "BTN", side: "solder" })
+  layout.wires.push({ from: "L8", to: "N9", net: "GND", side: "solder" })
+  expect(verifyLayout(layout).some((p) => p.includes("交差"))).toBe(false)
+})
+
+// 目的: グリッドの外を指す穴 ID を検出すること。実測でグリッドが小さかった場合の保険。
+test("範囲外の穴を検出する", () => {
+  const layout = minimal()
+  layout.legs["D1.R"] = "Z1" // 行 Z（26）は ROWS を大きく超える
+  expect(verifyLayout(layout).some((p) => p.includes("範囲外") && p.includes("Z1"))).toBe(true)
 })

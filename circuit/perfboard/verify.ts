@@ -5,13 +5,15 @@
 import { NETS } from "../parts"
 import { normaliseEndpoint } from "../breadboard/subcircuit"
 import { UnionFind } from "../breadboard/model"
-import { PICO_GND_PINS, PICO_PIN_OF_LABEL, holeId, parseHole, pinHole, type Hole } from "./board"
+import { COLS, PICO_GND_PINS, PICO_PIN_OF_LABEL, ROWS, holeId, parseHole, pinHole, type Hole } from "./board"
 
 export type Wire = {
   from: string
   to: string
   net: string
   side: "solder" | "component"
+  /** 被覆線で引く。裸のすずめっき線と違い、他の線やランドに触れても短絡しない。 */
+  insulated?: boolean
 }
 
 export type Layout = {
@@ -30,19 +32,29 @@ function holeOf(layout: Layout, endpoint: string): string | undefined {
   return layout.legs[endpoint]
 }
 
-/** 両端以外に穴の中心を通る座標。行・列・45 度の直線だけが中心を通る。 */
-function holesOnSegment(from: Hole, to: Hole): Hole[] {
-  const dc = to.col - from.col
-  const dr = to.row - from.row
-  if (dc !== 0 && dr !== 0 && Math.abs(dc) !== Math.abs(dr)) return []
-  const steps = Math.max(Math.abs(dc), Math.abs(dr))
-  const out: Hole[] = []
-  for (let i = 1; i < steps; i++)
-    out.push({ col: from.col + (dc / steps) * i, row: from.row + (dr / steps) * i })
-  return out
+/** 穴の中心と線分の距離（グリッド単位）。 */
+function holeDistance(h: Hole, from: Hole, to: Hole): number {
+  const vx = to.col - from.col, vy = to.row - from.row
+  const wx = h.col - from.col, wy = h.row - from.row
+  const len2 = vx * vx + vy * vy
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, (wx * vx + wy * vy) / len2))
+  const dx = wx - t * vx, dy = wy - t * vy
+  return Math.sqrt(dx * dx + dy * dy)
 }
 
-export function verifyLayout(layout: Layout, allowUnconnected: string[] = []): string[] {
+/** 2 つの線分が端点を共有せずに交差するか。 */
+function segmentsCross(a1: Hole, a2: Hole, b1: Hole, b2: Hole): boolean {
+  const key = (h: Hole) => `${h.col},${h.row}`
+  const ends = new Set([key(a1), key(a2), key(b1), key(b2)])
+  if (ends.size < 4) return false // 端点を共有する線は交差扱いしない
+  const cross = (p: Hole, q: Hole, r: Hole) =>
+    (q.col - p.col) * (r.row - p.row) - (q.row - p.row) * (r.col - p.col)
+  const d1 = cross(b1, b2, a1), d2 = cross(b1, b2, a2)
+  const d3 = cross(a1, a2, b1), d4 = cross(a1, a2, b2)
+  return ((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0))
+}
+
+export function verifyLayout(layout: Layout): string[] {
   const problems: string[] = []
   const uf = new UnionFind()
 
@@ -60,20 +72,43 @@ export function verifyLayout(layout: Layout, allowUnconnected: string[] = []): s
     else occupied[hole] = leg
   }
 
-  // またぎ。ワイヤが両端以外で使用済みの穴の中心を通ると、単面基板の裸線では
-  // そこに乗っている別ネットとぶつかる。行・列・45 度の直線だけを対象にする。
+  // 範囲外。書いた穴の列・行が今のグリッド仮定（COLS × ROWS）の外に出ていないか。
+  // 実測前の仮定なので、行数・列数が違えば存在しない穴を指してしまいうる。
+  const allHoleIds = [...Object.values(layout.legs), ...layout.wires.flatMap((w) => [w.from, w.to])]
+  for (const id of allHoleIds) {
+    const h = parseHole(id)
+    if (h.col < 1 || h.col > COLS || h.row < 1 || h.row > ROWS)
+      problems.push(`範囲外: ${id} は列 1〜${COLS}、行 A〜${String.fromCharCode(64 + ROWS)} の外`)
+  }
+
+  // 近接。ワイヤが両端以外で使用済みの穴の 0.5 グリッド単位未満まで近づくと、単面基板の
+  // 裸線ではそこに乗っている別ネットとぶつかる。被覆線（insulated）は触れても短絡しないので対象外。
   for (const w of layout.wires) {
-    const crossed = holesOnSegment(parseHole(w.from), parseHole(w.to))
-    for (const h of crossed) {
-      const id = holeId(h)
-      if (occupied[id]) problems.push(`またぎ: ${w.net} (${w.from}→${w.to}) が ${id} の ${occupied[id]} をまたぐ`)
+    if (w.insulated) continue
+    const from = parseHole(w.from), to = parseHole(w.to)
+    for (const [id, occupant] of Object.entries(occupied)) {
+      if (id === w.from || id === w.to) continue
+      if (holeDistance(parseHole(id), from, to) < 0.5)
+        problems.push(`近接: ${w.net} (${w.from}→${w.to}) が ${id} の ${occupant} に近すぎる`)
+    }
+  }
+
+  // 交差。裏面（同じ side）で異なるネットの裸線同士が端点を共有せずに交差すると、
+  // その交点で短絡する。片方でも被覆線なら対象外。
+  for (let i = 0; i < layout.wires.length; i++) {
+    for (let j = i + 1; j < layout.wires.length; j++) {
+      const a = layout.wires[i], b = layout.wires[j]
+      if (a.side !== b.side || a.net === b.net) continue
+      if (a.insulated || b.insulated) continue
+      if (segmentsCross(parseHole(a.from), parseHole(a.to), parseHole(b.from), parseHole(b.to)))
+        problems.push(`交差: ${a.net} (${a.from}→${a.to}) と ${b.net} (${b.from}→${b.to}) が交差`)
     }
   }
 
   // ネットごとの導通。
   const groupNets: Record<string, Set<string>> = {}
   for (const net of NETS) {
-    const endpoints = net.endpoints.map(normaliseEndpoint).filter((e) => !allowUnconnected.includes(e))
+    const endpoints = net.endpoints.map(normaliseEndpoint)
     const groups: string[] = []
     for (const e of endpoints) {
       const hole = holeOf(layout, e)
