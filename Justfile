@@ -22,6 +22,10 @@ components:
 test-enclosure:
     bun test enclosure/scripts/
 
+# 方位の併記が対応表と一致するかを検査
+test-axes:
+    bun test scripts/axes.test.ts
+
 # 回路 ERC（導通・ショート）
 erc:
     cd circuit && bun install --frozen-lockfile && bun test
