@@ -6,7 +6,7 @@
 // 列は +X（右）端を 1 として −X（左）へ、行は −Y（下）端を 1（A）として +Y（上）へ数える。
 
 export const COLS = 25
-export const ROWS = 16 // 偶数でないとピン列がグリッド中心から等距離に乗らない
+export const ROWS = 15 // 実測（2026-08-24）。行は A〜O で、P 行は存在しない
 export const PITCH = 2.54
 
 export type Hole = { col: number; row: number }
@@ -14,10 +14,13 @@ export type Hole = { col: number; row: number }
 const CENTER_COL = (COLS + 1) / 2
 const CENTER_ROW = (ROWS + 1) / 2
 
-/** 21〜40 番のピン列（−Y（下）側）。 */
-export const PIN_ROW_LOW = CENTER_ROW - 3.5
-/** 1〜20 番のピン列（+Y（上）側）。 */
-export const PIN_ROW_HIGH = CENTER_ROW + 3.5
+// ソケットの 2 列は 7 ピッチ離れる。行数が奇数なので中心対称には置けず、
+// Pico はグリッド中心から半ピッチ（1.27mm）+Y（上）へ寄って載る。
+// 設計時は 16 行（偶数）と仮定して ±8.89 に置くつもりだったが、実測で 15 行と判明した。
+/** 21〜40 番のピン列（−Y（下）側）。y = −7.62mm。 */
+export const PIN_ROW_LOW = 5
+/** 1〜20 番のピン列（+Y（上）側）。y = +10.16mm。 */
+export const PIN_ROW_HIGH = 12
 
 export function holeId(h: Hole): string {
   return `${String.fromCharCode(64 + h.row)}${h.col}`

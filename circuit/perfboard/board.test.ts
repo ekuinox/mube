@@ -5,12 +5,30 @@ import {
   holeId, holeXY, parseHole, pinHole, PICO_PIN_OF_LABEL,
 } from "./board"
 
-// 目的: ソケットの 2 列が 7 ピッチ離れ、かつ穴の上に乗ること。
-// 行数が奇数だとこの条件を満たせないので、グリッドの仮定が壊れたらここで落ちる。
-test("ピン列は 7 ピッチ離れた整数行に乗る", () => {
+// 目的: ソケットの 2 列が 7 ピッチ離れ、かつ実在する行に乗ること。
+test("ピン列は 7 ピッチ離れた実在の行に乗る", () => {
   expect(PIN_ROW_HIGH - PIN_ROW_LOW).toBe(7)
-  expect(Number.isInteger(PIN_ROW_LOW)).toBe(true)
-  expect(Number.isInteger(PIN_ROW_HIGH)).toBe(true)
+  for (const row of [PIN_ROW_LOW, PIN_ROW_HIGH]) {
+    expect(Number.isInteger(row)).toBe(true)
+    expect(row >= 1 && row <= ROWS).toBe(true)
+  }
+})
+
+// 目的: 実測したグリッドの寸法を固定すること。最上段は O 行で、P 行は無い。
+// ここが変わったら決定 2 の座標と #90 の高さ予算をすべて引き直す必要がある。
+test("グリッドは実測どおり 25 列 15 行", () => {
+  expect([COLS, ROWS]).toEqual([25, 15])
+  expect(holeId({ col: 1, row: ROWS })).toBe("O1")
+})
+
+// 目的: 行数が奇数なので Pico が中心から半ピッチずれること自体を記録する。
+// このずれは #90 の「ソケット列は y = ±8.89」という記述を無効にしている。
+test("Pico はグリッド中心から半ピッチ +Y へ寄る", () => {
+  const low = holeXY(pinHole(21)).y
+  const high = holeXY(pinHole(1)).y
+  expect(low).toBeCloseTo(-7.62, 2)
+  expect(high).toBeCloseTo(10.16, 2)
+  expect((low + high) / 2).toBeCloseTo(1.27, 2)
 })
 
 // 目的: 40 ピンすべてがグリッドの内側に収まること。
@@ -44,5 +62,5 @@ test("穴 ID の往復と mm 変換", () => {
   expect(holeId({ col: 12, row: 12 })).toBe("L12")
   const { x, y } = holeXY(pinHole(29))
   expect(x).toBeCloseTo(2.54, 2)
-  expect(y).toBeCloseTo(-8.89, 2)
+  expect(y).toBeCloseTo(-7.62, 2)
 })

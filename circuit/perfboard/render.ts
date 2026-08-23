@@ -11,7 +11,7 @@ import {
 } from "./board"
 import type { Layout } from "./verify"
 
-const MARGIN = 64 // 目盛りのぶんを含む余白
+const MARGIN = 110 // 目盛りと、盤外へ逃がすラベルのぶんを含む余白
 const SCALE = 20 // mm あたりの px。ラベルが重ならない大きさを優先する
 const FONT = 12
 const RULER_FONT = 13
@@ -31,14 +31,25 @@ const NET_COLORS: Record<string, string> = {
 }
 
 /**
- * 部品の胴体寸法（mm）。**docs に実寸が書かれている部品だけ**を載せる。
- * ここに無い部品は足を囲む外形を破線で描き、実寸ではないことが図から分かるようにする。
- * 胴体どうしの干渉はまだ機械検査していないので、目で見るための情報である。
+ * 部品の胴体寸法（mm）。**BOM の型番から実寸が引けるものだけ**を載せる。
+ * ここに無い部品（コネクタ類）は足を囲む外形を破線で描き、実寸ではないことが図から分かる
+ * ようにする。胴体どうしの干渉はまだ機械検査していないので、目で見るための情報である。
+ *
+ * `stand` は縦置きの軸型部品。胴体はその足の穴の上に立ち、もう一方の足を折り返して
+ * 隣の穴へ落とす。カーボン抵抗（1/4W, 本体 6.3×φ2.3）と 1N5819（DO-41, 本体 5.2×φ2.7）は
+ * 同じ大きさの軸型なので、同じ 1 ピッチ（2.54mm）で扱う。胴体の径はどちらも 1 ピッチ未満
+ * なので、隣の穴を塞がない。
  */
-const BODIES: Record<string, { d?: number; w?: number; h?: number }> = {
+const BODIES: Record<string, { d?: number; w?: number; h?: number; stand?: string }> = {
   C1: { d: 8 }, // 電解 470µF φ8×11.5（docs/parts-selection.md）
+  C2: { w: 4.5, h: 3.2 }, // 積層セラミック 0.1µF、BOM に 5mm ピッチと明記
   D1: { d: 5 }, // 二色 LED φ5×8.6（docs/parts-selection.md）
   Q1: { w: 10.2, h: 4.6 }, // TO-220 の標準的な胴体寸法
+  Rled: { d: 2.3, stand: "pin1" }, // カーボン抵抗 1/4W（R-25331）
+  Rled2: { d: 2.3, stand: "pin1" },
+  Rg: { d: 2.3, stand: "pin1" }, // R-25221
+  Rgs: { d: 2.3, stand: "pin1" }, // R-25103
+  D2: { d: 2.7, stand: "cathode" }, // 1N5819 DO-41（I-17244）
 }
 
 type Point = { x: number; y: number }
@@ -93,7 +104,10 @@ function pinNames(): Map<string, string> {
 function placeLabels(
   parts: Map<string, string[]>,
   obstacles: Box[],
+  canvas: { w: number; h: number },
 ): Map<string, { at: Point; box: Box }> {
+  const inCanvas = (b: Box) =>
+    b.x1 >= 4 && b.y1 >= 4 && b.x2 <= canvas.w - 4 && b.y2 <= canvas.h - 4
   const legBoxes: Box[] = [...parts.values()].flat().map((hole) => {
     const p = xy(hole)
     return { x1: p.x - 6, y1: p.y - 6, x2: p.x + 6, y2: p.y + 6 }
@@ -101,28 +115,31 @@ function placeLabels(
   const placed: Box[] = [...legBoxes, ...obstacles]
   const out = new Map<string, { at: Point; box: Box }>()
   const step = PITCH * SCALE
-  const dirs = [
-    [0, -1], [0, 1], [1, -1], [-1, -1], [1, 1], [-1, 1], [1, 0], [-1, 0],
-  ]
+  // 16 方位 × 6 段。真上が塞がっている部品（最上段の D1 など）でも置き場が見つかる粒度。
+  const dirs = Array.from({ length: 16 }, (_, i) => {
+    const a = (i * Math.PI) / 8
+    return [Math.sin(a), -Math.cos(a)] // 真上から時計回り
+  })
 
   for (const ref of [...parts.keys()].sort()) {
     const c = centroid(parts.get(ref)!)
     const w = ref.length * FONT * 0.65 + 6
     const h = FONT + 4
     let chosen: { at: Point; box: Box } | null = null
-    for (let ring = 1; ring <= 4 && !chosen; ring++)
+    for (let ring = 1; ring <= 6 && !chosen; ring++)
       for (const [dx, dy] of dirs) {
-        const at = { x: c.x + dx * step * ring, y: c.y + dy * step * ring }
+        const at = { x: c.x + dx * step * ring * 0.8, y: c.y + dy * step * ring * 0.8 }
         const box = { x1: at.x - w / 2, y1: at.y - h / 2, x2: at.x + w / 2, y2: at.y + h / 2 }
-        if (!placed.some((b) => overlaps(b, box))) {
+        if (inCanvas(box) && !placed.some((b) => overlaps(b, box))) {
           chosen = { at, box }
           break
         }
       }
-    // 4 リング試して空きが無ければ重心の真上へ置く（現データでは到達しない）
+    // 置き場が見つからなければ重心の真下へ寄せる。キャンバス外へは出さない。
+    const fy = Math.min(c.y + step, canvas.h - h)
     const fallback = {
-      at: { x: c.x, y: c.y - step },
-      box: { x1: c.x - w / 2, y1: c.y - step - h / 2, x2: c.x + w / 2, y2: c.y - step + h / 2 },
+      at: { x: c.x, y: fy },
+      box: { x1: c.x - w / 2, y1: fy - h / 2, x2: c.x + w / 2, y2: fy + h / 2 },
     }
     const result = chosen ?? fallback
     placed.push(result.box)
@@ -164,7 +181,7 @@ export function renderSvg(layout: Layout): string {
   // Pico のソケット。40 ピンが穴を占有していることと、USB がどちら端かを図に出す。
   const socketTL = xy(holeId({ col: 20, row: PIN_ROW_HIGH }))
   const socketBR = xy(holeId({ col: 1, row: PIN_ROW_LOW }))
-  const pad = 0.5 * PITCH * SCALE
+  const pad = 0.32 * PITCH * SCALE
   const socketBox: Box = {
     x1: socketTL.x - pad, y1: socketTL.y - pad, x2: socketBR.x + pad, y2: socketBR.y + pad,
   }
@@ -195,7 +212,8 @@ export function renderSvg(layout: Layout): string {
   for (const ref of [...parts.keys()].sort()) {
     const holes = parts.get(ref)!
     const body = BODIES[ref]
-    const c = centroid(holes)
+    // 縦置きの部品は胴体が片方の足の上に立つ。それ以外は足の重心に置く。
+    const c = body?.stand ? xy(layout.legs[`${ref}.${body.stand}`]) : centroid(holes)
     if (body?.d) {
       bodyBoxes.push({
         x1: c.x - (body.d / 2) * SCALE, y1: c.y - (body.d / 2) * SCALE,
@@ -244,7 +262,14 @@ export function renderSvg(layout: Layout): string {
 
   // 部品ラベル。足ごとではなく部品ごとに 1 つ置き、引き出し線で結ぶ。
   // 足の識別は目盛りと結線表が担う。
-  for (const [ref, { at }] of placeLabels(parts, [...bodyBoxes, ...pinLabelBoxes, socketBox])) {
+  const rulerBoxes: Box[] = [
+    { x1: 0, y1: MARGIN - 42, x2: w, y2: MARGIN - 12 },
+    { x1: 0, y1: MARGIN + boardH + 20, x2: w, y2: MARGIN + boardH + 46 },
+    { x1: MARGIN - 42, y1: 0, x2: MARGIN - 12, y2: h },
+    { x1: MARGIN + boardW + 12, y1: 0, x2: MARGIN + boardW + 42, y2: h },
+  ]
+  const labelObstacles = [...bodyBoxes, ...pinLabelBoxes, ...rulerBoxes, socketBox]
+  for (const [ref, { at }] of placeLabels(parts, labelObstacles, { w, h })) {
     const c = centroid(parts.get(ref)!)
     out.push(`<line class="leader" x1="${c.x}" y1="${c.y}" x2="${at.x}" y2="${at.y}" stroke="#8a7a4e" stroke-width="1"/>`)
     out.push(`<text class="part-label" x="${at.x}" y="${at.y + 4}" font-size="${FONT}" text-anchor="middle" fill="#3b3320">${ref}</text>`)
