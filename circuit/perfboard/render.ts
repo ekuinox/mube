@@ -7,7 +7,7 @@
 import { axisWithLabel, VIEWPOINT } from "../../scripts/axes"
 import {
   COLS, PICO_GND_PINS, PICO_PIN_OF_LABEL, PIN_ROW_HIGH, PIN_ROW_LOW, PITCH, ROWS,
-  holeId, parseHole, pinHole,
+  holeId, holeXY, parseHole, pinHole,
 } from "./board"
 import type { Layout } from "./verify"
 
@@ -290,6 +290,18 @@ export function renderSvg(layout: Layout): string {
   return out.join("\n")
 }
 
+/** 部品ごとの占有穴とローカル mm。設計書が手で持っていた表を生成物へ移すためのもの。 */
+function placementRows(layout: Layout): string[] {
+  const parts = partsOf(layout)
+  return [...parts.keys()].sort().map((ref) => {
+    const holes = parts.get(ref)!
+    const pts = holes.map((hole) => holeXY(parseHole(hole)))
+    const x = pts.reduce((sum, p) => sum + p.x, 0) / pts.length
+    const y = pts.reduce((sum, p) => sum + p.y, 0) / pts.length
+    return `| ${ref} | ${holes.join(", ")} | (${x.toFixed(1)}, ${y.toFixed(1)}) |`
+  })
+}
+
 export function renderTable(layout: Layout): string {
   const rows = layout.wires.map(
     (w) => `| ${w.from} | ${w.to} | ${w.net} | ${w.side === "solder" ? "裏" : "表"} | ${w.insulated ? "被覆" : "裸"} |`)
@@ -305,6 +317,15 @@ export function renderTable(layout: Layout): string {
     `| from | to | ネット | 面 | 線材 |`,
     `| --- | --- | --- | --- | --- |`,
     ...rows,
+    ``,
+    `## 部品の占有穴`,
+    ``,
+    `ローカル座標は基板中心が原点（${axisWithLabel("+X")}が列 1 側、${axisWithLabel("+Y")}が行 ${String.fromCharCode(64 + ROWS)} 側）。`,
+    `複数の足を持つ部品は足の重心を書く。設計書はこの表を参照する（mm を手で書き写さない）。`,
+    ``,
+    `| 部品 | 穴 | ローカル mm |`,
+    `| --- | --- | --- |`,
+    ...placementRows(layout),
     ``,
   ].join("\n")
 }
