@@ -30,6 +30,10 @@ test-axes:
 erc:
     cd circuit && bun install --frozen-lockfile && bun test
 
+# ユニバーサル基板の配線見本を生成（SVG + 結線表）
+perfboard:
+    cd circuit && bun perfboard-build.ts
+
 # WebUI ビルド（yew → crates/mube-webui/dist）
 webui:
     cd crates/mube-webui && trunk build --release
