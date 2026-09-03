@@ -22,9 +22,21 @@ components:
 test-enclosure:
     bun test enclosure/scripts/
 
+# 方位の併記が対応表と一致するかを検査
+test-axes:
+    bun test scripts/axes.test.ts
+
 # 回路 ERC（導通・ショート）
 erc:
     cd circuit && bun install --frozen-lockfile && bun test
+
+# ユニバーサル基板の配線見本を生成（SVG + 結線表）
+perfboard:
+    cd circuit && bun perfboard-build.ts
+
+# 配線見本をブラウザで見る（cloudflared quick tunnel で公開）
+perfboard-view:
+    cd circuit && bun perfboard-serve.ts
 
 # WebUI ビルド（yew → crates/mube-webui/dist）
 webui:

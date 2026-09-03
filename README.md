@@ -40,6 +40,8 @@ Pico W が WiFi 接続後に HTTP ポート 80 で WebUI と JSON API を配信�
 | 印刷パート5点の STL が単一連結ソリッドであることのチェック | `just components` | `bun enclosure/scripts/components.ts` |
 | enclosure ツールの単体テスト | `just test-enclosure` | `bun test enclosure/scripts/` |
 | 回路 ERC（導通・ショート） | `just erc` | `cd circuit && bun install --frozen-lockfile && bun test` |
+| ユニバーサル基板の配線見本 | `just perfboard` | `cd circuit && bun perfboard-build.ts` |
+| 配線見本をブラウザで見る | `just perfboard-view` | `cd circuit && bun perfboard-serve.ts` |
 | WebUI ビルド（yew→dist） | `just webui` | `cd crates/mube-webui && trunk build --release` |
 | ファームビルド一発（blob→webui→cargo build） | `just firmware` | — |
 | OTA でファーム更新（LAN 内・要 TARGET_IP） | `just ota` | — |

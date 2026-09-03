@@ -28,6 +28,7 @@ ordinal: 4000
 - 基板レイアウトを決めてはんだ実装（部品は docs/parts-selection.md の BOM どおり。基板上の配置は docs/superpowers/specs/2026-08-16-universal-pcb-cover-design.md で確定済み）。
 - ~~scad: トレイを P-03229 マウントに作り替え~~ → 2026-08-16 の筐体改修で完了（トレイ・プレート・カバーを一括で作り替え）。
 - 実装後にブレッドボードと同条件の実機確認（TCP 経由の施錠/解錠、LED、スイッチ）。
+- 配線見本（`just perfboard`）の結線表どおりにはんだ付けする。配置を動かしたら再生成して `docs/perfboard-wiring.md` を更新する。
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

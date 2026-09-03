@@ -2,12 +2,12 @@
 //!
 //! 現状: CYW43439 を起動し、WPA2 で WiFi に接続して DHCP で IP を取得したうえで、
 //! picoserve で HTTP ポート 80 を listen し、埋め込み yew SPA と JSON API を配信する。
-//! SG90 サーボ（GP15 PWM + GP14 電源ゲート）への指令は `SERVO_CMD: Signal` 経由で
+//! SG90 サーボ（GP22 PWM + GP20 電源ゲート）への指令は `SERVO_CMD: Signal` 経由で
 //! `servo_task` が受け取る（Pico W の LED は GPIO ではなく CYW43 側にぶら下がっているため、
 //! 制御にも WiFi チップの初期化が要る）。
 //!
-//! ロック状態は単一ソース `LOCK_STATE` に集約し、HTTP API・GP17 ボタン（トグル）・
-//! 二色ステータス LED（GP16=赤=施錠 / GP18=黄緑=解錠）が同じ状態を参照する。
+//! ロック状態は単一ソース `LOCK_STATE` に集約し、HTTP API・GP5 ボタン（トグル）・
+//! 二色ステータス LED（GP9=赤=施錠 / GP10=黄緑=解錠）が同じ状態を参照する。
 //! ボタンは内部プルアップ（アクティブ Low）。
 //!
 //! ここから先（スマートロック本体）の積み残し:
@@ -145,7 +145,7 @@ async fn servo_task(
     }
 }
 
-/// GP17 のタクトスイッチ（内部プルアップ・アクティブ Low）を監視し、押下ごとにロックをトグルする。
+/// GP5 のタクトスイッチ（内部プルアップ・アクティブ Low）を監視し、押下ごとにロックをトグルする。
 /// 内部プルアップに依存（外付け抵抗なし＝ Issue #27 の方針）。20ms デバウンスでチャタを除く。
 #[embassy_executor::task]
 async fn button_task(mut btn: Input<'static>) -> ! {
@@ -227,16 +227,16 @@ async fn main(spawner: Spawner) {
     let mut watchdog = Watchdog::new(p.WATCHDOG);
     watchdog.start(WATCHDOG_TIMEOUT);
 
-    // サーボ駆動: PWM 信号 = GP15（slice7 ch B）、電源ゲート = GP14（active-high）。
-    let gate = Output::new(p.PIN_14, Level::Low);
-    let servo_pwm = Pwm::new_output_b(p.PWM_SLICE7, p.PIN_15, PwmConfig::default());
+    // サーボ駆動: PWM 信号 = GP22（slice3 ch A）、電源ゲート = GP20（active-high）。
+    let gate = Output::new(p.PIN_20, Level::Low);
+    let servo_pwm = Pwm::new_output_a(p.PWM_SLICE3, p.PIN_22, PwmConfig::default());
     let servo = Servo::new(servo_pwm, gate);
-    // 二色ステータス LED: 赤=GP16（施錠）, 黄緑=GP18（解錠）。コモンカソード、active-high。
-    let led_r = Output::new(p.PIN_16, Level::Low);
-    let led_g = Output::new(p.PIN_18, Level::Low);
+    // 二色ステータス LED: 赤=GP9（施錠）, 黄緑=GP10（解錠）。コモンカソード、active-high。
+    let led_r = Output::new(p.PIN_9, Level::Low);
+    let led_g = Output::new(p.PIN_10, Level::Low);
     spawner.spawn(servo_task(servo, led_r, led_g).unwrap());
-    // ボタン: GP17 内部プルアップ（アクティブ Low）。押下でロックをトグル。
-    let button = Input::new(p.PIN_17, Pull::Up);
+    // ボタン: GP5 内部プルアップ（アクティブ Low）。押下でロックをトグル。
+    let button = Input::new(p.PIN_5, Pull::Up);
     spawner.spawn(button_task(button).unwrap());
     spawner.spawn(auto_lock_task().unwrap());
 

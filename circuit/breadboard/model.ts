@@ -30,7 +30,7 @@ export function nodeOf(hole: Hole): string {
 export type Jumper = { from: Hole; to: Hole; net?: string; color?: string }
 
 // --- Union-Find ---
-class UnionFind {
+export class UnionFind {
   private parent: Map<string, string> = new Map()
 
   private root(x: string): string {

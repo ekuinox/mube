@@ -85,8 +85,8 @@ jobs:
       # バックエンドが無く、レンダリング挙動が一致しない。
       - uses: DeterminateSystems/nix-installer-action@main
 
-      - name: bun test (enclosure ヘルパ + lockctl)
-        run: nix develop --command bun test enclosure/scripts/ scripts/lockctl.test.ts
+      - name: bun test (enclosure ヘルパ + lockctl + 方位の併記)
+        run: nix develop --command bun test enclosure/scripts/ scripts/
 
       - name: Render SCAD models to STL (fails on WARNING/ERROR)
         run: |
