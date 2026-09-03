@@ -63,6 +63,18 @@ test("被覆線は近接の対象外", () => {
   expect(verifyLayout(layout).some((p) => p.includes("近接"))).toBe(false)
 })
 
+// 目的: 同じ電気ノードのランドは近接の対象外にすること。裸線が触れても短絡しないので、
+// 実測後に配置を詰めたときの誤検出を防ぐ。
+test("同じネットのランドは近接扱いしない", () => {
+  const layout = minimal()
+  // O8 のランドを BTN の島へ繋いだうえで、その真上を BTN の裸線 O7→O9 が通る。
+  layout.legs["TP1.pin1"] = "O8"
+  layout.wires.push({ from: "O7", to: "N7", net: "BTN", side: "solder" })
+  layout.wires.push({ from: "O8", to: "O7", net: "BTN", side: "solder" })
+  layout.wires.push({ from: "O7", to: "O9", net: "BTN", side: "solder" })
+  expect(verifyLayout(layout).some((p) => p.includes("近接"))).toBe(false)
+})
+
 // 目的: 十分離れた斜めのワイヤは咎めないこと。
 test("穴から十分離れた斜めのワイヤは近接扱いしない", () => {
   const layout = minimal()

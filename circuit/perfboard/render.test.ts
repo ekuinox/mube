@@ -62,6 +62,13 @@ test("被覆線に縁取りが描かれる", () => {
   expect(svg.match(/class="sleeve"/g)?.length).toBe(insulated)
 })
 
+// 目的: 白縁の意味が凡例の見本でも分かること。文だけだと装飾に見えて裸線で引いてしまう。
+test("凡例に被覆線の見本が並ぶ", () => {
+  const svg = renderSvg(LAYOUT)
+  expect(svg).toContain(`class="swatch-sleeve"`)
+  expect(svg).toContain(`>被覆線</text>`)
+})
+
 // 目的: 結線表が全ワイヤを穴 ID で並べること。半田付けはこの表を見て進める。
 test("結線表に全てのワイヤが並ぶ", () => {
   const table = renderTable(LAYOUT)

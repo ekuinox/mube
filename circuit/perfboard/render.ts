@@ -280,6 +280,13 @@ export function renderSvg(layout: Layout): string {
   out.push(`<text x="${MARGIN}" y="${legendY}" font-size="13">${VIEWPOINT}見て ${axisWithLabel("+X")} ${axisWithLabel("-X")} ${axisWithLabel("+Y")} ${axisWithLabel("-Y")}</text>`)
   out.push(`<text x="${MARGIN}" y="${legendY + 18}" font-size="13">破線 = 裏面（はんだ面）を通る線 / 白縁 = 被覆線で引く区間 / 破線の枠 = 実寸未確認の部品外形</text>`)
   let swatchX = MARGIN
+  // 被覆線の見本。白縁はネットの色ではなく線の描き分けなので、色見本の先頭に置いて
+  // 意味を示す。文だけだと縁取りが装飾に見えて、裸線で引いてしまう。
+  out.push(`<line class="swatch-sleeve" x1="${swatchX}" y1="${legendY + 34}" x2="${swatchX + 22}" y2="${legendY + 34}" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-opacity="0.9"/>`)
+  out.push(`<line class="swatch" x1="${swatchX}" y1="${legendY + 34}" x2="${swatchX + 22}" y2="${legendY + 34}" stroke="#666" stroke-width="3" stroke-dasharray="7 5"/>`)
+  out.push(`<text x="${swatchX + 27}" y="${legendY + 38}" font-size="12" fill="#3b3320">被覆線</text>`)
+  // 全角 3 文字。ネット名の英数と字幅が違うので係数を分ける。
+  swatchX += 27 + 3 * 12 + 18
   for (const net of [...new Set(layout.wires.map((wire) => wire.net))].sort()) {
     const color = NET_COLORS[net] ?? "#666"
     out.push(`<line class="swatch" x1="${swatchX}" y1="${legendY + 34}" x2="${swatchX + 22}" y2="${legendY + 34}" stroke="${color}" stroke-width="3"/>`)

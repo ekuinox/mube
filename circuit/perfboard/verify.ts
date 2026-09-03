@@ -88,6 +88,8 @@ export function verifyLayout(layout: Layout): string[] {
     const from = parseHole(w.from), to = parseHole(w.to)
     for (const [id, occupant] of Object.entries(occupied)) {
       if (id === w.from || id === w.to) continue
+      // 同じ電気ノードのランドなら、裸線が触れても短絡にならない。
+      if (uf.groupOf(id) === uf.groupOf(w.from)) continue
       if (holeDistance(parseHole(id), from, to) < 0.5)
         problems.push(`近接: ${w.net} (${w.from}→${w.to}) が ${id} の ${occupant} に近すぎる`)
     }
